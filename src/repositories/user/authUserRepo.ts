@@ -1,119 +1,135 @@
+import { Document, Model } from "mongoose";
+import { ResponseModel } from "../../models/ResponseModel";
 import userModel from "../../models/Users";
 import OtpModel from "../../models/OtpSchema";
-import { userType,UserProfile } from "../../interfaces/userInterface/userInterface";
-import mongoose, { Document, ObjectId } from "mongoose";
+import { userType, UserProfile, CreateUserType } from "../../interfaces/userInterface/userInterface";
+import bcrypt from 'bcrypt';
+import BaseRepository from "../BaseRepository";
 import { IAuthRepository } from "../../interfaces/user/userAuthRepoInterface";
-import bcrypt from  'bcrypt'
+import { Messages } from "../../enums/messages";
 
-const ObjectId = mongoose.Types.ObjectId;
+export class AuthUserRepository extends BaseRepository<any> implements IAuthRepository {
+    private _otpRepository = new BaseRepository<any>(OtpModel); 
 
-export class AuthRepository implements IAuthRepository {
-
-  
-  async existUser(
-    email: string,
-    phone?: string
-  ): Promise<{ existEmail: boolean; existPhone: boolean }> {
-    try {
-      let existEmail = true;
-      let existPhone = true;
-
-      const emailExist = await userModel.findOne({ email: email });
-      if (!emailExist) {
-        existEmail = false;
-      }
-
-      const phoneExist = await userModel.findOne({ phone: phone });
-      if (!phoneExist) {
-        existPhone = false;
-      }
-
-      return { existEmail, existPhone };
-    } catch (error) {
-      console.error("Error checking if user exists:", error);
-      throw new Error("Error checking if user exists");
+    constructor() {
+        super(userModel); 
     }
-  }
-  async createUser(userData: userType): Promise<Document> {
-    try {
-      console.log("user data", userData);
 
-      const newUser = new userModel(userData);
-      return await newUser.save();
-    } catch (error: any) {
-      console.log("Error in creating new User", error);
-      throw new Error(`Error creating user : ${error.message}`);
-    }
-  }
-  async saveOTP(email: string, OTP: string): Promise<void> {
-    try {
-      const newOtp = new OtpModel({
-        email,
-        otp: OTP,
-      });
-      await newOtp.save();
-    } catch (error) {
-      console.error("Error in saveOTP:", error);
-      throw error;
-    }
-  }
-  async verifyOtp(email: string, otp: string): Promise<{ success: boolean }> {
-    try {
-      const emailExist = await OtpModel.findOne({ email: email });
-      if (!emailExist) {
-        return { success: false };
-      }
-      const isMatch = await bcrypt.compare(otp, emailExist.otp);
-      if (!isMatch) {
-        return { success: false }; 
-      }
-      return { success: true };
-    } catch (error) {
-      console.log("Error verifying OTP:", error);
-      return { success: false };
-    }
-  }
-  async verifyUser(email: string, password: string): Promise<{ success: boolean; message: string; data: UserProfile | null }> {
-    try {
-      console.log("inside verify user: ", email, password);
-      const userData = await userModel.findOne({ email: email }).lean();
-  
-      if (!userData) {
-        return { success: false, message: "invalid email", data: null }; 
-      }
-  
-      const isMatch = await bcrypt.compare(password, userData.password);
-      if (!isMatch) {
-        return { success: false, message: "invalid password", data: null }; 
-      }
-  
-      const formattedUserData: UserProfile = { 
-        ...userData, 
-        _id: userData._id.toString(), 
-      };
-  
-      return { success: true, message: "login success", data:formattedUserData };
-    } catch (error) {
-      console.log("Error verifying login:", error);
-      return { success: false, message: "error in login", data: null }; 
-    }
-  }
-  
+    async existUser(email: string, phone?: string): Promise<ResponseModel<{ existEmail: boolean; existPhone: boolean }>> {
+        try {
+            const [emailExist, phoneExist] = await Promise.all([
+                this.findOne({ email }),
+                phone ? this.findOne({ phone }) : Promise.resolve(null)
+            ]);
 
-  async resetPassword(email: string, password: string): Promise<{ success: boolean; message: string; }> {
-    try {
-      console.log("inside resetpass repo",email,password)
-
-      const userData = await userModel.findOne({ email: email });
-      console.log("emailexist:",userData)
-      if (userData===null) {
-        return { success: false ,message:"invalid email"};
-      }
-      await userModel.updateOne({ email: email }, { $set: { password: password } });
-      return { success: true, message: "Password updated successfully" };
-    } catch (error) {
-      console.error("Error in reset password repo: ",error)
-      return {success:false,message:"error in resetpassword repo"}
+            return {
+                success: true,
+                message: Messages.USER_EXISTENCE_SUCCESS,
+                data: {
+                    existEmail: !!emailExist,
+                    existPhone: phone ? !!phoneExist : false
+                }
+            };
+        } catch (error) {
+            console.error("Error checking if user exists:", error);
+            return {
+                success: false,
+                message: Messages.ERROR_CHECKING_USER,
+                data: { existEmail: false, existPhone: false }
+            };
+        }
     }
-  }
+
+    async createUser(userData: CreateUserType): Promise<ResponseModel<Document<unknown, any, any> & userType>> {
+        try {
+            const user = await this.create(userData) as Document<unknown, any, any> & userType;
+
+            return {
+                success: true,
+                message: Messages.USER_CREATED,
+                data: user
+            };
+        } catch (error) {
+            console.error("Error in creating new User", error);
+            return {
+                success: false,
+                message: `${Messages.ERROR_CREATING_USER}: ${(error as Error).message}`,
+                data: null
+            };
+        }
+    }
+
+    async saveOTP(email: string, OTP: string): Promise<ResponseModel> {
+        try {
+            await this._otpRepository.create({ email, otp: OTP });
+            return new ResponseModel(true, Messages.OTP_SAVED);
+        } catch (error: any) {
+            return new ResponseModel(false, `${Messages.ERROR_SAVING_OTP}: ${error.message}`);
+        }
+    }
+
+    async verifyOtp(email: string, otp: string): Promise<ResponseModel<{ success: boolean }>> {
+        try {
+            const otpRecord = await this._otpRepository.findOne({ email });
+            if (!otpRecord) {
+                return new ResponseModel(false, Messages.OTP_NOT_FOUND, { success: false });
+            }
+            const isMatch = await bcrypt.compare(otp, otpRecord.otp);
+            return new ResponseModel(true, Messages.OTP_VERIFIED, { success: isMatch });
+        } catch (error: any) {
+            return new ResponseModel(false, `${Messages.ERROR_VERIFYING_OTP}: ${error.message}`, { success: false });
+        }
+    }
+
+    async verifyUser(email: string, password: string): Promise<ResponseModel<UserProfile | null>> {
+        try {
+            const userData = await this.findOne({ email });
+            if (!userData) {
+                return new ResponseModel(false, Messages.INVALID_EMAIL, null);
+            }
+
+            const isMatch = await bcrypt.compare(password, userData.password);
+            if (!isMatch) {
+                return new ResponseModel(false, Messages.INVALID_PASSWORD, null);
+            }
+
+            const formattedUserData: UserProfile = {
+                ...userData.toObject(),
+                _id: userData._id.toString()
+            };
+
+            return new ResponseModel(true, Messages.LOGIN_SUCCESS, formattedUserData);
+        } catch (error: any) {
+            return new ResponseModel(false, `${Messages.ERROR_LOGIN}: ${error.message}`, null);
+        }
+    }
+
+    async resetPassword(email: string, password: string): Promise<ResponseModel<null>> {
+        try {
+            const userData = await this.findOne({ email });
+
+            if (!userData) {
+                return {
+                    success: false,
+                    message: Messages.INVALID_EMAIL,
+                    data: null
+                };
+            }
+
+            await this.update(userData._id.toString(), { password });
+
+            return {
+                success: true,
+                message: Messages.PASSWORD_UPDATED,
+                data: null
+            };
+        } catch (error) {
+            console.error("Error in reset password repo:", error);
+            return {
+                success: false,
+                message: Messages.ERROR_RESET_PASSWORD,
+                data: null
+            };
+        }
+    }
 }

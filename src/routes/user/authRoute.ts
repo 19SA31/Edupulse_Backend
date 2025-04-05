@@ -1,11 +1,11 @@
 import express from'express'
 import { AuthController } from '../../controllers/user/Auth'
 import { AuthService } from '../../services/user/authUserService'
-import { AuthRepository } from '../../repositories/user/authUserRepo'
+import { AuthUserRepository } from '../../repositories/user/authUserRepo'
 
 const authRoute = express.Router()
  
-const AuthRepositoryInstance= new AuthRepository()
+const AuthRepositoryInstance= new AuthUserRepository()
 const AuthServiceInstance= new AuthService(AuthRepositoryInstance)
 const AuthControllerInstance = new AuthController(AuthServiceInstance)
 

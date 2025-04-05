@@ -1,7 +1,7 @@
-import mongoose, { ObjectId } from "mongoose";
+import mongoose, { ObjectId,Types } from "mongoose";
 
 export interface IUser{
-    userId: string
+    userId: ObjectId
     name: string
     email: string
     phone: string
@@ -15,9 +15,26 @@ export interface IUser{
 }
 
 export interface userType{
+  _id?: Types.ObjectId;
   name?: string;  
   email: string;
   phone?: string; 
+  password: string;
+  createdAt: Date;
+};
+
+export interface CreateUserType  {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  createdAt: Date;
+}
+
+export type NewUserType = {
+  name: string;
+  email: string;
+  phone: string;
   password: string;
   createdAt: Date;
 };

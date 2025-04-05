@@ -4,7 +4,7 @@ import { IAuthRepository } from "../../interfaces/user/userAuthRepoInterface";
 import sendMail from "../../config/emailConfig";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
-import { GetUserData } from "../../interfaces/userInterface/userInterface";
+import {  CreateUserType, GetUserData, NewUserType } from "../../interfaces/userInterface/userInterface";
 
 dotenv.config();
 
@@ -52,18 +52,19 @@ export class AuthService implements IAuthService {
 
       if (userData.isForgot) {
         console.log("forgot password");
-        if (!response.existEmail) {
+        if (!response.data?.existEmail) {
           throw new Error("Email not found");
         }
         return await this.sendOTP(userData.email);
       }
-
-      if (response.existEmail) {
+      
+      if (response.data?.existEmail) {
         throw new Error("Email already in use");
       }
-      if (response.existPhone) {
+      if (response.data?.existPhone) {
         throw new Error("Phone already in use");
       }
+      
 
       return await this.sendOTP(userData.email);
     } catch (error: any) {
@@ -81,7 +82,7 @@ export class AuthService implements IAuthService {
     isForgot?: boolean;
   }): Promise<{ success: boolean }> {
     try {
-      console.log("Reached otpCheck");
+      console.log("Reached otpCheck service");
 
       const response = await this.AuthRepository.verifyOtp(
         userData.email,
@@ -104,7 +105,7 @@ export class AuthService implements IAuthService {
         this.saltRounds
       );
 
-      const newUserData = {
+      const newUserData: CreateUserType = {
         name: userData.name ?? "",
         email: userData.email,
         phone: userData.phone ?? "",

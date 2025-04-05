@@ -56,7 +56,7 @@ export class AuthController {
     next: NextFunction
   ): Promise<void> {
     try {
-      console.log("inside verify otp");
+      console.log("inside verify otp controller");
       const data = req.body;
 
       const response = await this.authService.otpCheck(data);
