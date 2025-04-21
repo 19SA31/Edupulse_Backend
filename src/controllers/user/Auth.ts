@@ -58,7 +58,7 @@ export class AuthController {
     try {
       console.log("inside verify otp controller");
       const data = req.body;
-
+      console.log("inside verify otp data:",data)
       const response = await this.authService.otpCheck(data);
       console.log("OTP Check Response:", response);
       if (!response.success) {

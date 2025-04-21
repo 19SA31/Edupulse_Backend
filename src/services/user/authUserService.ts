@@ -21,7 +21,7 @@ export class AuthService implements IAuthService {
       1000 + Math.random() * 9000
     ).toString();
     const hashedOTP: string = await bcrypt.hash(GeneratedOTP, this.saltRounds);
-
+    console.log("inside sendOTP:",GeneratedOTP)
     const subject = "OTP Verification";
     const sendMailStatus: boolean = await sendMail(
       email,
@@ -88,6 +88,7 @@ export class AuthService implements IAuthService {
         userData.email,
         userData.otp
       );
+      console.log("verifyotp respo response in auth service: ",response)
       if (!response.success) {
         return { success: false };
       }
@@ -132,9 +133,9 @@ export class AuthService implements IAuthService {
       console.log("Reached login service");
   
       const loggedUser = await this.AuthRepository.verifyUser(userData.email, userData.password);
-  
+      console.log(loggedUser)
       if (!loggedUser.success || !loggedUser.data) {
-        return { success: false, message: "Invalid credentials" }; // Provide specific error message
+        return { success: false, message: loggedUser.message }; // Provide specific error message
       }
   
       const { _id, email, name } = loggedUser.data;

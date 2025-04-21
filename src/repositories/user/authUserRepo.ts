@@ -7,6 +7,7 @@ import bcrypt from 'bcrypt';
 import BaseRepository from "../BaseRepository";
 import { IAuthRepository } from "../../interfaces/user/userAuthRepoInterface";
 import { Messages } from "../../enums/messages";
+import { Console } from "console";
 
 export class AuthUserRepository extends BaseRepository<any> implements IAuthRepository {
     private _otpRepository = new BaseRepository<any>(OtpModel); 
@@ -61,6 +62,7 @@ export class AuthUserRepository extends BaseRepository<any> implements IAuthRepo
 
     async saveOTP(email: string, OTP: string): Promise<ResponseModel> {
         try {
+            console.log("INSIDE SAVEOTP, otp:",OTP)
             await this._otpRepository.create({ email, otp: OTP });
             return new ResponseModel(true, Messages.OTP_SAVED);
         } catch (error: any) {
@@ -70,12 +72,14 @@ export class AuthUserRepository extends BaseRepository<any> implements IAuthRepo
 
     async verifyOtp(email: string, otp: string): Promise<ResponseModel<{ success: boolean }>> {
         try {
+            console.log("INSIDE verifyotp repo ,otp:",otp)
             const otpRecord = await this._otpRepository.findOne({ email });
             if (!otpRecord) {
                 return new ResponseModel(false, Messages.OTP_NOT_FOUND, { success: false });
             }
             const isMatch = await bcrypt.compare(otp, otpRecord.otp);
-            return new ResponseModel(true, Messages.OTP_VERIFIED, { success: isMatch });
+            console.log("verify otp repo otp match:",isMatch)
+            return new ResponseModel(isMatch, isMatch?Messages.OTP_VERIFIED:Messages.OTP_VERIFICATION_FAILED, { success: isMatch });
         } catch (error: any) {
             return new ResponseModel(false, `${Messages.ERROR_VERIFYING_OTP}: ${error.message}`, { success: false });
         }

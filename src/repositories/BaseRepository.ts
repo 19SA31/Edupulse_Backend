@@ -1,9 +1,11 @@
 import { Model, Document } from 'mongoose';
 class BaseRepository<T extends Document> {
+  
     private _model: Model<T>;
     constructor(model: Model<T>) {
         this._model = model;
       }
+      
       async create(data: T): Promise<T> {
         const document = new this._model(data);
         return document.save();
