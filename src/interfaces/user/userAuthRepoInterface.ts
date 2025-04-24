@@ -1,6 +1,6 @@
 import { Document } from "mongoose";
 import { userType, UserProfile, CreateUserType } from "../userInterface/userInterface";
-import { ResponseModel } from "../../models/ResponseModel"; // Import the response model
+import { ResponseModel } from "../../models/ResponseModel"; 
 
 export interface IAuthRepository {
     existUser(email: string, phone?: string): Promise<ResponseModel<{ existEmail: boolean; existPhone: boolean }>>;

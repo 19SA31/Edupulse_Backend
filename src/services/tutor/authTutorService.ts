@@ -1,18 +1,18 @@
 import bcrypt from "bcrypt";
-import { IAuthService } from "../../interfaces/user/userAuthServiceInterface";
-import { IAuthRepository } from "../../interfaces/user/userAuthRepoInterface";
+import { ITutorAuthInterface } from "../../interfaces/tutor/tutorAuthServiceInterface";
+import { ITutorAuthRepository } from "../../interfaces/tutor/tutorAuthRepoInterface";
 import sendMail from "../../config/emailConfig";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
-import {  CreateUserType, GetUserData } from "../../interfaces/userInterface/userInterface";
+import {  CreateTutorType, GetTutorData  } from "../../interfaces/tutorInterface/tutorInterface";
 
 dotenv.config();
 
-export class AuthService implements IAuthService {
-  private AuthRepository: IAuthRepository;
+export class AuthTutorService implements ITutorAuthInterface {
+  private AuthRepository: ITutorAuthRepository;
   private saltRounds: number = 10;
 
-  constructor(AuthRepository: IAuthRepository) {
+  constructor(AuthRepository: ITutorAuthRepository) {
     this.AuthRepository = AuthRepository;
   }
 
@@ -37,25 +37,25 @@ export class AuthService implements IAuthService {
     return { success: true };
   }
 
-  async signUp(userData: {
+  async signUp(tutorData: {
     email: string;
     phone?: string;
     isForgot?: boolean;
   }): Promise<{ success: boolean }> {
     try {
-      console.log("Reached user signup");
+      console.log("Reached tutor signup");
 
-      const response = await this.AuthRepository.existUser(
-        userData.email,
-        userData.phone
+      const response = await this.AuthRepository.existTutor(
+        tutorData.email,
+        tutorData.phone
       );
 
-      if (userData.isForgot) {
+      if (tutorData.isForgot) {
         console.log("forgot password");
         if (!response.data?.existEmail) {
           throw new Error("Email not found");
         }
-        return await this.sendOTP(userData.email);
+        return await this.sendOTP(tutorData.email);
       }
       
       if (response.data?.existEmail) {
@@ -66,14 +66,14 @@ export class AuthService implements IAuthService {
       }
       
 
-      return await this.sendOTP(userData.email);
+      return await this.sendOTP(tutorData.email);
     } catch (error: any) {
       console.error("Error in signUp:", error.message);
-      throw error;
+      return { success: false };
     }
   }
 
-  async otpCheck(userData: {
+  async otpCheck(tutorData: {
     name?: string;
     email: string;
     phone?: string;
@@ -85,36 +85,36 @@ export class AuthService implements IAuthService {
       console.log("Reached otpCheck service");
 
       const response = await this.AuthRepository.verifyOtp(
-        userData.email,
-        userData.otp
+        tutorData.email,
+        tutorData.otp
       );
       console.log("verifyotp respo response in auth service: ",response)
       if (!response.success) {
         return { success: false };
       }
 
-      if (userData.isForgot) {
+      if (tutorData.isForgot) {
         return { success: true };
       }
 
-      if (!userData.password) {
-        throw new Error("Password is required for new user registration.");
+      if (!tutorData.password) {
+        throw new Error("Password is required for new tutor registration.");
       }
 
       const hashedPassword: string = await bcrypt.hash(
-        userData.password,
+        tutorData.password,
         this.saltRounds
       );
 
-      const newUserData: CreateUserType = {
-        name: userData.name ?? "",
-        email: userData.email,
-        phone: userData.phone ?? "",
+      const newtutorData: CreateTutorType = {
+        name: tutorData.name ?? "",
+        email: tutorData.email,
+        phone: tutorData.phone ?? "",
         password: hashedPassword,
         createdAt: new Date(),
       };
 
-      await this.AuthRepository.createUser(newUserData);
+      await this.AuthRepository.createTutor(newtutorData);
       return { success: true };
     } catch (error: any) {
       console.error("Error in otpCheck:", error);
@@ -122,32 +122,32 @@ export class AuthService implements IAuthService {
     }
   }
 
-  async loginService(userData: { email: string; password: string }): Promise<{ 
+  async loginService(tutorData: { email: string; password: string }): Promise<{ 
     success: boolean; 
     message: string; 
     accessToken?: string; 
     refreshToken?: string;
-    user?: GetUserData; 
+    tutor?: GetTutorData; 
   }> {
     try {
       console.log("Reached login service");
   
-      const loggedUser = await this.AuthRepository.verifyUser(userData.email, userData.password);
-      console.log(loggedUser)
-      if (!loggedUser.success || !loggedUser.data) {
-        return { success: false, message: loggedUser.message }; // Provide specific error message
+      const loggedTutor = await this.AuthRepository.verifyTutor(tutorData.email, tutorData.password);
+      console.log(loggedTutor)
+      if (!loggedTutor.success || !loggedTutor.data) {
+        return { success: false, message: loggedTutor.message }; 
       }
   
-      const { _id, email, name } = loggedUser.data;
+      const { _id, email, name } = loggedTutor.data;
   
       const accessToken = jwt.sign(
-        { id: _id, email, role: "user" },
+        { id: _id, email, role: "tutor" },
         process.env.JWT_SECRET as string,
         { expiresIn: "1h" }
       );
   
       const refreshToken = jwt.sign(
-        { id: _id, email, role: "user" },
+        { id: _id, email, role: "tutor" },
         process.env.JWT_SECRET as string,
         { expiresIn: "7d" }
       );
@@ -157,7 +157,7 @@ export class AuthService implements IAuthService {
         message: "Login successful", 
         accessToken, 
         refreshToken,
-        user: { id: _id, name, email }
+        tutor: { id: _id, name, email }
       };
     } catch (error) {
       console.error("Error in login service:", error);
@@ -167,18 +167,18 @@ export class AuthService implements IAuthService {
   
   
 
-  async resetPasswordService(userData: {
+  async resetPasswordService(tutorData: {
     email: string;
     password: string;
   }): Promise<{ success: boolean; message: string }> {
     try {
       console.log("reached resetpassword service");
       const hashedPassword = await bcrypt.hash(
-        userData.password,
+        tutorData.password,
         this.saltRounds
       );
       const response = await this.AuthRepository.resetPassword(
-        userData.email,
+        tutorData.email,
         hashedPassword
       );
       return response;

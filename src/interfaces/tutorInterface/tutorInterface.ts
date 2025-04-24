@@ -60,3 +60,10 @@ export interface OTPDocument {
   createdTime: Date
 }
 
+export interface CreateTutorType  {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  createdAt: Date;
+}

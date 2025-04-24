@@ -1,9 +1,9 @@
 import express from 'express'
-import authRoute from './authRoute'
+import authTutorRoute from './authTutorRoute'
 
 const tutorRoute =express.Router()
 
-tutorRoute.use('/auth',authRoute)
+tutorRoute.use('/tutor',authTutorRoute)
 
 
 export default tutorRoute

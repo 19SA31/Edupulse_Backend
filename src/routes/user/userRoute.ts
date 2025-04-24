@@ -3,7 +3,7 @@ import authRoute from './authRoute'
 
 const userRoute =express.Router()
 
-userRoute.use('/auth',authRoute)
+userRoute.use('/user',authRoute)
 
 
 export default userRoute
