@@ -8,7 +8,6 @@ dotenv.config();
 
 export class AuthAdminService implements IAdminAuthServiceInterface {
   private AuthRepository: IAdminAuthRepository;
-  private saltRounds: number = 10;
 
   constructor(AuthRepository: IAdminAuthRepository) {
     this.AuthRepository = AuthRepository;
@@ -27,20 +26,20 @@ export class AuthAdminService implements IAdminAuthServiceInterface {
   
       const loggedAdmin = await this.AuthRepository.verifyAdmin(adminData.email, adminData.password);
       console.log(loggedAdmin)
-      if (!loggedAdmin.success || !loggedAdmin.data) {
+      if (!loggedAdmin.success ) {
         return { success: false, message: loggedAdmin.message }; 
       }
   
-      const { _id, email, name } = loggedAdmin.data;
+      
   
       const accessToken = jwt.sign(
-        { id: _id, email, role: "admin" },
+        { id: "admin_id", email:"admin@gmail.com", role: "admin" },
         process.env.JWT_SECRET as string,
         { expiresIn: "1h" }
       );
   
       const refreshToken = jwt.sign(
-        { id: _id, email, role: "admin" },
+        { id: "admin_id", email:"admin@gmail.com", role: "admin" },
         process.env.JWT_SECRET as string,
         { expiresIn: "7d" }
       );

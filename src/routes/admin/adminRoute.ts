@@ -3,7 +3,7 @@ import authAdminRoute from './authAdminRoute'
 
 const adminRoute =express.Router()
 
-adminRoute.use('/tutor',authAdminRoute)
+adminRoute.use('/admin',authAdminRoute)
 
 
 export default adminRoute

@@ -18,7 +18,7 @@ export class AuthAdminController {
   ): Promise<void> {
     try {
       const data = req.body;
-      console.log("inside login: ", data);
+      console.log("inside adminlogin: ", data);
 
       const response = await this.authService.loginService(data);
       console.log("adminlogin response: ", response);
