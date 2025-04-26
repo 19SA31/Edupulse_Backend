@@ -25,6 +25,12 @@ class BaseRepository<T extends Document> {
       async findWithCondition(condition: object): Promise<T[]> {
         return this._model.find(condition).exec();
       }
+      async findWithPagination(filter: object, skip: number, limit: number): Promise<T[]> {
+        return this._model.find(filter).skip(skip).limit(limit).exec();
+      }
+      async countDocuments(filter: object): Promise<number> {
+        return this._model.countDocuments(filter).exec();
+      }
 }
 
 export default BaseRepository;

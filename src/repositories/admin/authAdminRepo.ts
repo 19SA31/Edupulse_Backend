@@ -7,6 +7,7 @@ import BaseRepository from "../BaseRepository";
 
 
 
+
 export class AuthAdminRepository extends BaseRepository<any> implements IAdminAuthRepository {
     
 
@@ -38,6 +39,5 @@ export class AuthAdminRepository extends BaseRepository<any> implements IAdminAu
     }
 
     
-
     
 }

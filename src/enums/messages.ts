@@ -15,6 +15,9 @@ export const Messages = {
     ERROR_SAVING_OTP: "Error saving OTP",  
     ERROR_VERIFYING_OTP: "Error verifying OTP",  
     USER_EXISTENCE_SUCCESS:"User found",
-    OTP_NOT_FOUND:"Otp doesnot exist"
+    OTP_NOT_FOUND:"Otp doesnot exist",
+    FETCH_SUCCESS:"Users fetched successfully",
+    FETCH_FAILED:"Failed to fetch users",
+    
   };
   
