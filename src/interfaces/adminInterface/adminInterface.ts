@@ -17,6 +17,18 @@ export interface User {
     
   }
 
+  export interface Tutor {
+    _id: ObjectId|any;
+    userId: string; 
+    name: string;
+    email: string;
+    phone: string;
+    password: string; 
+    createdAt: Date;
+    isBlocked: boolean;
+    
+  }
+
 export interface GetUser{
     users:User[],
     totalPages:number
