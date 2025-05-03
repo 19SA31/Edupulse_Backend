@@ -92,7 +92,7 @@ export class AdminRepository
       return new ResponseModel<User>(
         true,
         "User status updated successfully",
-        updatedUser
+
       );
     } catch (error: any) {
       console.error("Error updating user:", error.message);
@@ -115,7 +115,6 @@ export class AdminRepository
       return new ResponseModel<Tutor>(
         true,
         "Tutor status updated successfully",
-        updatedTutor
       );
     } catch (error: any) {
       console.error("Error updating tutor:", error.message);

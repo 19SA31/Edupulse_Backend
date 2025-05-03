@@ -144,6 +144,7 @@ export class AuthController {
 
   async logoutUser(req: Request, res: Response): Promise<void> {
     try {
+      console.log("insidelogoutuser")
       res.clearCookie("refreshToken", {
         httpOnly: true,
         path: "/",
@@ -151,9 +152,10 @@ export class AuthController {
       });
       res
         .status(HTTP_statusCode.OK)
-        .json({ message: "You have been logged Out Successfully" });
+        .json({ success: true,message: "You have been logged Out Successfully" });
     } catch (error: any) {
       res.status(HTTP_statusCode.InternalServerError).json({
+        success: false,
         message: `Internal server error : ${error}`,
       });
     }
