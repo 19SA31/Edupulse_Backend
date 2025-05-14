@@ -27,7 +27,9 @@ export class AdminService implements IAdminService{
     
     async getAllTutors(skip: number, limit: number, search: any): Promise<{ tutors: Tutor[], totalPages: number }> {
         try {
+            
             const { data } = await this._adminRepository.getAllTutors(skip, limit, search);
+            
             if (!data) throw new Error('No data found');
     
             const { tutors, totalPages } = data;

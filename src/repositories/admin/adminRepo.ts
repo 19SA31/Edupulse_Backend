@@ -2,6 +2,7 @@ import { Messages } from "../../enums/messages";
 import BaseRepository from "../BaseRepository";
 import userModel from "../../models/Users";
 import tutorModel from "../../models/Tutors";
+import adminModel from "../../models/Admin"
 import { Tutor, User } from "../../interfaces/adminInterface/adminInterface";
 import { IAdminRepositoryInterface } from "../../interfaces/admin/adminRepositoryInterface";
 import { ResponseModel } from "../../models/ResponseModel";
@@ -10,6 +11,10 @@ export class AdminRepository
   extends BaseRepository<any>
   implements IAdminRepositoryInterface
 {
+  constructor() {
+        super(adminModel); 
+  }
+  
   private _userRepository = new BaseRepository<any>(userModel);
   private _tutorRepository = new BaseRepository<any>(tutorModel);
 
@@ -34,7 +39,7 @@ export class AdminRepository
         searchFilter
       );
 
-      const totalPages = Math.ceil(totalCount / limit); // Calculate total pages
+      const totalPages = Math.ceil(totalCount / limit); 
 
       return new ResponseModel(true, Messages.FETCH_SUCCESS, {
         users,
@@ -63,6 +68,7 @@ export class AdminRepository
         skip,
         limit
       );
+      
       const totalCount = await this._tutorRepository.countDocuments(
         searchFilter
       );

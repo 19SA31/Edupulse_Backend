@@ -14,12 +14,7 @@ export class AdminController {
     async getUsers(req: Request, res: Response): Promise<void> {
         try {
           const { page = 1, limit = 10,search } = req.query;
-    
-            console.log("query",search);
-            console.log("query",page);
-            console.log("query",limit);
-            
-            
+     
             
             const pageNumber = parseInt(page as string, 10);
           const pageLimit = parseInt(limit as string, 10);
@@ -41,7 +36,7 @@ export class AdminController {
     }
     async getTutors(req: Request, res: Response): Promise<void> {
       try {
-          console.log("Entering gettutors searc method in adminController");
+          
     
           const { page = 1, limit = 10,search } = req.query; 
     
@@ -49,10 +44,11 @@ export class AdminController {
           const pageNumber = parseInt(page as string, 10);
           const pageLimit = parseInt(limit as string, 10);
     
-          
-          const response = await this.AdminService.getAllTutors(pageNumber, pageLimit,search);
+          const skip = (pageNumber - 1) * pageLimit;
+
+          const response = await this.AdminService.getAllTutors(skip, pageLimit,search);
     
-          console.log("Doctors successfully fetched", response);
+          
     
           res.status(HTTP_statusCode.OK).json({ message: "Fetched tutors successfully", response });
           
