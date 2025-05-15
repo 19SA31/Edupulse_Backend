@@ -26,10 +26,10 @@ adminRoutes.post('/logout',AuthAdminControllerInstance.logoutAdmin.bind(AuthAdmi
 
 
 adminRoutes.get('/getUsers',AdminControllerInstance.getUsers.bind(AdminControllerInstance));
-// adminRoutes.put('/listUnlistUser/:userId',AdminControllerInstance.listUnlistUser.bind(AdminControllerInstance));
+adminRoutes.put('/listUnlistUser/:userId',AdminControllerInstance.listUnlistUser.bind(AdminControllerInstance));
 
 adminRoutes.get('/getTutors',AdminControllerInstance.getTutors.bind(AdminControllerInstance));
-// adminRoutes.put('/listUnlistDoctor/:doctorId',AdminControllerInstance.listUnlistTutor.bind(AdminControllerInstance));
+adminRoutes.put('/listUnlistTutor/:tutorId',AdminControllerInstance.listUnlistTutor.bind(AdminControllerInstance));
 
 
 export default adminRoutes

@@ -51,6 +51,7 @@ export class AuthAdminController {
   
   async logoutAdmin(req: Request, res: Response): Promise<void> {
     try {
+      console.log("inside admin logout controller")
       res.clearCookie("refreshToken", {
         httpOnly: true,
         path: "/",

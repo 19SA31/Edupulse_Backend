@@ -87,7 +87,7 @@ export class AdminRepository
 
   async changeUserStatus(id: string): Promise<ResponseModel<User>> {
     try {
-      const user = await userModel.findOne({ _id: id });
+      const user = await this._userRepository.findOne({ _id: id });
       if (!user) {
         return new ResponseModel<User>(false, "User not found", null);
       }
@@ -98,6 +98,7 @@ export class AdminRepository
       return new ResponseModel<User>(
         true,
         "User status updated successfully",
+        updatedUser
 
       );
     } catch (error: any) {
@@ -110,7 +111,7 @@ export class AdminRepository
 
   async changeTutorStatus(id: string): Promise<ResponseModel<Tutor>> {
     try {
-      const tutor = await tutorModel.findOne({ _id: id });
+      const tutor = await this._tutorRepository.findOne({ _id: id });
       if (!tutor) {
         return new ResponseModel<Tutor>(false, "Tutor not found", null);
       }
@@ -121,6 +122,7 @@ export class AdminRepository
       return new ResponseModel<Tutor>(
         true,
         "Tutor status updated successfully",
+        updatedTutor
       );
     } catch (error: any) {
       console.error("Error updating tutor:", error.message);
