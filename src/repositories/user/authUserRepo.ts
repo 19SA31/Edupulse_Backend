@@ -92,6 +92,10 @@ export class AuthUserRepository extends BaseRepository<any> implements IAuthRepo
                 return new ResponseModel(false, Messages.INVALID_EMAIL, null);
             }
 
+            if(userData.isBlocked){
+                return new ResponseModel(false, Messages.USER_BLOCKED, null);
+            }
+
             const isMatch = await bcrypt.compare(password, userData.password);
             if (!isMatch) {
                 return new ResponseModel(false, Messages.INVALID_PASSWORD, null);
