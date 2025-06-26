@@ -19,7 +19,7 @@ export class AuthAdminRepository extends BaseRepository<any> implements IAdminAu
 
     async verifyAdmin(email: string, password: string): Promise<ResponseModel<null>> {
         try {
-            console.log("inside verify admin")
+            
             const userData = await this.findOne({ email });
             if (!userData) {
                 return new ResponseModel(false, Messages.INVALID_EMAIL, null);

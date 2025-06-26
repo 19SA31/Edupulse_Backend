@@ -133,7 +133,7 @@ export class AuthTutorService implements ITutorAuthInterface {
       console.log("Reached login service");
   
       const loggedTutor = await this.AuthRepository.verifyTutor(tutorData.email, tutorData.password);
-      console.log(loggedTutor)
+      
       if (!loggedTutor.success || !loggedTutor.data) {
         return { success: false, message: loggedTutor.message }; 
       }
@@ -172,7 +172,7 @@ export class AuthTutorService implements ITutorAuthInterface {
     password: string;
   }): Promise<{ success: boolean; message: string }> {
     try {
-      console.log("reached resetpassword service");
+      
       const hashedPassword = await bcrypt.hash(
         tutorData.password,
         this.saltRounds

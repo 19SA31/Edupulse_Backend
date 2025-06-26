@@ -16,8 +16,8 @@ export const Messages = {
     ERROR_VERIFYING_OTP: "Error verifying OTP",  
     USER_EXISTENCE_SUCCESS:"User found",
     OTP_NOT_FOUND:"Otp doesnot exist",
-    FETCH_SUCCESS:"Users fetched successfully",
-    FETCH_FAILED:"Failed to fetch users",
+    FETCH_SUCCESS:"Data fetched successfully",
+    FETCH_FAILED:"Failed to fetch data",
     USER_BLOCKED:"User has been blocked",
     TUTOR_BLOCKED:"Tutor has been blocked"
   };

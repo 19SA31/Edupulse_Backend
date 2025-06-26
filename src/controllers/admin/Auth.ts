@@ -9,8 +9,6 @@ export class AuthAdminController {
     this.authService = authServiceInstance;
   }
 
-  
-
   async adminLogin(
     req: Request,
     res: Response,
@@ -18,26 +16,41 @@ export class AuthAdminController {
   ): Promise<void> {
     try {
       const data = req.body;
-      console.log("inside adminlogin: ", data);
+      
 
-      const response = await this.authService.loginService(data);
-      console.log("adminlogin response: ", response);
+      const adminResponse = await this.authService.loginService(data);
+      
 
-      if (!response.success) {
-        console.log("admin login failed");
+      if (!adminResponse.success) {
+        
         res
           .status(HTTP_statusCode.BadRequest)
-          .json({ success: response.success, message: response.message });
+          .json({
+            success: adminResponse.success,
+            message: adminResponse.message,
+          });
         return;
       }
+
+      res.cookie("RefreshToken", adminResponse.refreshToken, {
+        httpOnly: true, // Makes the cookie inaccessible to JavaScript
+        secure: false, // Ensures the cookie is sent over HTTPS in production
+        sameSite: "strict", // Protects against CSRF attacks
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 21 days
+      });
+      res.cookie("AccessToken", adminResponse.accessToken, {
+        httpOnly: true, // Makes the cookie inaccessible to JavaScript
+        secure: false, // Ensures the cookie is sent over HTTPS in production
+        sameSite: "strict", // Protects against CSRF attacks
+        maxAge: 1 * 24 * 60 * 60 * 1000, // 7 days
+      });
 
       console.log("admin logged in successfully");
       res.status(HTTP_statusCode.OK).json({
         success: true,
         message: "Admin logged in",
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-
+        accessToken: adminResponse.accessToken,
+        refreshToken: adminResponse.refreshToken,
       });
     } catch (error) {
       console.error("Error in login: ", error);
@@ -48,10 +61,9 @@ export class AuthAdminController {
     }
   }
 
-  
   async logoutAdmin(req: Request, res: Response): Promise<void> {
     try {
-      console.log("inside admin logout controller")
+      
       res.clearCookie("refreshToken", {
         httpOnly: true,
         path: "/",

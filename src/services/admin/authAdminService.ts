@@ -25,7 +25,7 @@ export class AuthAdminService implements IAdminAuthServiceInterface {
       console.log("Reached login service");
   
       const loggedAdmin = await this.AuthRepository.verifyAdmin(adminData.email, adminData.password);
-      console.log(loggedAdmin)
+      
       if (!loggedAdmin.success ) {
         return { success: false, message: loggedAdmin.message }; 
       }

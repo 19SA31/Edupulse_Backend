@@ -95,7 +95,7 @@ export class AuthTutorRepository
     otp: string
   ): Promise<ResponseModel<{ success: boolean }>> {
     try {
-      console.log("INSIDE verifyotp repo ,otp:", otp);
+      
       const otpRecord = await this._otpRepository.findOne({ email });
       if (!otpRecord) {
         return new ResponseModel(false, Messages.OTP_NOT_FOUND, {
@@ -103,7 +103,7 @@ export class AuthTutorRepository
         });
       }
       const isMatch = await bcrypt.compare(otp, otpRecord.otp);
-      console.log("verify otp repo otp match:", isMatch);
+      
       return new ResponseModel(
         isMatch,
         isMatch ? Messages.OTP_VERIFIED : Messages.OTP_VERIFICATION_FAILED,

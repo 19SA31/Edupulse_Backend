@@ -50,3 +50,15 @@ export interface GetUser{
     isBlocked: boolean;
 
   }
+
+ export interface ICategory {
+  _id?: string;
+  name: string;
+  description: string;
+  isListed?: boolean;
+  
+}
+export interface Category{
+  name: string;
+  description: string;
+}

@@ -87,7 +87,7 @@ export class AuthTutorController {
   ): Promise<void> {
     try {
       const data = req.body;
-      console.log("inside login: ", data);
+      
 
       const response = await this.authService.loginService(data);
       console.log("userLogin response: ", response);
@@ -100,7 +100,7 @@ export class AuthTutorController {
         return;
       }
 
-      console.log("tutor logged in successfully");
+      
       res.status(HTTP_statusCode.OK).json({
         success: true,
         message: "Tutor logged in",
@@ -124,10 +124,10 @@ export class AuthTutorController {
   ): Promise<void> {
     try {
       const data = req.body;
-      console.log("inside reset password: ", data);
+      
 
       const response = await this.authService.resetPasswordService(data);
-      console.log("tutorLogin response: ", response);
+      
 
       if (response.success) {
         res.json(response);

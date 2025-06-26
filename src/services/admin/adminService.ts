@@ -1,6 +1,10 @@
 import { IAdminService } from "../../interfaces/admin/adminServiceInterface";
 import { IAdminRepositoryInterface } from "../../interfaces/admin/adminRepositoryInterface";
-import { Tutor, User } from "../../interfaces/adminInterface/adminInterface";
+import {
+  Tutor,
+  User,
+  Category,
+} from "../../interfaces/adminInterface/adminInterface";
 
 export class AdminService implements IAdminService {
   private _adminRepository: IAdminRepositoryInterface;
@@ -62,7 +66,9 @@ export class AdminService implements IAdminService {
         return response.data;
       } else {
         console.error("Failed to edit user: Response is invalid", response);
-        throw new Error(response.message || "Something went wrong while editing the user.");
+        throw new Error(
+          response.message || "Something went wrong while editing the user."
+        );
       }
     } catch (error: any) {
       console.error("Error in edituser:", error.message);
@@ -78,11 +84,48 @@ export class AdminService implements IAdminService {
         return response.data;
       } else {
         console.error("Failed to edit tutor: Response is invalid", response);
-        throw new Error(response.message || "Something went wrong while editing the tutor.");
+        throw new Error(
+          response.message || "Something went wrong while editing the tutor."
+        );
       }
     } catch (error: any) {
       console.error("Error in editTutor:", error.message);
       throw new Error(`Failed to edit tutor: ${error.message}`);
+    }
+  }
+
+  async addCourseCategory(data: Category): Promise<Category> {
+    try {
+      const categoryResponse = await this._adminRepository.addCategory(data);
+      if (!categoryResponse.success || !categoryResponse.data) {
+        throw new Error(categoryResponse.message || "Failed to add category");
+      }
+      return categoryResponse.data;
+    } catch (error: any) {
+      console.error("error in addCourseCategory:", error.message);
+      throw new Error("Failed to add category");
+    }
+  }
+
+  async getAllCategories(
+    skip: number,
+    limit: number,
+    search: any
+  ): Promise<{ category: Category[]; totalPages: number }> {
+    try {
+      const { data } = await this._adminRepository.getAllCategories(
+        skip,
+        limit,
+        search
+      );
+
+      if (!data) throw new Error("No data found");
+      const { category, totalPages } = data;
+
+      return { category, totalPages };
+    } catch (error: any) {
+      console.error("Error in getAllCategories:", error.message);
+      throw new Error("Failed to get categories");
     }
   }
 }

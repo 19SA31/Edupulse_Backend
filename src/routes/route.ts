@@ -5,9 +5,9 @@ import adminRoute from "./admin/adminRoute";
 
 
 const routes =(app:Application)=>{
-    app.use('/api/user',userRoute)
-    app.use('/api/tutor',tutorRoute)
-    app.use('/api/admin',adminRoute)
+    app.use('/api/',userRoute)
+    app.use('/api/',tutorRoute)
+    app.use('/api/',adminRoute)
 }
 
 export default routes

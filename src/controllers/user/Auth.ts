@@ -15,7 +15,7 @@ export class AuthController {
     next: NextFunction
   ): Promise<void> {
     try {
-      console.log("inside create user auth");
+      
       const data = req.body;
       console.log(data);
       const response = await this.authService.signUp(data);
@@ -56,19 +56,19 @@ export class AuthController {
     next: NextFunction
   ): Promise<void> {
     try {
-      console.log("inside verify otp controller");
+      
       const data = req.body;
-      console.log("inside verify otp data:",data)
+      
       const response = await this.authService.otpCheck(data);
-      console.log("OTP Check Response:", response);
+      
       if (!response.success) {
-        console.log("OTP verification failed!");
+        
         res
           .status(HTTP_statusCode.BadRequest)
           .json({ success: response.success });
         return;
       }
-      console.log("OTP Verified Successfully!");
+      
       res
         .status(HTTP_statusCode.OK)
         .json({ success: true, message: "OTP verified" });
@@ -87,20 +87,19 @@ export class AuthController {
   ): Promise<void> {
     try {
       const data = req.body;
-      console.log("inside login: ", data);
-
+      
       const response = await this.authService.loginService(data);
-      console.log("userLogin response: ", response);
+      
 
       if (!response.success) {
-        console.log("user login failed");
+        
         res
           .status(HTTP_statusCode.BadRequest)
           .json({ success: response.success, message: response.message });
         return;
       }
 
-      console.log("user logged in successfully");
+      
       res.status(HTTP_statusCode.OK).json({
         success: true,
         message: "User logged in",
@@ -124,10 +123,10 @@ export class AuthController {
   ): Promise<void> {
     try {
       const data = req.body;
-      console.log("inside reset password: ", data);
+      
 
       const response = await this.authService.resetPasswordService(data);
-      console.log("userLogin response: ", response);
+      
 
       if (response.success) {
         res.json(response);

@@ -2,8 +2,13 @@ import { Messages } from "../../enums/messages";
 import BaseRepository from "../BaseRepository";
 import userModel from "../../models/Users";
 import tutorModel from "../../models/Tutors";
-import adminModel from "../../models/Admin"
-import { Tutor, User } from "../../interfaces/adminInterface/adminInterface";
+import adminModel from "../../models/Admin";
+import categoryModel from "../../models/CategoryModel";
+import {
+  Category,
+  Tutor,
+  User,
+} from "../../interfaces/adminInterface/adminInterface";
 import { IAdminRepositoryInterface } from "../../interfaces/admin/adminRepositoryInterface";
 import { ResponseModel } from "../../models/ResponseModel";
 
@@ -12,11 +17,12 @@ export class AdminRepository
   implements IAdminRepositoryInterface
 {
   constructor() {
-        super(adminModel); 
+    super(adminModel);
   }
-  
+
   private _userRepository = new BaseRepository<any>(userModel);
   private _tutorRepository = new BaseRepository<any>(tutorModel);
+  private _categoryRepository = new BaseRepository<any>(categoryModel);
 
   async getAllUsers(
     skip: number,
@@ -39,7 +45,7 @@ export class AdminRepository
         searchFilter
       );
 
-      const totalPages = Math.ceil(totalCount / limit); 
+      const totalPages = Math.ceil(totalCount / limit);
 
       return new ResponseModel(true, Messages.FETCH_SUCCESS, {
         users,
@@ -47,7 +53,7 @@ export class AdminRepository
       });
     } catch (error: any) {
       console.error("Error in AdminRepository:", error.message);
-      throw new Error(`Failed to fetch users: ${error.message}`);      
+      throw new Error(`Failed to fetch users: ${error.message}`);
     }
   }
 
@@ -68,7 +74,7 @@ export class AdminRepository
         skip,
         limit
       );
-      
+
       const totalCount = await this._tutorRepository.countDocuments(
         searchFilter
       );
@@ -91,23 +97,20 @@ export class AdminRepository
       if (!user) {
         return new ResponseModel<User>(false, "User not found", null);
       }
-  
+
       user.isBlocked = !user.isBlocked;
       const updatedUser = await user.save();
-  
+
       return new ResponseModel<User>(
         true,
         "User status updated successfully",
         updatedUser
-
       );
     } catch (error: any) {
       console.error("Error updating user:", error.message);
       return new ResponseModel<User>(false, error.message, null);
     }
   }
-  
-  
 
   async changeTutorStatus(id: string): Promise<ResponseModel<Tutor>> {
     try {
@@ -127,6 +130,56 @@ export class AdminRepository
     } catch (error: any) {
       console.error("Error updating tutor:", error.message);
       return new ResponseModel<Tutor>(false, error.message, null);
+    }
+  }
+
+  async addCategory(data: Category): Promise<ResponseModel<Category | null>> {
+    try {
+      const newCategory = await this._categoryRepository.create(
+        data as Category
+      );
+      return new ResponseModel(
+        true,
+        "Category created successfully",
+        newCategory
+      );
+    } catch (error: unknown) {
+      console.error("Error in adding category:", (error as Error).message);
+      return new ResponseModel(false, "Failed to create category", null);
+    }
+  }
+
+  async getAllCategories(
+    skip: number,
+    limit: number,
+    search: string
+  ): Promise<ResponseModel<{ category: Category[]; totalPages: number }|null>> {
+    try {
+
+      const searchFilter = search
+        ? {
+            name: { $regex: search, $options: "i" },
+          }
+        : {};
+
+      const categories = await this._categoryRepository.findWithPagination(
+        searchFilter,
+        skip,
+        limit
+      );
+
+      const totalCount = await this._categoryRepository.countDocuments(
+        searchFilter
+      );
+
+      const totalPages = Math.ceil(totalCount / limit);
+      return new ResponseModel(true, Messages.FETCH_SUCCESS, {
+        category:categories,
+        totalPages,
+      });
+    } catch (error: any) {
+      console.error("Error fetching categories:", error.message);
+      return new ResponseModel(false, "Failed to fetch categories", null);
     }
   }
 }

@@ -21,7 +21,7 @@ export class AuthService implements IAuthService {
       1000 + Math.random() * 9000
     ).toString();
     const hashedOTP: string = await bcrypt.hash(GeneratedOTP, this.saltRounds);
-    console.log("inside sendOTP:",GeneratedOTP)
+    
     const subject = "OTP Verification";
     const sendMailStatus: boolean = await sendMail(
       email,
@@ -43,7 +43,7 @@ export class AuthService implements IAuthService {
     isForgot?: boolean;
   }): Promise<{ success: boolean }> {
     try {
-      console.log("Reached user signup");
+      
 
       const response = await this.AuthRepository.existUser(
         userData.email,
@@ -51,7 +51,7 @@ export class AuthService implements IAuthService {
       );
 
       if (userData.isForgot) {
-        console.log("forgot password");
+        
         if (!response.data?.existEmail) {
           throw new Error("Email not found");
         }
@@ -82,13 +82,13 @@ export class AuthService implements IAuthService {
     isForgot?: boolean;
   }): Promise<{ success: boolean }> {
     try {
-      console.log("Reached otpCheck service");
+      
 
       const response = await this.AuthRepository.verifyOtp(
         userData.email,
         userData.otp
       );
-      console.log("verifyotp respo response in auth service: ",response)
+      
       if (!response.success) {
         return { success: false };
       }
@@ -130,10 +130,10 @@ export class AuthService implements IAuthService {
     user?: GetUserData; 
   }> {
     try {
-      console.log("Reached login service");
+      
   
       const loggedUser = await this.AuthRepository.verifyUser(userData.email, userData.password);
-      console.log(loggedUser)
+      
       if (!loggedUser.success || !loggedUser.data) {
         return { success: false, message: loggedUser.message }; // Provide specific error message
       }
@@ -172,7 +172,7 @@ export class AuthService implements IAuthService {
     password: string;
   }): Promise<{ success: boolean; message: string }> {
     try {
-      console.log("reached resetpassword service");
+      
       const hashedPassword = await bcrypt.hash(
         userData.password,
         this.saltRounds
