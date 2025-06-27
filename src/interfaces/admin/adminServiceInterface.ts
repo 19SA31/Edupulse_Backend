@@ -18,13 +18,12 @@ export interface IAdminService {
     limit: number,
     search: any
   ): Promise<{ category: Category[]; totalPages: number }>;
-//   listUnlistCategory(id: string): Promise<Category>;
-//   updateCourseCategory(
-//     categoryId: string,
-//     updateData: {
-//       name: string;
-//       description: string;
-//     }
-//   ): Promise<Category>;
-//   toggleCategoryListStatus(categoryId: string): Promise<Category>;
+  updateCourseCategory(
+    categoryId: string,
+    updateData: {
+      name: string;
+      description: string;
+    }
+  ): Promise<Category>;
+  toggleCategoryListStatus(categoryId: string): Promise<Category>;
 }

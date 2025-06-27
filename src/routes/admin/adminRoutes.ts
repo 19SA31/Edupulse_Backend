@@ -31,6 +31,7 @@ adminRoutes.put('/listUnlistTutor/:tutorId',verifyToken('admin'),AdminController
 
 adminRoutes.get('/category',verifyToken('admin'),AdminControllerInstance.getCategories.bind(AdminControllerInstance))
 adminRoutes.post('/add-category',verifyToken('admin'),AdminControllerInstance.addCategory.bind(AdminControllerInstance))
-adminRoutes.put('/update-category')
+adminRoutes.put('/update-category/:id',verifyToken('admin'),AdminControllerInstance.editCategory.bind(AdminControllerInstance))
+adminRoutes.put('/toggle-category/:id',verifyToken('admin'),AdminControllerInstance.toggleCategoryStatus.bind(AdminControllerInstance))
 
 export default adminRoutes

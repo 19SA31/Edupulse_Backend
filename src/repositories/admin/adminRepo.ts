@@ -134,20 +134,34 @@ export class AdminRepository
   }
 
   async addCategory(data: Category): Promise<ResponseModel<Category | null>> {
-    try {
-      const newCategory = await this._categoryRepository.create(
-        data as Category
-      );
+  try {
+    // Check if a category with the same name already exists (case-insensitive)
+    const existingCategory = await this._categoryRepository.findOne({
+      name: { $regex: new RegExp(`^${data.name}$`, 'i') }
+    });
+
+    if (existingCategory) {
       return new ResponseModel(
-        true,
-        "Category created successfully",
-        newCategory
+        false,
+        `Category with name '${data.name}' already exists`,
+        null
       );
-    } catch (error: unknown) {
-      console.error("Error in adding category:", (error as Error).message);
-      return new ResponseModel(false, "Failed to create category", null);
     }
+
+    // Create the new category if no duplicate exists
+    const newCategory = await this._categoryRepository.create(
+      data as Category
+    );
+    return new ResponseModel(
+      true,
+      "Category created successfully",
+      newCategory
+    );
+  } catch (error: unknown) {
+    console.error("Error in adding category:", (error as Error).message);
+    return new ResponseModel(false, "Failed to create category", null);
   }
+}
 
   async getAllCategories(
     skip: number,
@@ -182,4 +196,84 @@ export class AdminRepository
       return new ResponseModel(false, "Failed to fetch categories", null);
     }
   }
+
+  async updateCategory(
+  categoryId: string,
+  updateData: { name: string; description: string }
+): Promise<ResponseModel<Category>> {
+  try {
+    // Check if category exists
+    const existingCategory = await this._categoryRepository.findOne({ 
+      _id: categoryId 
+    });
+    
+    if (!existingCategory) {
+      return new ResponseModel<Category>(false, "Category not found", null);
+    }
+
+    // Check if another category with the same name already exists (excluding current category)
+    const duplicateCategory = await this._categoryRepository.findOne({
+      name: { $regex: new RegExp(`^${updateData.name}$`, 'i') },
+      _id: { $ne: categoryId }
+    });
+
+    if (duplicateCategory) {
+      return new ResponseModel<Category>(
+        false, 
+        `Category with name '${updateData.name}' already exists`, 
+        null
+      );
+    }
+
+    // Update the category using BaseRepository's update method
+    const updatedCategory = await this._categoryRepository.update(
+      categoryId,
+      updateData
+    );
+
+    if (!updatedCategory) {
+      return new ResponseModel<Category>(false, "Failed to update category", null);
+    }
+
+    return new ResponseModel<Category>(
+      true,
+      "Category updated successfully",
+      updatedCategory
+    );
+  } catch (error: any) {
+    console.error("Error updating category:", error.message);
+    return new ResponseModel<Category>(false, error.message, null);
+  }
+}
+
+  async toggleCategoryStatus(categoryId: string): Promise<ResponseModel<Category>> {
+  try {
+    const category = await this._categoryRepository.findOne({ 
+      _id: categoryId 
+    });
+    
+    if (!category) {
+      return new ResponseModel<Category>(false, "Category not found", null);
+    }
+
+    // Toggle the isListed status and update using BaseRepository's update method
+    const updatedCategory = await this._categoryRepository.update(
+      categoryId,
+      { isListed: !category.isListed }
+    );
+
+    if (!updatedCategory) {
+      return new ResponseModel<Category>(false, "Failed to update category status", null);
+    }
+
+    return new ResponseModel<Category>(
+      true,
+      "Category status updated successfully",
+      updatedCategory
+    );
+  } catch (error: any) {
+    console.error("Error toggling category status:", error.message);
+    return new ResponseModel<Category>(false, error.message, null);
+  }
+}
 }

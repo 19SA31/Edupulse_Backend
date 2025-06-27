@@ -128,4 +128,64 @@ export class AdminService implements IAdminService {
       throw new Error("Failed to get categories");
     }
   }
+
+  async updateCourseCategory(
+    categoryId: string,
+    updateData: {
+      name: string;
+      description: string;
+    }
+  ): Promise<Category> {
+    try {
+      const response = await this._adminRepository.updateCategory(
+        categoryId,
+        updateData
+      );
+
+      if (response && response.success && response.data) {
+        return response.data;
+      } else {
+        console.error("Failed to update category: Response is invalid", response);
+        throw new Error(
+          response.message || "Something went wrong while updating the category."
+        );
+      }
+    } catch (error: any) {
+      console.error("Error in updateCourseCategory:", error.message);
+      
+      // Handle specific error cases that your controller expects
+      if (error.message.includes("not found") || error.message.includes("Category not found")) {
+        throw new Error("Category not found");
+      } else if (error.message.includes("already exists")) {
+        throw new Error(error.message);
+      } else {
+        throw new Error(`Failed to update category: ${error.message}`);
+      }
+    }
+  }
+
+  
+  async toggleCategoryListStatus(categoryId: string): Promise<Category> {
+    try {
+      const response = await this._adminRepository.toggleCategoryStatus(categoryId);
+
+      if (response && response.success && response.data) {
+        return response.data;
+      } else {
+        console.error("Failed to toggle category status: Response is invalid", response);
+        throw new Error(
+          response.message || "Something went wrong while toggling category status."
+        );
+      }
+    } catch (error: any) {
+      console.error("Error in toggleCategoryListStatus:", error.message);
+      
+      // Handle specific error cases that your controller expects
+      if (error.message.includes("not found") || error.message.includes("Category not found")) {
+        throw new Error("Category not found");
+      } else {
+        throw new Error(`Failed to toggle category status: ${error.message}`);
+      }
+    }
+  }
 }

@@ -21,4 +21,9 @@ export interface IAdminRepositoryInterface {
   ): Promise<
     ResponseModel<{ category: Category[]; totalPages: number } | null>
   >;
+  updateCategory(
+    categoryId: string,
+    updateData: { name: string; description: string }
+  ): Promise<any>;
+  toggleCategoryStatus(categoryId: string): Promise<any>;
 }

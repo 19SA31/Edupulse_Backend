@@ -148,72 +148,72 @@ export class AdminController {
     }
   }
 
-  // async editCategory(req: Request, res: Response): Promise<void> {
-  //   try {
-  //     console.log("inside admin controller of edit category");
-  //     const categoryId = req.params.categoryId;
-  //     const updateData = req.body;
+  async editCategory(req: Request, res: Response): Promise<void> {
+    try {
+      console.log("inside admin controller of edit category");
+      const categoryId = req.params.id;
+      const updateData = req.body;
+      const updatedCategory = await this.AdminService.updateCourseCategory(
+        categoryId,
+        updateData
+      );
 
-  //     const updatedCategory = await this.AdminService.updateCourseCategory(
-  //       categoryId,
-  //       updateData
-  //     );
-
-  //     res.status(HTTP_statusCode.OK).json({
-  //       success: true,
-  //       message: "Category updated successfully",
-  //       data: updatedCategory
-  //     });
-  //   } catch (error: any) {
-  //     console.error("Error in editCategory controller:", error.message);
+      res.status(HTTP_statusCode.OK).json({
+        success: true,
+        message: "Category updated successfully",
+        data: updatedCategory
+      });
+    } catch (error: any) {
+      console.error("Error in editCategory controller:", error.message);
       
-  //     if (error.message === "Category not found") {
-  //       res.status(HTTP_statusCode.NotFound).json({
-  //         success: false,
-  //         message: "Category not found"
-  //       });
-  //     } else if (error.message.includes("already exists")) {
-  //       res.status(HTTP_statusCode.BadRequest).json({
-  //         success: false,
-  //         message: error.message
-  //       });
-  //     } else {
-  //       res.status(HTTP_statusCode.InternalServerError).json({
-  //         success: false,
-  //         message: "An unexpected error occurred",
-  //         error: error.message
-  //       });
-  //     }
-  //   }
-  // }
+      if (error.message === "Category not found") {
+        res.status(HTTP_statusCode.NotFound).json({
+          success: false,
+          message: "Category not found"
+        });
+      } else if (error.message.includes("already exists")) {
+        res.status(HTTP_statusCode.BadRequest).json({
+          success: false,
+          message: error.message
+        });
+      } else {
+        res.status(HTTP_statusCode.InternalServerError).json({
+          success: false,
+          message: "An unexpected error occurred",
+          error: error.message
+        });
+      }
+    }
+  }
 
-  // async toggleCategoryStatus(req: Request, res: Response): Promise<void> {
-  //   try {
-  //     const categoryId = req.params.categoryId;
+  async toggleCategoryStatus(req: Request, res: Response): Promise<void> {
+    try {
+      console.log("inside toggle category status")
+      const categoryId = req.params.id;
 
-  //     const updatedCategory = await this.AdminService.toggleCategoryListStatus(categoryId);
-
-  //     res.status(HTTP_statusCode.OK).json({
-  //       success: true,
-  //       message: "Category status updated successfully",
-  //       data: updatedCategory
-  //     });
-  //   } catch (error: any) {
-  //     console.error("Error in toggleCategoryStatus controller:", error.message);
+      const updatedCategory = await this.AdminService.toggleCategoryListStatus(categoryId);
+      console.log('updated cat:',updatedCategory)
+      res.status(HTTP_statusCode.OK).json({
+        success: true,
+        message: "Category status updated successfully",
+        data: updatedCategory
+      });
+    } catch (error: any) {
+      console.error("Error in toggleCategoryStatus controller:", error.message);
       
-  //     if (error.message === "Category not found") {
-  //       res.status(HTTP_statusCode.NotFound).json({
-  //         success: false,
-  //         message: "Category not found"
-  //       });
-  //     } else {
-  //       res.status(HTTP_statusCode.InternalServerError).json({
-  //         success: false,
-  //         message: "An unexpected error occurred",
-  //         error: error.message
-  //       });
-  //     }
-  //   }
-  // }
+      if (error.message === "Category not found") {
+        res.status(HTTP_statusCode.NotFound).json({
+          success: false,
+          message: "Category not found"
+        });
+      } else {
+        res.status(HTTP_statusCode.InternalServerError).json({
+          success: false,
+          message: "An unexpected error occurred",
+          error: error.message
+        });
+      }
+    }
+  }
 }
 
