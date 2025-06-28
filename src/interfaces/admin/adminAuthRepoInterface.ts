@@ -1,8 +1,7 @@
-import { Document } from "mongoose";
-import { ResponseModel } from "../../models/ResponseModel"; 
-
-
-export interface IAdminAuthRepository{
-    verifyAdmin(email: string, password: string): Promise<ResponseModel<null>>;
-    
+export interface IAdminAuthRepository {
+    verifyAdmin(email: string, password: string): Promise<{
+        isValid: boolean;
+        admin?: any; // or your specific admin type
+        error?: string;
+    }>;
 }

@@ -2,6 +2,19 @@ import { ITutorAuthInterface } from "../../interfaces/tutor/tutorAuthServiceInte
 import HTTP_statusCode from "../../enums/HttpStatusCode";
 import { Request, Response, NextFunction } from "express";
 
+// ResponseModel implementation at controller level
+export class ResponseModel<T = null> {
+  success: boolean;
+  message: string;
+  data: T | null;
+
+  constructor(success: boolean, message: string, data?: T | null) {
+    this.success = success;
+    this.message = message;
+    this.data = data !== undefined ? data : null;
+  }
+}
+
 export class AuthTutorController {
   private authService: ITutorAuthInterface;
 
@@ -18,33 +31,29 @@ export class AuthTutorController {
       console.log("inside create tutor auth");
       const data = req.body;
       console.log(data);
-      const response = await this.authService.signUp(data);
+      
+      await this.authService.signUp(data);
 
-      if (!response.success) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json({ success: response.success });
-        return;
-      }
-
-      res.status(HTTP_statusCode.OK).json({ success: response.success });
+      const response = new ResponseModel(true, "OTP sent successfully");
+      res.status(HTTP_statusCode.OK).json(response);
     } catch (error: any) {
+      let response: ResponseModel;
+      
       if (error.message === "Email already in use") {
-        res
-          .status(HTTP_statusCode.Conflict)
-          .json({ message: "Email already in use" });
+        response = new ResponseModel(false, "Email already in use");
+        res.status(HTTP_statusCode.Conflict).json(response);
       } else if (error.message === "Phone already in use") {
-        res
-          .status(HTTP_statusCode.Conflict)
-          .json({ message: "Phone number already in use" });
-      } else if (error.message === "Otp not send") {
-        res
-          .status(HTTP_statusCode.InternalServerError)
-          .json({ message: "OTP not sent" });
+        response = new ResponseModel(false, "Phone number already in use");
+        res.status(HTTP_statusCode.Conflict).json(response);
+      } else if (error.message === "Email not found") {
+        response = new ResponseModel(false, "Email not found");
+        res.status(HTTP_statusCode.NotFound).json(response);
+      } else if (error.message === "Failed to send OTP email") {
+        response = new ResponseModel(false, "OTP not sent");
+        res.status(HTTP_statusCode.InternalServerError).json(response);
       } else {
-        res
-          .status(HTTP_statusCode.InternalServerError)
-          .json({ message: "Something went wrong, please try again later" });
+        response = new ResponseModel(false, "Something went wrong, please try again later");
+        res.status(HTTP_statusCode.InternalServerError).json(response);
       }
       next(error);
     }
@@ -58,25 +67,28 @@ export class AuthTutorController {
     try {
       console.log("inside verify otp controller");
       const data = req.body;
-      console.log("inside verify otp data:",data)
-      const response = await this.authService.otpCheck(data);
-      console.log("OTP Check Response:", response);
-      if (!response.success) {
-        console.log("OTP verification failed!");
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json({ success: response.success });
-        return;
-      }
+      console.log("inside verify otp data:", data);
+      
+      await this.authService.otpCheck(data);
+      
       console.log("OTP Verified Successfully!");
-      res
-        .status(HTTP_statusCode.OK)
-        .json({ success: true, message: "OTP verified" });
-    } catch (error) {
+      const response = new ResponseModel(true, "OTP verified successfully");
+      res.status(HTTP_statusCode.OK).json(response);
+    } catch (error: any) {
       console.error("Error in verifyOtp:", error);
-      res
-        .status(HTTP_statusCode.InternalServerError)
-        .json({ success: false, message: "Server error" });
+      
+      let response: ResponseModel;
+      
+      if (error.message === "Invalid OTP") {
+        response = new ResponseModel(false, "Invalid OTP");
+        res.status(HTTP_statusCode.BadRequest).json(response);
+      } else if (error.message === "Password is required for new tutor registration") {
+        response = new ResponseModel(false, "Password is required");
+        res.status(HTTP_statusCode.BadRequest).json(response);
+      } else {
+        response = new ResponseModel(false, "Server error");
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
     }
   }
 
@@ -88,32 +100,35 @@ export class AuthTutorController {
     try {
       const data = req.body;
       
+      const loginResult = await this.authService.loginService(data);
+      console.log("userLogin response: ", loginResult);
 
-      const response = await this.authService.loginService(data);
-      console.log("userLogin response: ", response);
-
-      if (!response.success) {
-        console.log("tutor login failed");
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json({ success: response.success, message: response.message });
-        return;
-      }
-
+      const response = new ResponseModel(
+        true, 
+        "Tutor logged in successfully", 
+        {
+          accessToken: loginResult.accessToken,
+          refreshToken: loginResult.refreshToken,
+          tutor: loginResult.tutor,
+        }
+      );
       
-      res.status(HTTP_statusCode.OK).json({
-        success: true,
-        message: "Tutor logged in",
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-        tutor: response.tutor,
-      });
-    } catch (error) {
+      res.status(HTTP_statusCode.OK).json(response);
+    } catch (error: any) {
       console.error("Error in login: ", error);
-      res.status(HTTP_statusCode.InternalServerError).json({
-        success: false,
-        message: "Internal Server Error",
-      });
+      
+      let response: ResponseModel;
+      
+      if (error.message === "Invalid email or password") {
+        response = new ResponseModel(false, "Invalid email or password");
+        res.status(HTTP_statusCode.BadRequest).json(response);
+      } else if (error.message === "Tutor account is blocked") {
+        response = new ResponseModel(false, "Tutor account is blocked");
+        res.status(HTTP_statusCode.NoAccess).json(response);
+      } else {
+        response = new ResponseModel(false, "Internal Server Error");
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
     }
   }
 
@@ -125,20 +140,22 @@ export class AuthTutorController {
     try {
       const data = req.body;
       
-
-      const response = await this.authService.resetPasswordService(data);
+      await this.authService.resetPasswordService(data);
       
-
-      if (response.success) {
-        res.json(response);
-      } else {
-        res.status(400).json(response);
-      }
-    } catch (error) {
+      const response = new ResponseModel(true, "Password reset successfully");
+      res.status(HTTP_statusCode.OK).json(response);
+    } catch (error: any) {
       console.error("Error in reset password: ", error);
-      res
-        .status(HTTP_statusCode.InternalServerError)
-        .json({ success: false, message: "Internal Server Error" });
+      
+      let response: ResponseModel;
+      
+      if (error.message === "Email not found") {
+        response = new ResponseModel(false, "Email not found");
+        res.status(HTTP_statusCode.NotFound).json(response);
+      } else {
+        response = new ResponseModel(false, "Internal Server Error");
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
     }
   }
 
@@ -149,13 +166,12 @@ export class AuthTutorController {
         path: "/",
         sameSite: "strict",
       });
-      res
-        .status(HTTP_statusCode.OK)
-        .json({ message: "You have been logged Out Successfully" });
+      
+      const response = new ResponseModel(true, "You have been logged out successfully");
+      res.status(HTTP_statusCode.OK).json(response);
     } catch (error: any) {
-      res.status(HTTP_statusCode.InternalServerError).json({
-        message: `Internal server error : ${error}`,
-      });
+      const response = new ResponseModel(false, `Internal server error: ${error}`);
+      res.status(HTTP_statusCode.InternalServerError).json(response);
     }
   }
 }

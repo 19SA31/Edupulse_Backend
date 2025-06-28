@@ -1,6 +1,7 @@
 import { IAuthService } from "../../interfaces/user/userAuthServiceInterface";
 import HTTP_statusCode from "../../enums/HttpStatusCode";
 import { Request, Response, NextFunction } from "express";
+import { ResponseModel } from "../../models/ResponseModel";
 
 export class AuthController {
   private authService: IAuthService;
@@ -15,37 +16,31 @@ export class AuthController {
     next: NextFunction
   ): Promise<void> {
     try {
-      
       const data = req.body;
       console.log(data);
-      const response = await this.authService.signUp(data);
+      
+      await this.authService.signUp(data);
 
-      if (!response.success) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json({ success: response.success });
-        return;
-      }
-
-      res.status(HTTP_statusCode.OK).json({ success: response.success });
+      const response = new ResponseModel(true, "OTP sent successfully");
+      res.status(HTTP_statusCode.OK).json(response);
+      
     } catch (error: any) {
+      let response: ResponseModel;
+      
       if (error.message === "Email already in use") {
-        res
-          .status(HTTP_statusCode.Conflict)
-          .json({ message: "Email already in use" });
+        response = new ResponseModel(false, "Email already in use");
+        res.status(HTTP_statusCode.Conflict).json(response);
       } else if (error.message === "Phone already in use") {
-        res
-          .status(HTTP_statusCode.Conflict)
-          .json({ message: "Phone number already in use" });
+        response = new ResponseModel(false, "Phone number already in use");
+        res.status(HTTP_statusCode.Conflict).json(response);
       } else if (error.message === "Otp not send") {
-        res
-          .status(HTTP_statusCode.InternalServerError)
-          .json({ message: "OTP not sent" });
+        response = new ResponseModel(false, "OTP not sent");
+        res.status(HTTP_statusCode.InternalServerError).json(response);
       } else {
-        res
-          .status(HTTP_statusCode.InternalServerError)
-          .json({ message: "Something went wrong, please try again later" });
+        response = new ResponseModel(false, "Something went wrong, please try again later");
+        res.status(HTTP_statusCode.InternalServerError).json(response);
       }
+      
       next(error);
     }
   }
@@ -56,27 +51,30 @@ export class AuthController {
     next: NextFunction
   ): Promise<void> {
     try {
-      
       const data = req.body;
       
-      const response = await this.authService.otpCheck(data);
+      const isVerified = await this.authService.otpCheck(data);
       
-      if (!response.success) {
-        
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json({ success: response.success });
+      if (!isVerified) {
+        const response = new ResponseModel(false, "OTP verification failed");
+        res.status(HTTP_statusCode.BadRequest).json(response);
         return;
       }
       
-      res
-        .status(HTTP_statusCode.OK)
-        .json({ success: true, message: "OTP verified" });
-    } catch (error) {
+      const response = new ResponseModel(true, "OTP verified successfully");
+      res.status(HTTP_statusCode.OK).json(response);
+      
+    } catch (error: any) {
       console.error("Error in verifyOtp:", error);
-      res
-        .status(HTTP_statusCode.InternalServerError)
-        .json({ success: false, message: "Server error" });
+      
+      let response: ResponseModel;
+      if (error.message === "OTP not found") {
+        response = new ResponseModel(false, "OTP not found or expired");
+        res.status(HTTP_statusCode.BadRequest).json(response);
+      } else {
+        response = new ResponseModel(false, "Server error occurred");
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
     }
   }
 
@@ -88,31 +86,37 @@ export class AuthController {
     try {
       const data = req.body;
       
-      const response = await this.authService.loginService(data);
+      const loginResult = await this.authService.loginService(data);
+      console.log(loginResult)
+      const response = new ResponseModel(
+        true, 
+        "User logged in successfully", 
+        {
+          accessToken: loginResult.accessToken,
+          refreshToken: loginResult.refreshToken,
+          user: loginResult.user,
+        }
+      );
       
-
-      if (!response.success) {
-        
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json({ success: response.success, message: response.message });
-        return;
-      }
-
+      res.status(HTTP_statusCode.OK).json(response);
       
-      res.status(HTTP_statusCode.OK).json({
-        success: true,
-        message: "User logged in",
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-        user: response.user,
-      });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error in login: ", error);
-      res.status(HTTP_statusCode.InternalServerError).json({
-        success: false,
-        message: "Internal Server Error",
-      });
+      
+      let response: ResponseModel;
+      if (error.message === "Invalid email") {
+        response = new ResponseModel(false, "Invalid email address");
+        res.status(HTTP_statusCode.BadRequest).json(response);
+      } else if (error.message === "Invalid password") {
+        response = new ResponseModel(false, "Invalid password");
+        res.status(HTTP_statusCode.BadRequest).json(response);
+      } else if (error.message === "User blocked") {
+        response = new ResponseModel(false, "Your account has been blocked");
+        res.status(HTTP_statusCode.NoAccess).json(response);
+      } else {
+        response = new ResponseModel(false, "Internal Server Error");
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
     }
   }
 
@@ -124,39 +128,41 @@ export class AuthController {
     try {
       const data = req.body;
       
-
-      const response = await this.authService.resetPasswordService(data);
+      await this.authService.resetPasswordService(data);
       
-
-      if (response.success) {
-        res.json(response);
-      } else {
-        res.status(400).json(response);
-      }
-    } catch (error) {
+      const response = new ResponseModel(true, "Password reset successfully");
+      res.status(HTTP_statusCode.OK).json(response);
+      
+    } catch (error: any) {
       console.error("Error in reset password: ", error);
-      res
-        .status(HTTP_statusCode.InternalServerError)
-        .json({ success: false, message: "Internal Server Error" });
+      
+      let response: ResponseModel;
+      if (error.message === "Invalid email") {
+        response = new ResponseModel(false, "Email address not found");
+        res.status(HTTP_statusCode.BadRequest).json(response);
+      } else {
+        response = new ResponseModel(false, "Internal Server Error");
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
     }
   }
 
   async logoutUser(req: Request, res: Response): Promise<void> {
     try {
-      console.log("insidelogoutuser")
+      console.log("insidelogoutuser");
+      
       res.clearCookie("refreshToken", {
         httpOnly: true,
         path: "/",
         sameSite: "strict",
       });
-      res
-        .status(HTTP_statusCode.OK)
-        .json({ success: true,message: "You have been logged Out Successfully" });
+      
+      const response = new ResponseModel(true, "You have been logged out successfully");
+      res.status(HTTP_statusCode.OK).json(response);
+      
     } catch (error: any) {
-      res.status(HTTP_statusCode.InternalServerError).json({
-        success: false,
-        message: `Internal server error : ${error}`,
-      });
+      const response = new ResponseModel(false, `Internal server error: ${error.message}`);
+      res.status(HTTP_statusCode.InternalServerError).json(response);
     }
   }
 }

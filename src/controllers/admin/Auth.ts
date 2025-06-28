@@ -1,6 +1,7 @@
 import { IAdminAuthServiceInterface } from "../../interfaces/admin/adminAuthServiceInterface";
 import HTTP_statusCode from "../../enums/HttpStatusCode";
 import { Request, Response, NextFunction } from "express";
+import { ResponseModel } from "../../models/ResponseModel";
 
 export class AuthAdminController {
   private authService: IAdminAuthServiceInterface;
@@ -17,65 +18,71 @@ export class AuthAdminController {
     try {
       const data = req.body;
       
-
-      const adminResponse = await this.authService.loginService(data);
+      const serviceResult = await this.authService.loginService(data);
       
-
-      if (!adminResponse.success) {
-        
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json({
-            success: adminResponse.success,
-            message: adminResponse.message,
-          });
+      if (!serviceResult.isValid) {
+        const response = new ResponseModel(false, serviceResult.error || "Login failed");
+        res.status(HTTP_statusCode.BadRequest).json(response);
         return;
       }
 
-      res.cookie("RefreshToken", adminResponse.refreshToken, {
-        httpOnly: true, // Makes the cookie inaccessible to JavaScript
-        secure: false, // Ensures the cookie is sent over HTTPS in production
-        sameSite: "strict", // Protects against CSRF attacks
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 21 days
+      // Set cookies for successful login
+      res.cookie("RefreshToken", serviceResult.refreshToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
-      res.cookie("AccessToken", adminResponse.accessToken, {
-        httpOnly: true, // Makes the cookie inaccessible to JavaScript
-        secure: false, // Ensures the cookie is sent over HTTPS in production
-        sameSite: "strict", // Protects against CSRF attacks
-        maxAge: 1 * 24 * 60 * 60 * 1000, // 7 days
+      
+      res.cookie("AccessToken", serviceResult.accessToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "strict",
+        maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
       });
 
       console.log("admin logged in successfully");
-      res.status(HTTP_statusCode.OK).json({
-        success: true,
-        message: "Admin logged in",
-        accessToken: adminResponse.accessToken,
-        refreshToken: adminResponse.refreshToken,
+      
+      const response = new ResponseModel(true, "Admin logged in successfully", {
+        accessToken: serviceResult.accessToken,
+        refreshToken: serviceResult.refreshToken,
       });
-    } catch (error) {
+      
+      res.status(HTTP_statusCode.OK).json(response);
+    } catch (error: any) {
       console.error("Error in login: ", error);
-      res.status(HTTP_statusCode.InternalServerError).json({
-        success: false,
-        message: "Internal Server Error",
-      });
+      
+      let response: ResponseModel;
+      
+      if (error.message === "Invalid email or password") {
+        response = new ResponseModel(false, "Invalid email or password");
+        res.status(HTTP_statusCode.BadRequest).json(response);
+      } else {
+        response = new ResponseModel(false, "Internal Server Error");
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
     }
   }
 
   async logoutAdmin(req: Request, res: Response): Promise<void> {
     try {
-      
-      res.clearCookie("refreshToken", {
+      res.clearCookie("RefreshToken", {
         httpOnly: true,
         path: "/",
         sameSite: "strict",
       });
-      res
-        .status(HTTP_statusCode.OK)
-        .json({ message: "You have been logged Out Successfully" });
-    } catch (error: any) {
-      res.status(HTTP_statusCode.InternalServerError).json({
-        message: `Internal server error : ${error}`,
+      
+      res.clearCookie("AccessToken", {
+        httpOnly: true,
+        path: "/",
+        sameSite: "strict",
       });
+      
+      const response = new ResponseModel(true, "You have been logged out successfully");
+      res.status(HTTP_statusCode.OK).json(response);
+    } catch (error: any) {
+      const response = new ResponseModel(false, `Internal server error: ${error.message}`);
+      res.status(HTTP_statusCode.InternalServerError).json(response);
     }
   }
 }

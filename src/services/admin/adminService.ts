@@ -19,19 +19,11 @@ export class AdminService implements IAdminService {
     search: any
   ): Promise<{ users: User[]; totalPages: number }> {
     try {
-      const { data } = await this._adminRepository.getAllUsers(
-        skip,
-        limit,
-        search
-      );
-      if (!data) throw new Error("No data found");
-
-      const { users, totalPages } = data;
-
-      return { users, totalPages };
+      const result = await this._adminRepository.getAllUsers(skip, limit, search);
+      return result;
     } catch (error: any) {
-      console.error("Error in AdminService:", error.message);
-      throw new Error(`Failed to fetch users: ${error.message}`);
+      console.error("Error in AdminService getAllUsers:", error.message);
+      throw error; // Re-throw to let controller handle
     }
   }
 
@@ -41,69 +33,41 @@ export class AdminService implements IAdminService {
     search: any
   ): Promise<{ tutors: Tutor[]; totalPages: number }> {
     try {
-      const { data } = await this._adminRepository.getAllTutors(
-        skip,
-        limit,
-        search
-      );
-
-      if (!data) throw new Error("No data found");
-
-      const { tutors, totalPages } = data;
-
-      return { tutors, totalPages };
+      const result = await this._adminRepository.getAllTutors(skip, limit, search);
+      return result;
     } catch (error: any) {
-      console.error("Error in AdminService:", error.message);
-      throw new Error(`Failed to fetch tutors: ${error.message}`);
+      console.error("Error in AdminService getAllTutors:", error.message);
+      throw error; // Re-throw to let controller handle
     }
   }
 
   async listUnlistUser(id: string): Promise<User> {
     try {
-      const response = await this._adminRepository.changeUserStatus(id);
-
-      if (response && response.success && response.data) {
-        return response.data;
-      } else {
-        console.error("Failed to edit user: Response is invalid", response);
-        throw new Error(
-          response.message || "Something went wrong while editing the user."
-        );
-      }
+      const user = await this._adminRepository.changeUserStatus(id);
+      return user;
     } catch (error: any) {
-      console.error("Error in edituser:", error.message);
-      throw new Error(`Failed to edit user: ${error.message}`);
+      console.error("Error in AdminService listUnlistUser:", error.message);
+      throw error; // Re-throw to let controller handle
     }
   }
 
   async listUnlistTutor(id: string): Promise<Tutor> {
     try {
-      const response = await this._adminRepository.changeTutorStatus(id);
-
-      if (response && response.success && response.data) {
-        return response.data;
-      } else {
-        console.error("Failed to edit tutor: Response is invalid", response);
-        throw new Error(
-          response.message || "Something went wrong while editing the tutor."
-        );
-      }
+      const tutor = await this._adminRepository.changeTutorStatus(id);
+      return tutor;
     } catch (error: any) {
-      console.error("Error in editTutor:", error.message);
-      throw new Error(`Failed to edit tutor: ${error.message}`);
+      console.error("Error in AdminService listUnlistTutor:", error.message);
+      throw error; // Re-throw to let controller handle
     }
   }
 
   async addCourseCategory(data: Category): Promise<Category> {
     try {
-      const categoryResponse = await this._adminRepository.addCategory(data);
-      if (!categoryResponse.success || !categoryResponse.data) {
-        throw new Error(categoryResponse.message || "Failed to add category");
-      }
-      return categoryResponse.data;
+      const category = await this._adminRepository.addCategory(data);
+      return category;
     } catch (error: any) {
-      console.error("error in addCourseCategory:", error.message);
-      throw new Error("Failed to add category");
+      console.error("Error in AdminService addCourseCategory:", error.message);
+      throw error; // Re-throw to let controller handle
     }
   }
 
@@ -113,19 +77,11 @@ export class AdminService implements IAdminService {
     search: any
   ): Promise<{ category: Category[]; totalPages: number }> {
     try {
-      const { data } = await this._adminRepository.getAllCategories(
-        skip,
-        limit,
-        search
-      );
-
-      if (!data) throw new Error("No data found");
-      const { category, totalPages } = data;
-
-      return { category, totalPages };
+      const result = await this._adminRepository.getAllCategories(skip, limit, search);
+      return result;
     } catch (error: any) {
-      console.error("Error in getAllCategories:", error.message);
-      throw new Error("Failed to get categories");
+      console.error("Error in AdminService getAllCategories:", error.message);
+      throw error; // Re-throw to let controller handle
     }
   }
 
@@ -137,55 +93,21 @@ export class AdminService implements IAdminService {
     }
   ): Promise<Category> {
     try {
-      const response = await this._adminRepository.updateCategory(
-        categoryId,
-        updateData
-      );
-
-      if (response && response.success && response.data) {
-        return response.data;
-      } else {
-        console.error("Failed to update category: Response is invalid", response);
-        throw new Error(
-          response.message || "Something went wrong while updating the category."
-        );
-      }
+      const category = await this._adminRepository.updateCategory(categoryId, updateData);
+      return category;
     } catch (error: any) {
-      console.error("Error in updateCourseCategory:", error.message);
-      
-      // Handle specific error cases that your controller expects
-      if (error.message.includes("not found") || error.message.includes("Category not found")) {
-        throw new Error("Category not found");
-      } else if (error.message.includes("already exists")) {
-        throw new Error(error.message);
-      } else {
-        throw new Error(`Failed to update category: ${error.message}`);
-      }
+      console.error("Error in AdminService updateCourseCategory:", error.message);
+      throw error; // Re-throw to let controller handle
     }
   }
 
-  
   async toggleCategoryListStatus(categoryId: string): Promise<Category> {
     try {
-      const response = await this._adminRepository.toggleCategoryStatus(categoryId);
-
-      if (response && response.success && response.data) {
-        return response.data;
-      } else {
-        console.error("Failed to toggle category status: Response is invalid", response);
-        throw new Error(
-          response.message || "Something went wrong while toggling category status."
-        );
-      }
+      const category = await this._adminRepository.toggleCategoryStatus(categoryId);
+      return category;
     } catch (error: any) {
-      console.error("Error in toggleCategoryListStatus:", error.message);
-      
-      // Handle specific error cases that your controller expects
-      if (error.message.includes("not found") || error.message.includes("Category not found")) {
-        throw new Error("Category not found");
-      } else {
-        throw new Error(`Failed to toggle category status: ${error.message}`);
-      }
+      console.error("Error in AdminService toggleCategoryListStatus:", error.message);
+      throw error; // Re-throw to let controller handle
     }
   }
 }

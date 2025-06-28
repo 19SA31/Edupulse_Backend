@@ -1,4 +1,3 @@
-
 import { IAdminAuthServiceInterface } from "../../interfaces/admin/adminAuthServiceInterface"; 
 import { IAdminAuthRepository } from "../../interfaces/admin/adminAuthRepoInterface";
 import dotenv from "dotenv";
@@ -13,47 +12,47 @@ export class AuthAdminService implements IAdminAuthServiceInterface {
     this.AuthRepository = AuthRepository;
   }
 
-
-  async loginService(adminData: { email: string; password: string }): Promise<{ 
-    success: boolean; 
-    message: string; 
-    accessToken?: string; 
+  async loginService(adminData: { email: string; password: string }): Promise<{
+    isValid: boolean;
+    accessToken?: string;
     refreshToken?: string;
-    
+    error?: string;
   }> {
     try {
       console.log("Reached login service");
   
-      const loggedAdmin = await this.AuthRepository.verifyAdmin(adminData.email, adminData.password);
-      
-      if (!loggedAdmin.success ) {
-        return { success: false, message: loggedAdmin.message }; 
+      const verificationResult = await this.AuthRepository.verifyAdmin(adminData.email, adminData.password);
+      console.log("verification result in service",verificationResult)
+      if (!verificationResult.isValid) {
+        return { 
+          isValid: false, 
+          error: verificationResult.error 
+        }; 
       }
   
-      
-  
       const accessToken = jwt.sign(
-        { id: "admin_id", email:"admin@gmail.com", role: "admin" },
+        { id: "admin_id", email: "admin@gmail.com", role: "admin" },
         process.env.JWT_SECRET as string,
         { expiresIn: "1h" }
       );
   
       const refreshToken = jwt.sign(
-        { id: "admin_id", email:"admin@gmail.com", role: "admin" },
+        { id: "admin_id", email: "admin@gmail.com", role: "admin" },
         process.env.JWT_SECRET as string,
         { expiresIn: "7d" }
       );
   
       return { 
-        success: true, 
-        message: "Login successful", 
+        isValid: true,
         accessToken, 
         refreshToken,
       };
     } catch (error) {
       console.error("Error in login service:", error);
-      return { success: false, message: "Error in login service" };
+      return { 
+        isValid: false, 
+        error: "Error in login service" 
+      };
     }
   }
-  
 }

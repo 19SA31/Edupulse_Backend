@@ -1,5 +1,4 @@
-import { Document, Model } from "mongoose";
-import { ResponseModel } from "../../models/ResponseModel";
+import { Document } from "mongoose";
 import tutorModel from "../../models/Tutors";
 import OtpModel from "../../models/OtpSchema";
 import {
@@ -10,8 +9,6 @@ import {
 import bcrypt from "bcrypt";
 import BaseRepository from "../BaseRepository";
 import { ITutorAuthRepository } from "../../interfaces/tutor/tutorAuthRepoInterface";
-import { Messages } from "../../enums/messages";
-import { Console } from "console";
 
 export class AuthTutorRepository
   extends BaseRepository<any>
@@ -26,7 +23,7 @@ export class AuthTutorRepository
   async existTutor(
     email: string,
     phone?: string
-  ): Promise<ResponseModel<{ existEmail: boolean; existPhone: boolean }>> {
+  ): Promise<{ existEmail: boolean; existPhone: boolean }> {
     try {
       const [emailExist, phoneExist] = await Promise.all([
         this.findOne({ email }),
@@ -34,107 +31,74 @@ export class AuthTutorRepository
       ]);
 
       return {
-        success: true,
-        message: Messages.USER_EXISTENCE_SUCCESS,
-        data: {
-          existEmail: !!emailExist,
-          existPhone: phone ? !!phoneExist : false,
-        },
+        existEmail: !!emailExist,
+        existPhone: phone ? !!phoneExist : false,
       };
     } catch (error) {
       console.error("Error checking if user exists:", error);
-      return {
-        success: false,
-        message: Messages.ERROR_CHECKING_USER,
-        data: { existEmail: false, existPhone: false },
-      };
+      throw new Error("Error checking user existence");
     }
   }
 
   async createTutor(
     userData: CreateTutorType
-  ): Promise<ResponseModel<Document<unknown, any, any> & tutorType>> {
+  ): Promise<Document<unknown, any, any> & tutorType> {
     try {
       const user = (await this.create(userData)) as Document<
         unknown,
         any,
         any
-      > &
-        tutorType;
+      > & tutorType;
 
-      return {
-        success: true,
-        message: Messages.USER_CREATED,
-        data: user,
-      };
+      return user;
     } catch (error) {
       console.error("Error in creating new User", error);
-      return {
-        success: false,
-        message: `${Messages.ERROR_CREATING_USER}: ${(error as Error).message}`,
-        data: null,
-      };
+      throw new Error(`Error creating user: ${(error as Error).message}`);
     }
   }
 
-  async saveOTP(email: string, OTP: string): Promise<ResponseModel> {
+  async saveOTP(email: string, OTP: string): Promise<void> {
     try {
       console.log("INSIDE SAVEOTP, otp:", OTP);
       await this._otpRepository.create({ email, otp: OTP });
-      return new ResponseModel(true, Messages.OTP_SAVED);
     } catch (error: any) {
-      return new ResponseModel(
-        false,
-        `${Messages.ERROR_SAVING_OTP}: ${error.message}`
-      );
+      console.error("Error saving OTP:", error);
+      throw new Error(`Error saving OTP: ${error.message}`);
     }
   }
 
-  async verifyOtp(
-    email: string,
-    otp: string
-  ): Promise<ResponseModel<{ success: boolean }>> {
+  async verifyOtp(email: string, otp: string): Promise<boolean> {
     try {
-      
       const otpRecord = await this._otpRepository.findOne({ email });
       if (!otpRecord) {
-        return new ResponseModel(false, Messages.OTP_NOT_FOUND, {
-          success: false,
-        });
+        return false;
       }
-      const isMatch = await bcrypt.compare(otp, otpRecord.otp);
       
-      return new ResponseModel(
-        isMatch,
-        isMatch ? Messages.OTP_VERIFIED : Messages.OTP_VERIFICATION_FAILED,
-        { success: isMatch }
-      );
+      const isMatch = await bcrypt.compare(otp, otpRecord.otp);
+      return isMatch;
     } catch (error: any) {
-      return new ResponseModel(
-        false,
-        `${Messages.ERROR_VERIFYING_OTP}: ${error.message}`,
-        { success: false }
-      );
+      console.error("Error verifying OTP:", error);
+      throw new Error(`Error verifying OTP: ${error.message}`);
     }
   }
 
   async verifyTutor(
     email: string,
     password: string
-  ): Promise<ResponseModel<TutorProfile | null>> {
+  ): Promise<TutorProfile | null> {
     try {
       const userData = await this.findOne({ email });
       if (!userData) {
-        return new ResponseModel(false, Messages.INVALID_EMAIL, null);
+        return null;
       }
 
       if (userData.isBlocked) {
-        return new ResponseModel(false, Messages.TUTOR_BLOCKED, null);
+        throw new Error("Tutor account is blocked");
       }
 
       const isMatch = await bcrypt.compare(password, userData.password);
       if (!isMatch) {
-        return new ResponseModel(false, Messages.INVALID_PASSWORD, null);
+        return null;
       }
 
       const formattedUserData: TutorProfile = {
@@ -142,45 +106,25 @@ export class AuthTutorRepository
         _id: userData._id.toString(),
       };
 
-      return new ResponseModel(true, Messages.LOGIN_SUCCESS, formattedUserData);
+      return formattedUserData;
     } catch (error: any) {
-      return new ResponseModel(
-        false,
-        `${Messages.ERROR_LOGIN}: ${error.message}`,
-        null
-      );
+      console.error("Error in tutor verification:", error);
+      throw error; // Re-throw to preserve specific error messages like "blocked"
     }
   }
 
-  async resetPassword(
-    email: string,
-    password: string
-  ): Promise<ResponseModel<null>> {
+  async resetPassword(email: string, password: string): Promise<void> {
     try {
       const userData = await this.findOne({ email });
 
       if (!userData) {
-        return {
-          success: false,
-          message: Messages.INVALID_EMAIL,
-          data: null,
-        };
+        throw new Error("Email not found");
       }
 
       await this.update(userData._id.toString(), { password });
-
-      return {
-        success: true,
-        message: Messages.PASSWORD_UPDATED,
-        data: null,
-      };
     } catch (error) {
       console.error("Error in reset password repo:", error);
-      return {
-        success: false,
-        message: Messages.ERROR_RESET_PASSWORD,
-        data: null,
-      };
+      throw new Error("Error resetting password");
     }
   }
 }

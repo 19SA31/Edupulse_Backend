@@ -29,7 +29,7 @@ adminRoutes.put('/listUnlistUser/:userId',verifyToken('admin'),AdminControllerIn
 adminRoutes.get('/tutors',verifyToken('admin'),AdminControllerInstance.getTutors.bind(AdminControllerInstance));
 adminRoutes.put('/listUnlistTutor/:tutorId',verifyToken('admin'),AdminControllerInstance.listUnlistTutor.bind(AdminControllerInstance));
 
-adminRoutes.get('/category',verifyToken('admin'),AdminControllerInstance.getCategories.bind(AdminControllerInstance))
+adminRoutes.get('/categories',verifyToken('admin'),AdminControllerInstance.getCategories.bind(AdminControllerInstance))
 adminRoutes.post('/add-category',verifyToken('admin'),AdminControllerInstance.addCategory.bind(AdminControllerInstance))
 adminRoutes.put('/update-category/:id',verifyToken('admin'),AdminControllerInstance.editCategory.bind(AdminControllerInstance))
 adminRoutes.put('/toggle-category/:id',verifyToken('admin'),AdminControllerInstance.toggleCategoryStatus.bind(AdminControllerInstance))

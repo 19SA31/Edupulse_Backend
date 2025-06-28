@@ -4,7 +4,10 @@ import { IAuthRepository } from "../../interfaces/user/userAuthRepoInterface";
 import sendMail from "../../config/emailConfig";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
-import {  CreateUserType, GetUserData } from "../../interfaces/userInterface/userInterface";
+import {
+  CreateUserType,
+  GetUserData,
+} from "../../interfaces/userInterface/userInterface";
 
 dotenv.config();
 
@@ -16,12 +19,12 @@ export class AuthService implements IAuthService {
     this.AuthRepository = AuthRepository;
   }
 
-  private async sendOTP(email: string): Promise<{ success: boolean }> {
+  private async sendOTP(email: string): Promise<void> {
     const GeneratedOTP: string = Math.floor(
       1000 + Math.random() * 9000
     ).toString();
     const hashedOTP: string = await bcrypt.hash(GeneratedOTP, this.saltRounds);
-    
+
     const subject = "OTP Verification";
     const sendMailStatus: boolean = await sendMail(
       email,
@@ -30,47 +33,38 @@ export class AuthService implements IAuthService {
     );
 
     if (!sendMailStatus) {
-      throw new Error("OTP not sent");
+      throw new Error("Otp not send");
     }
 
     await this.AuthRepository.saveOTP(email, hashedOTP);
-    return { success: true };
   }
 
   async signUp(userData: {
     email: string;
     phone?: string;
     isForgot?: boolean;
-  }): Promise<{ success: boolean }> {
-    try {
-      
+  }): Promise<void> {
+    const userExistence = await this.AuthRepository.existUser(
+      userData.email,
+      userData.phone
+    );
 
-      const response = await this.AuthRepository.existUser(
-        userData.email,
-        userData.phone
-      );
-
-      if (userData.isForgot) {
-        
-        if (!response.data?.existEmail) {
-          throw new Error("Email not found");
-        }
-        return await this.sendOTP(userData.email);
+    if (userData.isForgot) {
+      if (!userExistence.existEmail) {
+        throw new Error("Email not found");
       }
-      
-      if (response.data?.existEmail) {
-        throw new Error("Email already in use");
-      }
-      if (response.data?.existPhone) {
-        throw new Error("Phone already in use");
-      }
-      
-
-      return await this.sendOTP(userData.email);
-    } catch (error: any) {
-      console.error("Error in signUp:", error.message);
-      throw error;
+      await this.sendOTP(userData.email);
+      return;
     }
+
+    if (userExistence.existEmail) {
+      throw new Error("Email already in use");
+    }
+    if (userExistence.existPhone) {
+      throw new Error("Phone already in use");
+    }
+
+    await this.sendOTP(userData.email);
   }
 
   async otpCheck(userData: {
@@ -80,111 +74,83 @@ export class AuthService implements IAuthService {
     password?: string;
     otp: string;
     isForgot?: boolean;
-  }): Promise<{ success: boolean }> {
-    try {
-      
+  }): Promise<boolean> {
+    const isOtpValid = await this.AuthRepository.verifyOtp(
+      userData.email,
+      userData.otp
+    );
 
-      const response = await this.AuthRepository.verifyOtp(
-        userData.email,
-        userData.otp
-      );
-      
-      if (!response.success) {
-        return { success: false };
-      }
-
-      if (userData.isForgot) {
-        return { success: true };
-      }
-
-      if (!userData.password) {
-        throw new Error("Password is required for new user registration.");
-      }
-
-      const hashedPassword: string = await bcrypt.hash(
-        userData.password,
-        this.saltRounds
-      );
-
-      const newUserData: CreateUserType = {
-        name: userData.name ?? "",
-        email: userData.email,
-        phone: userData.phone ?? "",
-        password: hashedPassword,
-        createdAt: new Date(),
-      };
-
-      await this.AuthRepository.createUser(newUserData);
-      return { success: true };
-    } catch (error: any) {
-      console.error("Error in otpCheck:", error);
-      return { success: false };
+    if (!isOtpValid) {
+      return false;
     }
+
+    // If it's a forgot password flow, just return true after OTP verification
+    if (userData.isForgot) {
+      return true;
+    }
+
+    // For new user registration, create the user
+    if (!userData.password) {
+      throw new Error("Password is required for new user registration");
+    }
+
+    const hashedPassword: string = await bcrypt.hash(
+      userData.password,
+      this.saltRounds
+    );
+
+    const newUserData: CreateUserType = {
+      name: userData.name ?? "",
+      email: userData.email,
+      phone: userData.phone ?? "",
+      password: hashedPassword,
+      createdAt: new Date(),
+    };
+
+    await this.AuthRepository.createUser(newUserData);
+    return true;
   }
 
-  async loginService(userData: { email: string; password: string }): Promise<{ 
-    success: boolean; 
-    message: string; 
-    accessToken?: string; 
-    refreshToken?: string;
-    user?: GetUserData; 
+  async loginService(userData: { email: string; password: string }): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    user: GetUserData;
   }> {
-    try {
-      
-  
-      const loggedUser = await this.AuthRepository.verifyUser(userData.email, userData.password);
-      
-      if (!loggedUser.success || !loggedUser.data) {
-        return { success: false, message: loggedUser.message }; // Provide specific error message
-      }
-  
-      const { _id, email, name } = loggedUser.data;
-  
-      const accessToken = jwt.sign(
-        { id: _id, email, role: "user" },
-        process.env.JWT_SECRET as string,
-        { expiresIn: "1h" }
-      );
-  
-      const refreshToken = jwt.sign(
-        { id: _id, email, role: "user" },
-        process.env.JWT_SECRET as string,
-        { expiresIn: "7d" }
-      );
-  
-      return { 
-        success: true, 
-        message: "Login successful", 
-        accessToken, 
-        refreshToken,
-        user: { id: _id, name, email }
-      };
-    } catch (error) {
-      console.error("Error in login service:", error);
-      return { success: false, message: "Error in login service" };
-    }
+    const loggedUser = await this.AuthRepository.verifyUser(
+      userData.email,
+      userData.password
+    );
+
+    const { _id, email, name } = loggedUser;
+
+    const accessToken = jwt.sign(
+      { id: _id, email, role: "user" },
+      process.env.JWT_SECRET as string,
+      { expiresIn: "1h" }
+    );
+
+    const refreshToken = jwt.sign(
+      { id: _id, email, role: "user" },
+      process.env.JWT_SECRET as string,
+      { expiresIn: "7d" }
+    );
+
+    return {
+      accessToken,
+      refreshToken,
+      user: { id: _id, name, email },
+    };
   }
-  
-  
 
   async resetPasswordService(userData: {
     email: string;
     password: string;
-  }): Promise<{ success: boolean; message: string }> {
-    try {
-      
-      const hashedPassword = await bcrypt.hash(
-        userData.password,
-        this.saltRounds
-      );
-      const response = await this.AuthRepository.resetPassword(
-        userData.email,
-        hashedPassword
-      );
-      return response;
-    } catch (error) {
-      console.error("Error in resetPassword service: ", error);
-      return { success: false, message: "Error in resetpassword service" };
-    }
+  }): Promise<void> {
+    const hashedPassword = await bcrypt.hash(
+      userData.password,
+      this.saltRounds
+    );
+
+    await this.AuthRepository.resetPassword(userData.email, hashedPassword);
   }
 }
