@@ -1,4 +1,4 @@
-import { UserProfile, GetUserData } from "../userInterface/userInterface";
+import { UserProfileData, GetUserData } from "../userInterface/userInterface";
 
 export interface IAuthService {
   signUp(userData: {
@@ -21,7 +21,7 @@ export interface IAuthService {
   loginService(userData: { email: string; password: string }): Promise<{
     accessToken: string;
     refreshToken: string;
-    user: GetUserData;
+    user: UserProfileData;
   }>;
 
   resetPasswordService(userData: {

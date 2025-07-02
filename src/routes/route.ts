@@ -1,5 +1,5 @@
 import express, { Application } from "express";
-import userRoute from "./user/userRoute";
+import userRoute from "./user/userRoutes";
 import tutorRoute from "./tutor/tutorRoute";
 import adminRoute from "./admin/adminRoute";
 

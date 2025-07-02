@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import {
   CreateUserType,
-  GetUserData,
+  UserProfileData,
 } from "../../interfaces/userInterface/userInterface";
 
 dotenv.config();
@@ -114,14 +114,14 @@ export class AuthService implements IAuthService {
   async loginService(userData: { email: string; password: string }): Promise<{
     accessToken: string;
     refreshToken: string;
-    user: GetUserData;
+    user: UserProfileData;
   }> {
     const loggedUser = await this.AuthRepository.verifyUser(
       userData.email,
       userData.password
     );
-
-    const { _id, email, name } = loggedUser;
+    console.log(loggedUser)
+    const { _id, email, name, phone, DOB, gender, avatar } = loggedUser;
 
     const accessToken = jwt.sign(
       { id: _id, email, role: "user" },
@@ -138,7 +138,7 @@ export class AuthService implements IAuthService {
     return {
       accessToken,
       refreshToken,
-      user: { id: _id, name, email },
+      user: { _id, name, email, phone, DOB, gender, avatar },
     };
   }
 

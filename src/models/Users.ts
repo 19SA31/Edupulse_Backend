@@ -22,9 +22,14 @@ const userSchema = new Schema<IUser>({
     DOB:{
         type: Date
     },
-    gender:{
-        type: String
+    gender: {
+        type: String,
+        enum: ['male', 'female', 'other']
     },
+    avatar: {
+    type: String, 
+    default: null
+  },
     isBlocked:{
         type: Boolean,
         default: false

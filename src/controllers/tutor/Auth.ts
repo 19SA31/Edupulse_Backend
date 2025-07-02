@@ -112,6 +112,22 @@ export class AuthTutorController {
           tutor: loginResult.tutor,
         }
       );
+
+      // Set cookies for successful login
+      res.cookie("RefreshToken", loginResult.refreshToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+      
+      res.cookie("AccessToken", loginResult.accessToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "strict",
+        maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
+      });
+      
       
       res.status(HTTP_statusCode.OK).json(response);
     } catch (error: any) {

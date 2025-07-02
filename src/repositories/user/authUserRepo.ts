@@ -2,8 +2,8 @@ import { Document } from "mongoose";
 import userModel from "../../models/Users";
 import OtpModel from "../../models/OtpSchema";
 import {
-  userType,
-  UserProfile,
+  User,
+  UserProfileData,
   CreateUserType,
 } from "../../interfaces/userInterface/userInterface";
 import bcrypt from "bcrypt";
@@ -37,9 +37,9 @@ export class AuthUserRepository
 
   async createUser(
     userData: CreateUserType
-  ): Promise<Document<unknown, any, any> & userType> {
+  ): Promise<Document<unknown, any, any> & User> {
     const user = (await this.create(userData)) as Document<unknown, any, any> &
-      userType;
+      User;
 
     return user;
   }
@@ -59,7 +59,7 @@ export class AuthUserRepository
     return isMatch;
   }
 
-  async verifyUser(email: string, password: string): Promise<UserProfile> {
+  async verifyUser(email: string, password: string): Promise<UserProfileData> {
     const userData = await this.findOne({ email });
 
     if (!userData) {
@@ -75,7 +75,7 @@ export class AuthUserRepository
       throw new Error("Invalid password");
     }
 
-    const formattedUserData: UserProfile = {
+    const formattedUserData: UserProfileData = {
       ...userData.toObject(),
       _id: userData._id.toString(),
     };

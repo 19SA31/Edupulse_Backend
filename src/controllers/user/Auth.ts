@@ -87,7 +87,7 @@ export class AuthController {
       const data = req.body;
       
       const loginResult = await this.authService.loginService(data);
-      console.log(loginResult)
+      console.log("inside userLogin contrl",loginResult)
       const response = new ResponseModel(
         true, 
         "User logged in successfully", 
@@ -97,6 +97,20 @@ export class AuthController {
           user: loginResult.user,
         }
       );
+      // Set cookies for successful login
+      res.cookie("RefreshToken", loginResult.refreshToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+      
+      res.cookie("AccessToken", loginResult.accessToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "strict",
+        maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
+      });
       
       res.status(HTTP_statusCode.OK).json(response);
       
