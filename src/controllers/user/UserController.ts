@@ -23,7 +23,7 @@ class UserController {
     try {
       console.log("inside controller for update,body: ")
       const userId = req.body.id;
-      console.log()
+      console.log(userId)
       if (!userId) {
         console.log("no user id")
         res.status(HTTP_statusCode.Unauthorized).json(new ResponseModel(false, 'Unauthorized: User not authenticated'));
@@ -63,6 +63,15 @@ class UserController {
       res.status(HTTP_statusCode.InternalServerError).json(new ResponseModel(false, 'Internal server error'));
     }
   };
+
+  // getCategories = async (req:Request, res:Response):Promise<void>=>{
+  //   try {
+  //     const categories = await this.userService.fetchCategories()
+  //   } catch (error) {
+  //     console.error("error in fetching categories",error)
+  //     res.status(HTTP_statusCode.InternalServerError).json(new ResponseModel(false,'internal server error'))
+  //   }
+  // }
 
   getUserProfile = async (req: AuthRequest, res: Response): Promise<void> => {
     try {

@@ -10,4 +10,5 @@ export interface IUserService {
   ): Promise<ResponseModel<{ user: UserProfileData }>>;
   
   getUserProfile(userId: string): Promise<ResponseModel<{ user: UserProfileData }>>;
+  // fetchCategories():Promise<ResponseModel<{categories[]:Categories}>
 }

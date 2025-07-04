@@ -101,7 +101,7 @@ export class AuthTutorController {
       const data = req.body;
       
       const loginResult = await this.authService.loginService(data);
-      console.log("userLogin response: ", loginResult);
+      console.log("tutorLogin response: ", loginResult);
 
       const response = new ResponseModel(
         true, 

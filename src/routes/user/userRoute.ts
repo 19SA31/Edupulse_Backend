@@ -40,4 +40,6 @@ userRoute.get('/profile',
   userController.getUserProfile.bind(userController)
 );
 
+userRoute.get('categories',verifyToken('user'));
+
 export default userRoute;

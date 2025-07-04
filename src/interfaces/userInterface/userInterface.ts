@@ -73,6 +73,10 @@ export interface UserProfileData {
     lastLogin?: Date;
 }
 
+export interface Categories{
+    
+}
+
 // Simplified user data for responses
 export interface GetUserData {
     id: string;

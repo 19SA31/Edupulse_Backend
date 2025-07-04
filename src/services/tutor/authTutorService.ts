@@ -134,7 +134,7 @@ export class AuthTutorService implements ITutorAuthInterface {
       throw new Error("Invalid email or password");
     }
 
-    const { _id, email, name } = loggedTutor;
+    const { _id, email, name, isVerified } = loggedTutor;
 
     const accessToken = jwt.sign(
       { id: _id, email, role: "tutor" },
@@ -151,7 +151,7 @@ export class AuthTutorService implements ITutorAuthInterface {
     return { 
       accessToken, 
       refreshToken,
-      tutor: { id: _id, name, email }
+      tutor: { id: _id, name, email, isVerified }
     };
   }
 

@@ -19,7 +19,7 @@ class UserService implements IUserService {
   ): Promise<ResponseModel<{ user: UserProfileData }>> {
     try {
 
-      console.log("inside service for update profile")
+      console.log("inside service for update profile",userId)
       // Validate user exists
       const existingUser = await this.userRepository.findById(userId);
       if (!existingUser) {

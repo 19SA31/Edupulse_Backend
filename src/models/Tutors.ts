@@ -1,8 +1,8 @@
 import  { model, Schema } from "mongoose"
-import { IUser } from "../interfaces/userInterface/userInterface"
+import { ITutor } from "../interfaces/tutorInterface/tutorInterface"
 
 
-const tutorSchema = new Schema<IUser>({
+const tutorSchema = new Schema<ITutor>({
     name:{
         type: String,
         required: true
@@ -29,6 +29,10 @@ const tutorSchema = new Schema<IUser>({
         type: Boolean,
         default: false
     },
+    isVerified:{
+        type: Boolean,
+        default: false
+    },
     createdAt:{
         type: Date,
         default: Date.now
@@ -38,5 +42,5 @@ const tutorSchema = new Schema<IUser>({
     }
 })
 
-const userModel = model<IUser>("Tutor",tutorSchema)
+const userModel = model<ITutor>("Tutor",tutorSchema)
 export default userModel
