@@ -1,6 +1,6 @@
 import express, { Application } from "express";
 import userRoute from "./user/userRoutes";
-import tutorRoute from "./tutor/tutorRoute";
+import tutorRoute from "./tutor/tutorRoutes";
 import adminRoute from "./admin/adminRoute";
 
 

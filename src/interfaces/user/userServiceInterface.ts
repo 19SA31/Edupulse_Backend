@@ -1,14 +1,11 @@
-// interfaces/userInterface/IUserService.ts
-import { IUser, UpdateProfileData, UserProfileData } from '../userInterface/userInterface';
-import { ResponseModel } from '../../models/ResponseModel';
+// interfaces/user/userServiceInterface.ts
+import { UpdateProfileData, UserProfileData } from '../userInterface/userInterface';
 
 export interface IUserService {
   updateProfile(
-    userId: string, 
-    updateData: UpdateProfileData,
-    avatarFile?: Express.Multer.File
-  ): Promise<ResponseModel<{ user: UserProfileData }>>;
+    userId: string,
+    updateData: UpdateProfileData
+  ): Promise<{ user: UserProfileData }>;
   
-  getUserProfile(userId: string): Promise<ResponseModel<{ user: UserProfileData }>>;
-  // fetchCategories():Promise<ResponseModel<{categories[]:Categories}>
+  getUserProfile(userId: string): Promise<{ user: UserProfileData }>;
 }

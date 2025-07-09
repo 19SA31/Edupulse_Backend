@@ -1,197 +1,240 @@
 // services/userService.ts
 import { IUserService } from '../../interfaces/user/userServiceInterface';
 import { IUserRepository } from '../../interfaces/user/userRepoInterface';
-import { UpdateProfileData, UserProfileData } from '../../interfaces/userInterface/userInterface';
-import { ResponseModel } from '../../models/ResponseModel';
-import   cloudinary  from '../../utils/cloudinary';
+import { UpdateProfileData, UserProfileData, CropData } from '../../interfaces/userInterface/userInterface';
+import { S3Service } from '../../utils/s3';
+import { cropAndSave } from '../../helper/Sharp';
 
 class UserService implements IUserService {
   private userRepository: IUserRepository;
+  private s3Service: S3Service;
 
   constructor(userRepository: IUserRepository) {
     this.userRepository = userRepository;
+    this.s3Service = new S3Service();
   }
 
   async updateProfile(
     userId: string, 
-    updateData: UpdateProfileData,
-    avatarFile?: Express.Multer.File
-  ): Promise<ResponseModel<{ user: UserProfileData }>> {
-    try {
+    updateData: UpdateProfileData
+  ): Promise<{ user: UserProfileData }> {
+    console.log("inside service for update profile", userId);
+    console.log("updateData received:", updateData);
 
-      console.log("inside service for update profile",userId)
-      // Validate user exists
-      const existingUser = await this.userRepository.findById(userId);
-      if (!existingUser) {
-        return new ResponseModel(false, 'User not found');
+    // Validate user exists
+    const existingUser = await this.userRepository.findById(userId);
+    if (!existingUser) {
+      throw new Error('User not found');
+    }
+
+    // Validate name if provided
+    if (updateData.name !== undefined) {
+      if (!updateData.name || updateData.name.trim().length < 2) {
+        throw new Error('Name must be at least 2 characters long');
+      }
+      if (updateData.name.trim().length > 50) {
+        throw new Error('Name must be less than 50 characters');
+      }
+      updateData.name = updateData.name.trim();
+    }
+
+    // Validate phone if provided
+    if (updateData.phone !== undefined) {
+      if (!updateData.phone) {
+        throw new Error('Phone number is required');
+      }
+      
+      const phoneRegex = /^[0-9]{10,15}$/;
+      const cleanPhone = updateData.phone.replace(/\D/g, '');
+      
+      if (!phoneRegex.test(cleanPhone)) {
+        throw new Error('Please enter a valid phone number (10-15 digits)');
       }
 
-      // Validate name if provided
-      if (updateData.name !== undefined) {
-        if (!updateData.name || updateData.name.trim().length < 2) {
-          return new ResponseModel(false, 'Name must be at least 2 characters long');
-        }
-        if (updateData.name.trim().length > 50) {
-          return new ResponseModel(false, 'Name must be less than 50 characters');
-        }
-        updateData.name = updateData.name.trim();
+      // Check if phone is already taken by another user
+      const existingPhoneUser = await this.userRepository.findByPhoneExcludingId(cleanPhone, userId);
+      if (existingPhoneUser) {
+        throw new Error('Phone number is already registered with another account');
       }
+      
+      updateData.phone = cleanPhone;
+    }
 
-      // Validate phone if provided
-      if (updateData.phone !== undefined) {
-        if (!updateData.phone) {
-          return new ResponseModel(false, 'Phone number is required');
-        }
-        
-        const phoneRegex = /^[0-9]{10,15}$/;
-        const cleanPhone = updateData.phone.replace(/\D/g, '');
-        
-        if (!phoneRegex.test(cleanPhone)) {
-          return new ResponseModel(false, 'Please enter a valid phone number (10-15 digits)');
-        }
-
-        // Check if phone is already taken by another user
-        const existingPhoneUser = await this.userRepository.findByPhoneExcludingId(cleanPhone, userId);
-        if (existingPhoneUser) {
-          return new ResponseModel(false, 'Phone number is already registered with another account');
-        }
-        
-        updateData.phone = cleanPhone;
+    // Validate DOB if provided
+    if (updateData.DOB !== undefined && updateData.DOB) {
+      const dobDate = new Date(updateData.DOB);
+      const today = new Date();
+      
+      if (dobDate > today) {
+        throw new Error('Date of birth cannot be in the future');
       }
-
-      // Validate DOB if provided
-      if (updateData.DOB !== undefined && updateData.DOB) {
-        const dobDate = new Date(updateData.DOB);
-        const today = new Date();
-        
-        if (dobDate > today) {
-          return new ResponseModel(false, 'Date of birth cannot be in the future');
-        }
-        
-        // Check if user is at least 13 years old
-        const minAge = new Date();
-        minAge.setFullYear(today.getFullYear() - 13);
-        
-        if (dobDate > minAge) {
-          return new ResponseModel(false, 'User must be at least 13 years old');
-        }
+      
+      // Check if user is at least 13 years old
+      const minAge = new Date();
+      minAge.setFullYear(today.getFullYear() - 13);
+      
+      if (dobDate > minAge) {
+        throw new Error('User must be at least 13 years old');
       }
+    }
 
-      // Validate gender if provided
-      if (updateData.gender !== undefined && updateData.gender) {
-        if (!['male', 'female', 'other'].includes(updateData.gender)) {
-          return new ResponseModel(false, 'Invalid gender selection');
-        }
+    // Validate gender if provided
+    if (updateData.gender !== undefined && updateData.gender) {
+      if (!['male', 'female', 'other'].includes(updateData.gender)) {
+        throw new Error('Invalid gender selection');
       }
+    }
 
-      // Handle avatar upload if provided
-      if (avatarFile) {
-        try {
-          // Delete old avatar from cloudinary if exists
-          if (existingUser.avatar) {
-            try {
-              const publicId = this.extractPublicIdFromUrl(existingUser.avatar);
-              if (publicId) {
-                await cloudinary.uploader.destroy(publicId);
-              }
-            } catch (deleteError) {
-              console.warn('Failed to delete old avatar:', deleteError);
-              // Continue with upload even if delete fails
+    // Handle avatar upload if provided
+    if (updateData.avatar && updateData.avatar !== null && typeof updateData.avatar === 'object' && 'buffer' in updateData.avatar) {
+      try {
+        console.log("Processing avatar upload");
+        
+        const avatarFile = updateData.avatar as Express.Multer.File;
+        let processedBuffer = avatarFile.buffer;
+
+        // Apply crop data if provided
+        if (updateData.cropData) {
+          const { x, y, width, height } = updateData.cropData;
+          console.log("Applying crop data:", updateData.cropData);
+          
+          processedBuffer = await cropAndSave(x, y, width, height, avatarFile.buffer) as Buffer;
+        }
+
+        // Create a processed file object for S3 upload
+        const processedFile = {
+          ...avatarFile,
+          buffer: processedBuffer
+        };
+
+        // Delete old avatar from S3 if exists
+        if (existingUser.avatar) {
+          try {
+            const oldFileName = this.extractFileNameFromUrl(existingUser.avatar);
+            if (oldFileName) {
+              await this.s3Service.deleteFile(`user_avatars/${oldFileName}`);
+              console.log("Old avatar deleted from S3");
             }
+          } catch (deleteError) {
+            console.warn('Failed to delete old avatar:', deleteError);
+            // Continue with upload even if delete fails
           }
+        }
 
-          // Upload new avatar to cloudinary
-          const uploadResult = await new Promise((resolve, reject) => {
-            cloudinary.uploader.upload_stream(
-              {
-                folder: 'user_avatars',
-                transformation: [
-                  { width: 400, height: 400, crop: 'fill', gravity: 'face' },
-                  { quality: 'auto', fetch_format: 'auto' }
-                ]
-              },
-              (error, result) => {
-                if (error) reject(error);
-                else resolve(result);
-              }
-            ).end(avatarFile.buffer);
-          });
+        // Upload new avatar to S3
+        const fileName = await this.s3Service.uploadFile('user_avatars/', processedFile);
+        
+        // Generate the avatar URL (you might want to store just the filename and generate URLs on demand)
+        updateData.avatar = fileName; // Store just the filename, generate URL when needed
+        console.log("New avatar uploaded:", fileName);
 
-          updateData.avatar = (uploadResult as any).secure_url;
-        } catch (uploadError) {
-          console.error('Avatar upload error:', uploadError);
-          return new ResponseModel(false, 'Failed to upload avatar. Please try again.');
+      } catch (uploadError) {
+        console.error('Avatar upload error:', uploadError);
+        throw new Error('Failed to upload avatar. Please try again.');
+      }
+    } else if (updateData.avatar === null) {
+      // Handle explicit avatar deletion
+      console.log("Deleting avatar");
+      
+      // Delete old avatar from S3 if exists
+      if (existingUser.avatar) {
+        try {
+          const oldFileName = this.extractFileNameFromUrl(existingUser.avatar);
+          if (oldFileName) {
+            await this.s3Service.deleteFile(`user_avatars/${oldFileName}`);
+            console.log("Avatar deleted from S3");
+          }
+        } catch (deleteError) {
+          console.warn('Failed to delete avatar:', deleteError);
         }
       }
-
-      // Update user profile
-      const updatedUser = await this.userRepository.updateProfile(userId, updateData);
-      
-      if (!updatedUser) {
-        return new ResponseModel(false, 'Failed to update profile');
-      }
-
-      // Format response data according to UserProfileData interface
-      const responseData: UserProfileData = {
-        _id: updatedUser._id.toString(),
-        name: updatedUser.name,
-        email: updatedUser.email,
-        phone: updatedUser.phone,
-        DOB: updatedUser.DOB, // Keep as Date object
-        gender: updatedUser.gender,
-        avatar: updatedUser.avatar,
-        isBlocked: updatedUser.isBlocked,
-        createdAt: updatedUser.createdAt,
-        updatedAt: updatedUser.updatedAt,
-        lastLogin: updatedUser.lastLogin
-      };
-
-      return new ResponseModel(true, 'Profile updated successfully', { user: responseData });
-
-    } catch (error) {
-      console.error('Update profile service error:', error);
-      return new ResponseModel(false, 'Internal server error');
     }
+
+    // Remove cropData from updateData before saving to database
+    const { cropData, ...dataToUpdate } = updateData;
+
+    // Update user profile
+    const updatedUser = await this.userRepository.updateProfile(userId, dataToUpdate);
+    
+    if (!updatedUser) {
+      throw new Error('Failed to update profile');
+    }
+
+    // Generate avatar URL if avatar exists
+    let avatarUrl = null;
+    if (updatedUser.avatar) {
+      try {
+        avatarUrl = await this.s3Service.getFile(updatedUser.avatar, 'user_avatars');
+      } catch (error) {
+        console.warn('Failed to generate avatar URL:', error);
+      }
+    }
+
+    // Format response data according to UserProfileData interface
+    const responseData: UserProfileData = {
+      _id: updatedUser._id.toString(),
+      name: updatedUser.name,
+      email: updatedUser.email,
+      phone: updatedUser.phone,
+      DOB: updatedUser.DOB,
+      gender: updatedUser.gender,
+      avatar: avatarUrl, // Return the signed URL
+      isBlocked: updatedUser.isBlocked,
+      createdAt: updatedUser.createdAt,
+      updatedAt: updatedUser.updatedAt,
+      lastLogin: updatedUser.lastLogin
+    };
+
+    return { user: responseData };
   }
 
-  async getUserProfile(userId: string): Promise<ResponseModel<{ user: UserProfileData }>> {
-    try {
-      const user = await this.userRepository.findById(userId);
-      
-      if (!user) {
-        return new ResponseModel(false, 'User not found');
-      }
-
-      // Format response data according to UserProfileData interface
-      const responseData: UserProfileData = {
-        _id: user._id.toString(),
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        DOB: user.DOB, // Keep as Date object
-        gender: user.gender,
-        avatar: user.avatar,
-        isBlocked: user.isBlocked,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-        lastLogin: user.lastLogin
-      };
-
-      return new ResponseModel(true, 'Profile retrieved successfully', { user: responseData });
-
-    } catch (error) {
-      console.error('Get profile service error:', error);
-      return new ResponseModel(false, 'Internal server error');
+  async getUserProfile(userId: string): Promise<{ user: UserProfileData }> {
+    const user = await this.userRepository.findById(userId);
+    
+    if (!user) {
+      throw new Error('User not found');
     }
+
+    // Generate avatar URL if avatar exists
+    let avatarUrl = null;
+    if (user.avatar) {
+      try {
+        avatarUrl = await this.s3Service.getFile(user.avatar, 'user_avatars');
+      } catch (error) {
+        console.warn('Failed to generate avatar URL:', error);
+      }
+    }
+
+    // Format response data according to UserProfileData interface
+    const responseData: UserProfileData = {
+      _id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      DOB: user.DOB,
+      gender: user.gender,
+      avatar: avatarUrl, // Return the signed URL
+      isBlocked: user.isBlocked,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      lastLogin: user.lastLogin
+    };
+
+    return { user: responseData };
   }
 
-  private extractPublicIdFromUrl(url: string): string | null {
+  private extractFileNameFromUrl(url: string): string | null {
     try {
-      // Extract public_id from cloudinary URL
-      const matches = url.match(/\/v\d+\/(.+)\./);
-      return matches ? matches[1] : null;
+      // If it's just a filename (not a full URL), return it as is
+      if (!url.includes('http')) {
+        return url;
+      }
+      
+      // Extract filename from S3 URL
+      const urlParts = url.split('/');
+      return urlParts[urlParts.length - 1];
     } catch (error) {
-      console.error('Error extracting public ID:', error);
+      console.error('Error extracting filename:', error);
       return null;
     }
   }

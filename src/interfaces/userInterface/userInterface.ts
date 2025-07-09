@@ -33,13 +33,22 @@ export interface User {
     lastLogin?: Date;
 }
 
+// src/types/common.ts
+export interface CropData {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 // Profile update data interface
 export interface UpdateProfileData {
-    name?: string;
-    phone?: string;
-    DOB?: string | Date;
-    gender?: 'male' | 'female' | 'other';
-    avatar?: string;
+  name?: string;
+  phone?: string;
+  DOB?: string;
+  gender?: 'male' | 'female' | 'other';
+  avatar?: Express.Multer.File | string | null; // Added string to handle filename assignment
+  cropData?: CropData;
 }
 
 // User creation interfaces
@@ -60,17 +69,17 @@ export interface NewUserType {
 
 // Profile data for responses
 export interface UserProfileData {
-    _id: string;
-    name: string;
-    email: string;
-    phone: string;
-    DOB?: Date;
-    gender?: 'male' | 'female' | 'other';
-    avatar?: string;
-    isBlocked?: boolean;
-    createdAt?: Date;
-    updatedAt?: Date;
-    lastLogin?: Date;
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  DOB?: Date;
+  gender?: 'male' | 'female' | 'other';
+  avatar?: string | null; // Changed from string | undefined to string | null
+  isBlocked?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+  lastLogin?: Date;
 }
 
 export interface Categories{

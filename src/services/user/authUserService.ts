@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import { S3Service } from "../../utils/s3";
 import { IAuthService } from "../../interfaces/user/userAuthServiceInterface";
 import { IAuthRepository } from "../../interfaces/user/userAuthRepoInterface";
 import sendMail from "../../config/emailConfig";
@@ -13,10 +14,12 @@ dotenv.config();
 
 export class AuthService implements IAuthService {
   private AuthRepository: IAuthRepository;
+  private s3Service: S3Service;
   private saltRounds: number = 10;
 
   constructor(AuthRepository: IAuthRepository) {
     this.AuthRepository = AuthRepository;
+    this.s3Service = new S3Service();
   }
 
   private async sendOTP(email: string): Promise<void> {
@@ -120,8 +123,17 @@ export class AuthService implements IAuthService {
       userData.email,
       userData.password
     );
-    console.log(loggedUser)
+    console.log(loggedUser);
     const { _id, email, name, phone, DOB, gender, avatar } = loggedUser;
+
+    let avatarUrl = null;
+    if (avatar) {
+      try {
+        avatarUrl = await this.s3Service.getFile(avatar, "user_avatars");
+      } catch (error) {
+        console.warn("Failed to generate avatar URL:", error);
+      }
+    }
 
     const accessToken = jwt.sign(
       { id: _id, email, role: "user" },
@@ -138,7 +150,7 @@ export class AuthService implements IAuthService {
     return {
       accessToken,
       refreshToken,
-      user: { _id, name, email, phone, DOB, gender, avatar },
+      user: { _id, name, email, phone, DOB, gender, avatar: avatarUrl, },
     };
   }
 

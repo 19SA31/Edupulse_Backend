@@ -1,7 +1,7 @@
 import { Document } from "mongoose";
 import {
-  userType,
-  UserProfile,
+  User,
+  UserProfileData,
   CreateUserType,
 } from "../userInterface/userInterface";
 
@@ -12,9 +12,9 @@ export interface IAuthRepository {
   ): Promise<{ existEmail: boolean; existPhone: boolean }>;
   createUser(
     userData: CreateUserType
-  ): Promise<Document<unknown, any, any> & userType>;
+  ): Promise<Document<unknown, any, any> & User>;
   saveOTP(email: string, OTP: string): Promise<void>;
   verifyOtp(email: string, otp: string): Promise<boolean>;
-  verifyUser(email: string, password: string): Promise<UserProfile>;
+  verifyUser(email: string, password: string): Promise<UserProfileData>;
   resetPassword(email: string, password: string): Promise<void>;
 }

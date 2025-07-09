@@ -1,5 +1,6 @@
 // routes/userRoutes.ts
 import express from 'express';
+import multer from 'multer';
 import { AuthController } from '../../controllers/user/Auth';
 import { AuthService } from '../../services/user/authUserService';
 import { AuthUserRepository } from '../../repositories/user/authUserRepo';
@@ -7,9 +8,31 @@ import UserController from '../../controllers/user/UserController';
 import UserService from '../../services/user/userService';
 import UserRepository from '../../repositories/user/userRepo';
 import { verifyToken } from '../../utils/jwt';
-import upload from '../../config/multerConfig'; // Import multer config
+
 
 const userRoute = express.Router();
+
+
+// Multer configuration for file uploads
+const storage = multer.memoryStorage();
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Only allow image files
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      const error = new Error('Only image files are allowed') as any;
+      cb(error, false);
+    }
+  }
+});
+
+// Single file upload for avatar (matches the frontend field name)
+const uploadAvatar = upload.single('avatar');
 
 // Auth instances
 const AuthRepositoryInstance = new AuthUserRepository();
@@ -31,7 +54,7 @@ userRoute.patch('/reset-password', AuthControllerInstance.resetPassword.bind(Aut
 // Profile routes
 userRoute.put('/profile/update-profile', 
   verifyToken('user'), 
-  upload.single('avatar'), 
+  uploadAvatar,
   userController.updateProfile.bind(userController)
 );
 
