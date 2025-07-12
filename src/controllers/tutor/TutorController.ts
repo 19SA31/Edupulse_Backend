@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { ResponseModel } from "../../models/ResponseModel";
 import { ITutorService } from "../../interfaces/tutor/tutorServiceInterface";
+import { TutorMapper } from "../../mappers/tutor/TutorMapper";
 
 export class TutorController {
   private tutorService: ITutorService;
@@ -14,11 +15,12 @@ export class TutorController {
     res: Response
   ): Promise<void> {
     try {
-      console.log("inside submitverificationdocs tutor")
+      console.log("inside submitverificationdocs tutor");
       
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       const { email, phone } = req.body;
-      console.log(files,email,phone)
+      console.log(files, email, phone);
+
       if (!files?.degree || !files?.aadharFront || !files?.aadharBack) {
         res
           .status(400)
@@ -38,17 +40,11 @@ export class TutorController {
         return;
       }
 
-      const documentFiles = {
-        degree: files.degree[0],
-        aadharFront: files.aadharFront[0],
-        aadharBack: files.aadharBack[0],
-      };
+      // Map request to DTO
+      const requestDTO = TutorMapper.mapSubmitVerificationDocumentsRequest(req);
 
-      const result = await this.tutorService.submitVerificationDocuments(
-        documentFiles,
-        email,
-        phone
-      );
+      // Call service with DTO
+      const result = await this.tutorService.submitVerificationDocuments(requestDTO);
 
       if (result.success) {
         res
@@ -87,10 +83,11 @@ export class TutorController {
         return;
       }
 
-      const result = await this.tutorService.getVerificationStatus(
-        email as string,
-        phone as string
-      );
+      // Map request to DTO
+      const requestDTO = TutorMapper.mapGetVerificationStatusRequest(req);
+
+      // Call service with DTO
+      const result = await this.tutorService.getVerificationStatus(requestDTO);
 
       if (result.success) {
         res
@@ -127,7 +124,11 @@ export class TutorController {
         return;
       }
 
-      const result = await this.tutorService.getVerificationDocuments(tutorId);
+      // Map request to DTO
+      const requestDTO = TutorMapper.mapGetVerificationDocumentsRequest(req);
+
+      // Call service with DTO
+      const result = await this.tutorService.getVerificationDocuments(requestDTO);
 
       if (result.success) {
         res

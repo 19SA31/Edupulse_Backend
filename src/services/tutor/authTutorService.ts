@@ -4,7 +4,19 @@ import { ITutorAuthRepository } from "../../interfaces/tutor/tutorAuthRepoInterf
 import sendMail from "../../config/emailConfig";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
-import { CreateTutorType, GetTutorData } from "../../interfaces/tutorInterface/tutorInterface";
+import {
+  CreateTutorType,
+  GetTutorData,
+} from "../../interfaces/tutorInterface/tutorInterface";
+import {
+  SignUpServiceDTO,
+  OtpCheckServiceDTO,
+  LoginServiceDTO,
+  LoginServiceResponseDTO,
+  ResetPasswordServiceDTO,
+  TutorDataDTO,
+} from "../../dto/tutor/TutorAuthDTO";
+import { TutorAuthMapper } from "../../mappers/tutor/TutorAuthMapper";
 
 dotenv.config();
 
@@ -22,7 +34,7 @@ export class AuthTutorService implements ITutorAuthInterface {
     ).toString();
     const hashedOTP: string = await bcrypt.hash(GeneratedOTP, this.saltRounds);
     console.log("inside sendOTP:", GeneratedOTP);
-    
+
     const subject = "OTP Verification";
     const sendMailStatus: boolean = await sendMail(
       email,
@@ -37,11 +49,7 @@ export class AuthTutorService implements ITutorAuthInterface {
     await this.AuthRepository.saveOTP(email, hashedOTP);
   }
 
-  async signUp(tutorData: {
-    email: string;
-    phone?: string;
-    isForgot?: boolean;
-  }): Promise<boolean> {
+  async signUp(tutorData: SignUpServiceDTO): Promise<boolean> {
     console.log("Reached tutor signup");
 
     const response = await this.AuthRepository.existTutor(
@@ -57,35 +65,28 @@ export class AuthTutorService implements ITutorAuthInterface {
       await this.sendOTP(tutorData.email);
       return true;
     }
-    
+
     if (response.existEmail) {
       throw new Error("Email already in use");
     }
     if (response.existPhone) {
       throw new Error("Phone already in use");
     }
-    
+
     await this.sendOTP(tutorData.email);
     return true;
   }
 
-  async otpCheck(tutorData: {
-    name?: string;
-    email: string;
-    phone?: string;
-    password?: string;
-    otp: string;
-    isForgot?: boolean;
-  }): Promise<boolean> {
+  async otpCheck(tutorData: OtpCheckServiceDTO): Promise<boolean> {
     console.log("Reached otpCheck service");
 
     const isOtpValid = await this.AuthRepository.verifyOtp(
       tutorData.email,
       tutorData.otp
     );
-    
+
     console.log("verifyotp response in auth service: ", isOtpValid);
-    
+
     if (!isOtpValid) {
       throw new Error("Invalid OTP");
     }
@@ -115,26 +116,29 @@ export class AuthTutorService implements ITutorAuthInterface {
     return true;
   }
 
-  async loginService(tutorData: { 
-    email: string; 
-    password: string 
-  }): Promise<{ 
-    accessToken: string; 
-    refreshToken: string;
-    tutor: GetTutorData; 
-  }> {
+  async loginService(
+    tutorData: LoginServiceDTO
+  ): Promise<LoginServiceResponseDTO> {
     console.log("Reached login service");
 
     const loggedTutor = await this.AuthRepository.verifyTutor(
-      tutorData.email, 
+      tutorData.email,
       tutorData.password
     );
-    
+
     if (!loggedTutor) {
       throw new Error("Invalid email or password");
     }
 
     const { _id, email, name, isVerified } = loggedTutor;
+
+    const doc = await this.AuthRepository.checkVerificationStatus(_id);
+
+    if (!doc) {
+      throw new Error("Verification document not found");
+    }
+    console.log("inside service :",doc)
+    const { verificationStatus } = doc;
 
     const accessToken = jwt.sign(
       { id: _id, email, role: "tutor" },
@@ -148,25 +152,29 @@ export class AuthTutorService implements ITutorAuthInterface {
       { expiresIn: "7d" }
     );
 
-    return { 
-      accessToken, 
-      refreshToken,
-      tutor: { id: _id, name, email, isVerified }
+    const tutorResponseData: GetTutorData = {
+      id: _id,
+      name,
+      email,
+      isVerified,
+      verificationStatus: verificationStatus,
     };
+
+    return TutorAuthMapper.mapLoginServiceResponse(
+      accessToken,
+      refreshToken,
+      tutorResponseData
+    );
   }
 
-  async resetPasswordService(tutorData: {
-    email: string;
-    password: string;
-  }): Promise<void> {
+  async resetPasswordService(
+    tutorData: ResetPasswordServiceDTO
+  ): Promise<void> {
     const hashedPassword = await bcrypt.hash(
       tutorData.password,
       this.saltRounds
     );
-    
-    await this.AuthRepository.resetPassword(
-      tutorData.email,
-      hashedPassword
-    );
+
+    await this.AuthRepository.resetPassword(tutorData.email, hashedPassword);
   }
 }

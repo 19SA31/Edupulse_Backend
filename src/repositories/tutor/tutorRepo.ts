@@ -3,6 +3,13 @@ import { ITutor, ITutorDocs } from '../../interfaces/tutorInterface/tutorInterfa
 import { ITutorRepository } from '../../interfaces/tutor/tutorRepoInterface';
 import { TutorDocs } from '../../models/TutorDocs';
 import TutorModel from '../../models/Tutors';
+import { TutorMapper } from '../../mappers/tutor/TutorMapper';
+import {
+  TutorServiceDTO,
+  VerificationDocsServiceDTO,
+  CreateVerificationDocsDTO,
+  UpdateVerificationDocsDTO
+} from '../../dto/tutor/TutorDTO';
 
 export class TutorRepository extends BaseRepository<ITutor> implements ITutorRepository {
   private tutorDocsModel: typeof TutorDocs;
@@ -12,8 +19,7 @@ export class TutorRepository extends BaseRepository<ITutor> implements ITutorRep
     this.tutorDocsModel = TutorDocs; 
   }
 
-
-  async findTutorByEmailOrPhone(email?: string, phone?: string): Promise<ITutor | null> {
+  async findTutorByEmailOrPhone(email?: string, phone?: string): Promise<TutorServiceDTO | null> {
     try {
       const query: any = {};
       
@@ -27,81 +33,87 @@ export class TutorRepository extends BaseRepository<ITutor> implements ITutorRep
         return null;
       }
 
-      return await this.findOne(query);
+      const tutor = await this.findOne(query);
+      return tutor ? TutorMapper.mapTutorToServiceDTO(tutor) : null;
     } catch (error) {
       console.error('Error finding tutor by email or phone:', error);
       throw error;
     }
   }
 
-  async findTutorById(tutorId: string): Promise<ITutor | null> {
+  async findTutorById(tutorId: string): Promise<TutorServiceDTO | null> {
     try {
-      return await this.findOne({tutorId});
+      const tutor = await this.findOne({tutorId});
+      return tutor ? TutorMapper.mapTutorToServiceDTO(tutor) : null;
     } catch (error) {
       console.error('Error finding tutor by ID:', error);
       throw error;
     }
   }
 
-  async createTutor(tutorData: Partial<ITutor>): Promise<ITutor> {
+  async createTutor(tutorData: Partial<ITutor>): Promise<TutorServiceDTO> {
     try {
-      return await this.create(tutorData as ITutor);
+      const tutor = await this.create(tutorData as ITutor);
+      return TutorMapper.mapTutorToServiceDTO(tutor);
     } catch (error) {
       console.error('Error creating tutor:', error);
       throw error;
     }
   }
 
-  async updateTutor(tutorId: string, updateData: Partial<ITutor>): Promise<ITutor | null> {
+  async updateTutor(tutorId: string, updateData: Partial<ITutor>): Promise<TutorServiceDTO | null> {
     try {
-      return await this.update(tutorId, updateData);
+      const tutor = await this.update(tutorId, updateData);
+      return tutor ? TutorMapper.mapTutorToServiceDTO(tutor) : null;
     } catch (error) {
       console.error('Error updating tutor:', error);
       throw error;
     }
   }
 
-  
-
   // ============================================================================
   // VERIFICATION DOCUMENTS OPERATIONS
   // ============================================================================
 
-  async findVerificationDocsByTutorId(tutorId: string): Promise<ITutorDocs | null> {
+  async findVerificationDocsByTutorId(tutorId: string): Promise<VerificationDocsServiceDTO | null> {
     try {
-      return await this.tutorDocsModel.findOne({ tutorId }).exec();
+      const docs = await this.tutorDocsModel.findOne({ tutorId }).exec();
+      return docs ? TutorMapper.mapVerificationDocsToServiceDTO(docs) : null;
     } catch (error) {
       console.error('Error finding verification docs by tutor ID:', error);
       throw error;
     }
   }
 
-  async createVerificationDocs(documentData: Partial<ITutorDocs>): Promise<ITutorDocs> {
+  async createVerificationDocs(documentData: CreateVerificationDocsDTO): Promise<VerificationDocsServiceDTO> {
     try {
       const verificationDocs = new this.tutorDocsModel(documentData);
-      return await verificationDocs.save();
+      const savedDocs = await verificationDocs.save();
+      return TutorMapper.mapVerificationDocsToServiceDTO(savedDocs);
     } catch (error) {
       console.error('Error creating verification documents:', error);
       throw error;
     }
   }
 
-  async updateVerificationDocs(docId: string, updateData: Partial<ITutorDocs>): Promise<ITutorDocs | null> {
+  async updateVerificationDocs(docId: string, updateData: UpdateVerificationDocsDTO): Promise<VerificationDocsServiceDTO | null> {
     try {
-      return await this.tutorDocsModel.findByIdAndUpdate(
+      const updatedDocs = await this.tutorDocsModel.findByIdAndUpdate(
         docId,
         updateData,
         { new: true, runValidators: true }
       ).exec();
+      return updatedDocs ? TutorMapper.mapVerificationDocsToServiceDTO(updatedDocs) : null;
     } catch (error) {
       console.error('Error updating verification documents:', error);
       throw error;
     }
   }
 
-  async findVerificationDocsByStatus(status: 'pending' | 'approved' | 'rejected'): Promise<ITutorDocs[]> {
+  async findVerificationDocsByStatus(status: 'pending' | 'approved' | 'rejected'): Promise<VerificationDocsServiceDTO[]> {
     try {
-      return await this.tutorDocsModel.find({ verificationStatus: status }).exec();
+      const docs = await this.tutorDocsModel.find({ verificationStatus: status }).exec();
+      return TutorMapper.mapVerificationDocsArrayToServiceDTO(docs);
     } catch (error) {
       console.error('Error finding verification docs by status:', error);
       throw error;
@@ -112,14 +124,15 @@ export class TutorRepository extends BaseRepository<ITutor> implements ITutorRep
     filter: object,
     skip: number,
     limit: number
-  ): Promise<ITutorDocs[]> {
+  ): Promise<VerificationDocsServiceDTO[]> {
     try {
-      return await this.tutorDocsModel
+      const docs = await this.tutorDocsModel
         .find(filter)
         .skip(skip)
         .limit(limit)
         .sort({ submittedAt: -1 })
         .exec();
+      return TutorMapper.mapVerificationDocsArrayToServiceDTO(docs);
     } catch (error) {
       console.error('Error finding verification docs with pagination:', error);
       throw error;
@@ -139,9 +152,9 @@ export class TutorRepository extends BaseRepository<ITutor> implements ITutorRep
     docId: string,
     status: 'pending' | 'approved' | 'rejected',
     rejectionReason?: string
-  ): Promise<ITutorDocs | null> {
+  ): Promise<VerificationDocsServiceDTO | null> {
     try {
-      const updateData: Partial<ITutorDocs> = {
+      const updateData: UpdateVerificationDocsDTO = {
         verificationStatus: status,
         reviewedAt: new Date()
       };
@@ -150,11 +163,13 @@ export class TutorRepository extends BaseRepository<ITutor> implements ITutorRep
         updateData.rejectionReason = rejectionReason;
       }
 
-      return await this.tutorDocsModel.findByIdAndUpdate(
+      const updatedDocs = await this.tutorDocsModel.findByIdAndUpdate(
         docId,
         updateData,
         { new: true, runValidators: true }
       ).exec();
+
+      return updatedDocs ? TutorMapper.mapVerificationDocsToServiceDTO(updatedDocs) : null;
     } catch (error) {
       console.error('Error updating verification status:', error);
       throw error;
@@ -185,7 +200,6 @@ export class TutorRepository extends BaseRepository<ITutor> implements ITutorRep
       throw error;
     }
   }
-
 
   async findTutorsWithVerificationStatus(
     verificationStatus?: 'pending' | 'approved' | 'rejected'

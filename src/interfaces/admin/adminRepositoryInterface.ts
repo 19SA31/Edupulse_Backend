@@ -1,36 +1,45 @@
+// src/interfaces/admin/adminRepositoryInterface.ts
+import { UserDto, PaginatedUsersDto } from "../../dto/admin/UserDTO";
+import { TutorDto, PaginatedTutorsDto } from "../../dto/admin/TutorDTO";
 import {
-  User,
-  Tutor,
-  Category,
-} from "../../interfaces/adminInterface/adminInterface";
+  CategoryDto,
+  PaginatedCategoriesDto,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+} from "../../dto/admin/CategoryDTO";
+import { ICategory } from "../adminInterface/adminInterface"; 
 
 export interface IAdminRepositoryInterface {
-  // User methods - return raw data, not ResponseModel
+  // User methods - return DTOs
   getAllUsers(
     skip: number,
     limit: number,
     search: string
-  ): Promise<{ users: User[]; totalPages: number }>;
-  changeUserStatus(id: string): Promise<User>;
+  ): Promise<{ users: UserDto[]; totalPages: number; totalCount: number }>;
+  changeUserStatus(id: string): Promise<UserDto>;
 
-  // Tutor methods - return raw data, not ResponseModel
+  // Tutor methods - return DTOs
   getAllTutors(
     skip: number,
     limit: number,
     search: string
-  ): Promise<{ tutors: Tutor[]; totalPages: number }>;
-  changeTutorStatus(id: string): Promise<Tutor>;
+  ): Promise<{ tutors: TutorDto[]; totalPages: number; totalCount: number }>;
+  changeTutorStatus(id: string): Promise<TutorDto>;
 
-  // Category methods - return raw data, not ResponseModel
-  addCategory(data: Category): Promise<Category>;
+  // Category methods - return DTOs
+  addCategory(data: CreateCategoryDto): Promise<CategoryDto>;
   getAllCategories(
-    skip: number,
-    limit: number,
-    search: string
-  ): Promise<{ category: Category[]; totalPages: number }>;
+  skip: number,
+  limit: number,
+  search: string
+): Promise<{
+  categories: ICategory[]; 
+  totalPages: number;
+  totalCount: number;
+}>;
   updateCategory(
     categoryId: string,
-    updateData: { name: string; description: string }
-  ): Promise<Category>;
-  toggleCategoryStatus(categoryId: string): Promise<Category>;
+    updateData: UpdateCategoryDto
+  ): Promise<CategoryDto>;
+  toggleCategoryStatus(categoryId: string): Promise<CategoryDto>;
 }

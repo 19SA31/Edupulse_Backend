@@ -1,10 +1,12 @@
 import { Document } from "mongoose";
 import tutorModel from "../../models/Tutors";
 import OtpModel from "../../models/OtpSchema";
+import { TutorDocs } from "../../models/TutorDocs";
 import {
   tutorType,
   TutorProfile,
   CreateTutorType,
+  ITutorDocs,
 } from "../../interfaces/tutorInterface/tutorInterface";
 import bcrypt from "bcrypt";
 import BaseRepository from "../BaseRepository";
@@ -15,6 +17,7 @@ export class AuthTutorRepository
   implements ITutorAuthRepository
 {
   private _otpRepository = new BaseRepository<any>(OtpModel);
+  private _tutorDocRepo=new BaseRepository<any>(TutorDocs)
 
   constructor() {
     super(tutorModel);
@@ -125,6 +128,20 @@ export class AuthTutorRepository
     } catch (error) {
       console.error("Error in reset password repo:", error);
       throw new Error("Error resetting password");
+    }
+  }
+
+  async checkVerificationStatus(id: string): Promise<ITutorDocs | null> {
+    try {
+      console.log(id)
+      const status = await this._tutorDocRepo.findOne({tutorId:id})
+      if(!status){
+        throw new Error("Tutor Not found")
+      }
+      return status
+    } catch (error) {
+      console.error("error in check verification status:",error)
+      throw new Error("error in checking verification status")
     }
   }
 }

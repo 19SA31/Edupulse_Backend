@@ -1,6 +1,9 @@
+
 import { Document, Model } from "mongoose";
-import adminModel from '../../models/Admin'
-import { IAdminAuthRepository } from "../../interfaces/admin/adminAuthRepoInterface"; 
+import adminModel from '../../models/Admin';
+import { IAdminAuthRepository } from "../../interfaces/admin/adminAuthRepoInterface";
+import { AdminVerificationResultDTO } from "../../dto/admin/AdminAuthDTO";
+import { AdminAuthMapper } from "../../mappers/admin/AdminAuthMapper";
 import BaseRepository from "../BaseRepository";
 
 export class AuthAdminRepository extends BaseRepository<any> implements IAdminAuthRepository {
@@ -9,13 +12,10 @@ export class AuthAdminRepository extends BaseRepository<any> implements IAdminAu
         super(adminModel); 
     }
 
-    async verifyAdmin(email: string, password: string): Promise<{
-        isValid: boolean;
-        admin?: any;
-        error?: string;
-    }> {
+    async verifyAdmin(email: string, password: string): Promise<AdminVerificationResultDTO> {
         try {
             const userData = await this.findOne({ email });
+            
             if (!userData) {
                 return {
                     isValid: false,
@@ -31,9 +31,12 @@ export class AuthAdminRepository extends BaseRepository<any> implements IAdminAu
                 };
             }
 
+            // Map model to domain object
+            const adminDomain = AdminAuthMapper.mapModelToDomain(userData);
+
             return {
                 isValid: true,
-                admin: userData
+                admin: adminDomain
             };
         } catch (error: any) {
             return {

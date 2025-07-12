@@ -9,6 +9,8 @@ import {
 import bcrypt from "bcrypt";
 import BaseRepository from "../BaseRepository";
 import { IAuthRepository } from "../../interfaces/user/userAuthRepoInterface";
+import { UserExistenceDto } from "../../dto/user/UserAuthDTO";
+import { AuthMapper } from "../../mappers/user/UserAuthMapper";
 
 export class AuthUserRepository
   extends BaseRepository<any>
@@ -20,27 +22,19 @@ export class AuthUserRepository
     super(userModel);
   }
 
-  async existUser(
-    email: string,
-    phone?: string
-  ): Promise<{ existEmail: boolean; existPhone: boolean }> {
+  async existUser(email: string, phone?: string): Promise<UserExistenceDto> {
     const [emailExist, phoneExist] = await Promise.all([
       this.findOne({ email }),
       phone ? this.findOne({ phone }) : Promise.resolve(null),
     ]);
 
-    return {
-      existEmail: !!emailExist,
-      existPhone: phone ? !!phoneExist : false,
-    };
+    return AuthMapper.mapToUserExistence(!!emailExist, phone ? !!phoneExist : false);
   }
 
   async createUser(
     userData: CreateUserType
   ): Promise<Document<unknown, any, any> & User> {
-    const user = (await this.create(userData)) as Document<unknown, any, any> &
-      User;
-
+    const user = (await this.create(userData)) as Document<unknown, any, any> & User;
     return user;
   }
 

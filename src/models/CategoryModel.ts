@@ -13,6 +13,14 @@ const categorySchema = new Schema <ICategory>({
     isListed:{
         type:Boolean,
         default:true
+    },
+    createdAt:{
+        type: Date,
+        default: new Date()
+    },
+    updatedAt:{
+        type: Date,
+        default: new Date()
     }
 })
 

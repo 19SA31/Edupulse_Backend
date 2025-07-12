@@ -68,6 +68,8 @@ export interface GetTutorData {
   name: string;
   email: string;
   isVerified: boolean;
+  verificationStatus: 'pending' | 'approved' | 'rejected';
+
 }
 
 // ============================================================================

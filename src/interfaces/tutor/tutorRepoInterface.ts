@@ -1,16 +1,22 @@
 import { ITutor, ITutorDocs } from '../tutorInterface/tutorInterface';
+import {
+  TutorServiceDTO,
+  VerificationDocsServiceDTO,
+  CreateVerificationDocsDTO,
+  UpdateVerificationDocsDTO
+} from '../../dto/tutor/TutorDTO';
 
 export interface ITutorRepository {
   // Tutor methods
-  findTutorByEmailOrPhone(email?: string, phone?: string): Promise<ITutor | null>;
+  findTutorByEmailOrPhone(email?: string, phone?: string): Promise<TutorServiceDTO | null>;
   
   // Verification documents methods
-  findVerificationDocsByTutorId(tutorId: string): Promise<ITutorDocs | null>;
-  createVerificationDocs(documentData: ITutorDocs): Promise<ITutorDocs>;
-  updateVerificationDocs(docId: string, updateData: Partial<ITutorDocs>): Promise<ITutorDocs | null>;
+  findVerificationDocsByTutorId(tutorId: string): Promise<VerificationDocsServiceDTO | null>;
+  createVerificationDocs(documentData: CreateVerificationDocsDTO): Promise<VerificationDocsServiceDTO>;
+  updateVerificationDocs(docId: string, updateData: UpdateVerificationDocsDTO): Promise<VerificationDocsServiceDTO | null>;
   
   // Status-based queries
-  findVerificationDocsByStatus(status: 'pending' | 'approved' | 'rejected'): Promise<ITutorDocs[]>;
+  findVerificationDocsByStatus(status: 'pending' | 'approved' | 'rejected'): Promise<VerificationDocsServiceDTO[]>;
   countVerificationDocsByStatus(status: 'pending' | 'approved' | 'rejected'): Promise<number>;
   
   // Pagination
@@ -18,14 +24,14 @@ export interface ITutorRepository {
     filter: object,
     skip: number,
     limit: number
-  ): Promise<ITutorDocs[]>;
+  ): Promise<VerificationDocsServiceDTO[]>;
   
   // Status updates
   updateVerificationStatus(
     docId: string,
     status: 'pending' | 'approved' | 'rejected',
     rejectionReason?: string
-  ): Promise<ITutorDocs | null>;
+  ): Promise<VerificationDocsServiceDTO | null>;
   
   // Populated queries
   findVerificationDocsWithTutorInfo(tutorId: string): Promise<any>;

@@ -1,7 +1,12 @@
+// src/controllers/admin/AdminController.ts
 import { Request, Response } from "express";
 import HTTP_statusCode from "../../enums/HttpStatusCode";
 import { IAdminService } from "../../interfaces/admin/adminServiceInterface";
 import { ResponseModel } from "../../models/ResponseModel";
+import { UserMapper } from "../../mappers/admin/UserMapper";
+import { TutorMapper } from "../../mappers/admin/TutorMapper";
+import { CategoryMapper } from "../../mappers/admin/CategoryMapper";
+import { CreateCategoryDto, UpdateCategoryDto } from "../../dto/admin/CategoryDTO";
 
 export class AdminController {
   private AdminService: IAdminService;
@@ -18,16 +23,19 @@ export class AdminController {
       const pageLimit = parseInt(limit as string, 10);
       const skip = (pageNumber - 1) * pageLimit;
 
-      const { users, totalPages } = await this.AdminService.getAllUsers(
+      const { users, totalPages, totalCount } = await this.AdminService.getAllUsers(
         skip,
         pageLimit,
         search
       );
 
+      // Create paginated DTO
+      const paginatedUsers = UserMapper.toPaginatedDto(users, totalPages, pageNumber, totalCount);
+
       const response = new ResponseModel(
         true,
         "Fetch users successfully",
-        { users, totalPages }
+        paginatedUsers
       );
 
       res.status(HTTP_statusCode.OK).json(response);
@@ -52,16 +60,19 @@ export class AdminController {
       const pageLimit = parseInt(limit as string, 10);
       const skip = (pageNumber - 1) * pageLimit;
 
-      const result = await this.AdminService.getAllTutors(
+      const { tutors, totalPages, totalCount } = await this.AdminService.getAllTutors(
         skip,
         pageLimit,
         search
       );
 
+      // Create paginated DTO
+      const paginatedTutors = TutorMapper.toPaginatedDto(tutors, totalPages, pageNumber, totalCount);
+
       const response = new ResponseModel(
         true,
         "Fetched tutors successfully",
-        result
+        paginatedTutors
       );
 
       res.status(HTTP_statusCode.OK).json(response);
@@ -82,12 +93,12 @@ export class AdminController {
     try {
       const id = req.params.userId;
 
-      const user = await this.AdminService.listUnlistUser(id);
+      const userDto = await this.AdminService.listUnlistUser(id);
 
       const response = new ResponseModel(
         true,
         "User updated successfully",
-        user
+        userDto
       );
 
       res.status(HTTP_statusCode.OK).json(response);
@@ -116,12 +127,12 @@ export class AdminController {
     try {
       const id = req.params.tutorId;
 
-      const tutor = await this.AdminService.listUnlistTutor(id);
+      const tutorDto = await this.AdminService.listUnlistTutor(id);
 
       const response = new ResponseModel(
         true,
         "Tutor updated successfully",
-        tutor
+        tutorDto
       );
 
       res.status(HTTP_statusCode.OK).json(response);
@@ -149,12 +160,14 @@ export class AdminController {
   async addCategory(req: Request, res: Response): Promise<void> {
     try {
       console.log("inside admin controller of add category");
-      const category = await this.AdminService.addCourseCategory(req.body);
+      
+      const createCategoryDto: CreateCategoryDto = req.body;
+      const categoryDto = await this.AdminService.addCourseCategory(createCategoryDto);
 
       const response = new ResponseModel(
         true,
         "Category created successfully",
-        category
+        categoryDto
       );
 
       res.status(HTTP_statusCode.updated).json(response);
@@ -187,16 +200,19 @@ export class AdminController {
       const pageLimit = parseInt(limit as string, 10);
       const skip = (pageNumber - 1) * pageLimit;
 
-      const { category, totalPages } = await this.AdminService.getAllCategories(
+      const { categories, totalPages, totalCount } = await this.AdminService.getAllCategories(
         skip,
         pageLimit,
         search
       );
 
+     console.log("inside get all categories",categories)
+      const paginatedCategories = CategoryMapper.toPaginatedDto(categories, totalPages, pageNumber, totalCount);
+      console.log(paginatedCategories)
       const response = new ResponseModel(
         true,
         "Fetched categories successfully",
-        { category, totalPages }
+        paginatedCategories
       );
 
       res.status(HTTP_statusCode.OK).json(response);
@@ -217,17 +233,17 @@ export class AdminController {
     try {
       console.log("inside admin controller of edit category");
       const categoryId = req.params.id;
-      const updateData = req.body;
+      const updateCategoryDto: UpdateCategoryDto = req.body;
 
-      const updatedCategory = await this.AdminService.updateCourseCategory(
+      const categoryDto = await this.AdminService.updateCourseCategory(
         categoryId,
-        updateData
+        updateCategoryDto
       );
 
       const response = new ResponseModel(
         true,
         "Category updated successfully",
-        updatedCategory
+        categoryDto
       );
 
       res.status(HTTP_statusCode.OK).json(response);
@@ -264,12 +280,12 @@ export class AdminController {
       console.log("inside toggle category status");
       const categoryId = req.params.id;
 
-      const updatedCategory = await this.AdminService.toggleCategoryListStatus(categoryId);
+      const categoryDto = await this.AdminService.toggleCategoryListStatus(categoryId);
 
       const response = new ResponseModel(
         true,
         "Category status updated successfully",
-        updatedCategory
+        categoryDto
       );
 
       res.status(HTTP_statusCode.OK).json(response);

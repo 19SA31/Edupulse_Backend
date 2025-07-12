@@ -1,15 +1,22 @@
+// src/repositories/admin/AdminRepository.ts
 import { Messages } from "../../enums/messages";
 import BaseRepository from "../BaseRepository";
 import userModel from "../../models/Users";
 import tutorModel from "../../models/Tutors";
 import adminModel from "../../models/Admin";
 import categoryModel from "../../models/CategoryModel";
-import {
-  Category,
-  Tutor,
-  User,
-} from "../../interfaces/adminInterface/adminInterface";
+import { ICategory } from "../../interfaces/adminInterface/adminInterface";
 import { IAdminRepositoryInterface } from "../../interfaces/admin/adminRepositoryInterface";
+import { UserMapper } from "../../mappers/admin/UserMapper";
+import { TutorMapper } from "../../mappers/admin/TutorMapper";
+import { CategoryMapper } from "../../mappers/admin/CategoryMapper";
+import { UserDto } from "../../dto/admin/UserDTO";
+import { TutorDto } from "../../dto/admin/TutorDTO";
+import {
+  CategoryDto,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+} from "../../dto/admin/CategoryDTO";
 
 export class AdminRepository
   extends BaseRepository<any>
@@ -27,7 +34,7 @@ export class AdminRepository
     skip: number,
     limit: number,
     search: string
-  ): Promise<{ users: User[]; totalPages: number }> {
+  ): Promise<{ users: UserDto[]; totalPages: number; totalCount: number }> {
     try {
       const searchFilter = search
         ? {
@@ -46,7 +53,10 @@ export class AdminRepository
 
       const totalPages = Math.ceil(totalCount / limit);
 
-      return { users, totalPages };
+      // Map to DTOs
+      const userDtos = UserMapper.toDtoArray(users);
+
+      return { users: userDtos, totalPages, totalCount };
     } catch (error: any) {
       console.error("Error in AdminRepository getAllUsers:", error.message);
       throw new Error(`Failed to fetch users: ${error.message}`);
@@ -57,7 +67,7 @@ export class AdminRepository
     skip: number,
     limit: number,
     search: string
-  ): Promise<{ tutors: Tutor[]; totalPages: number }> {
+  ): Promise<{ tutors: TutorDto[]; totalPages: number; totalCount: number }> {
     try {
       const searchFilter = search
         ? {
@@ -77,14 +87,17 @@ export class AdminRepository
 
       const totalPages = Math.ceil(totalCount / limit);
 
-      return { tutors, totalPages };
+      // Map to DTOs
+      const tutorDtos = TutorMapper.toDtoArray(tutors);
+
+      return { tutors: tutorDtos, totalPages, totalCount };
     } catch (error: any) {
       console.error("Error in AdminRepository getAllTutors:", error.message);
       throw new Error(`Failed to fetch tutors: ${error.message}`);
     }
   }
 
-  async changeUserStatus(id: string): Promise<User> {
+  async changeUserStatus(id: string): Promise<UserDto> {
     try {
       const user = await this._userRepository.findOne({ _id: id });
       if (!user) {
@@ -94,14 +107,18 @@ export class AdminRepository
       user.isBlocked = !user.isBlocked;
       const updatedUser = await user.save();
 
-      return updatedUser;
+      // Map to DTO
+      return UserMapper.toDto(updatedUser);
     } catch (error: any) {
-      console.error("Error in AdminRepository changeUserStatus:", error.message);
+      console.error(
+        "Error in AdminRepository changeUserStatus:",
+        error.message
+      );
       throw error; // Re-throw to let service/controller handle
     }
   }
 
-  async changeTutorStatus(id: string): Promise<Tutor> {
+  async changeTutorStatus(id: string): Promise<TutorDto> {
     try {
       const tutor = await this._tutorRepository.findOne({ _id: id });
       if (!tutor) {
@@ -111,27 +128,36 @@ export class AdminRepository
       tutor.isBlocked = !tutor.isBlocked;
       const updatedTutor = await tutor.save();
 
-      return updatedTutor;
+      // Map to DTO
+      return TutorMapper.toDto(updatedTutor);
     } catch (error: any) {
-      console.error("Error in AdminRepository changeTutorStatus:", error.message);
+      console.error(
+        "Error in AdminRepository changeTutorStatus:",
+        error.message
+      );
       throw error; // Re-throw to let service/controller handle
     }
   }
 
-  async addCategory(data: Category): Promise<Category> {
+  async addCategory(data: CreateCategoryDto): Promise<CategoryDto> {
     try {
       // Check if a category with the same name already exists (case-insensitive)
       const existingCategory = await this._categoryRepository.findOne({
-        name: { $regex: new RegExp(`^${data.name}$`, 'i') }
+        name: { $regex: new RegExp(`^${data.name}$`, "i") },
       });
 
       if (existingCategory) {
         throw new Error(`Category with name '${data.name}' already exists`);
       }
 
+      // Convert DTO to domain model
+      const categoryData = CategoryMapper.fromCreateDto(data);
+
       // Create the new category if no duplicate exists
-      const newCategory = await this._categoryRepository.create(data as Category);
-      return newCategory;
+      const newCategory = await this._categoryRepository.create(categoryData);
+
+      // Map to DTO
+      return CategoryMapper.toDto(newCategory);
     } catch (error: any) {
       console.error("Error in AdminRepository addCategory:", error.message);
       throw error; // Re-throw to let service/controller handle
@@ -142,7 +168,11 @@ export class AdminRepository
     skip: number,
     limit: number,
     search: string
-  ): Promise<{ category: Category[]; totalPages: number }> {
+  ): Promise<{
+    categories: ICategory[]; // Return raw data
+    totalPages: number;
+    totalCount: number;
+  }> {
     try {
       const searchFilter = search
         ? {
@@ -161,61 +191,73 @@ export class AdminRepository
       );
 
       const totalPages = Math.ceil(totalCount / limit);
-      
-      return { category: categories, totalPages };
+
+      // Return raw categories without mapping
+      return { categories, totalPages, totalCount };
     } catch (error: any) {
-      console.error("Error in AdminRepository getAllCategories:", error.message);
+      console.error(
+        "Error in AdminRepository getAllCategories:",
+        error.message
+      );
       throw new Error(`Failed to fetch categories: ${error.message}`);
     }
   }
 
   async updateCategory(
     categoryId: string,
-    updateData: { name: string; description: string }
-  ): Promise<Category> {
+    updateData: UpdateCategoryDto
+  ): Promise<CategoryDto> {
     try {
       // Check if category exists
-      const existingCategory = await this._categoryRepository.findOne({ 
-        _id: categoryId 
+      const existingCategory = await this._categoryRepository.findOne({
+        _id: categoryId,
       });
-      
+
       if (!existingCategory) {
         throw new Error("Category not found");
       }
 
-      // Check if another category with the same name already exists (excluding current category)
-      const duplicateCategory = await this._categoryRepository.findOne({
-        name: { $regex: new RegExp(`^${updateData.name}$`, 'i') },
-        _id: { $ne: categoryId }
-      });
+      // Convert DTO to domain model
+      const domainUpdateData = CategoryMapper.fromUpdateDto(updateData);
 
-      if (duplicateCategory) {
-        throw new Error(`Category with name '${updateData.name}' already exists`);
+      // Check if another category with the same name already exists (excluding current category)
+      if (domainUpdateData.name) {
+        const duplicateCategory = await this._categoryRepository.findOne({
+          name: { $regex: new RegExp(`^${domainUpdateData.name}$`, "i") },
+          _id: { $ne: categoryId },
+        });
+
+        if (duplicateCategory) {
+          throw new Error(
+            `Category with name '${domainUpdateData.name}' already exists`
+          );
+        }
       }
 
       // Update the category using BaseRepository's update method
       const updatedCategory = await this._categoryRepository.update(
         categoryId,
-        updateData
+        domainUpdateData
       );
 
       if (!updatedCategory) {
         throw new Error("Failed to update category");
       }
 
-      return updatedCategory;
+      // Map to DTO
+      return CategoryMapper.toDto(updatedCategory);
     } catch (error: any) {
       console.error("Error in AdminRepository updateCategory:", error.message);
       throw error; // Re-throw to let service/controller handle
     }
   }
 
-  async toggleCategoryStatus(categoryId: string): Promise<Category> {
+  async toggleCategoryStatus(categoryId: string): Promise<CategoryDto> {
     try {
-      const category = await this._categoryRepository.findOne({ 
-        _id: categoryId 
+      const category = await this._categoryRepository.findOne({
+        _id: categoryId,
       });
-      
+
       if (!category) {
         throw new Error("Category not found");
       }
@@ -230,9 +272,13 @@ export class AdminRepository
         throw new Error("Failed to update category status");
       }
 
-      return updatedCategory;
+      // Map to DTO
+      return CategoryMapper.toDto(updatedCategory);
     } catch (error: any) {
-      console.error("Error in AdminRepository toggleCategoryStatus:", error.message);
+      console.error(
+        "Error in AdminRepository toggleCategoryStatus:",
+        error.message
+      );
       throw error; // Re-throw to let service/controller handle
     }
   }

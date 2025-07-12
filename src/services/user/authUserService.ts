@@ -5,10 +5,15 @@ import { IAuthRepository } from "../../interfaces/user/userAuthRepoInterface";
 import sendMail from "../../config/emailConfig";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
-import {
-  CreateUserType,
-  UserProfileData,
-} from "../../interfaces/userInterface/userInterface";
+import { CreateUserType } from "../../interfaces/userInterface/userInterface";
+import { 
+  SignUpRequestDto, 
+  VerifyOtpRequestDto, 
+  LoginRequestDto, 
+  ResetPasswordRequestDto,
+  LoginServiceResultDto,
+} from "../../dto/user/UserAuthDTO";
+import { AuthMapper } from "../../mappers/user/UserAuthMapper";
 
 dotenv.config();
 
@@ -42,11 +47,7 @@ export class AuthService implements IAuthService {
     await this.AuthRepository.saveOTP(email, hashedOTP);
   }
 
-  async signUp(userData: {
-    email: string;
-    phone?: string;
-    isForgot?: boolean;
-  }): Promise<void> {
+  async signUp(userData: SignUpRequestDto): Promise<void> {
     const userExistence = await this.AuthRepository.existUser(
       userData.email,
       userData.phone
@@ -70,14 +71,7 @@ export class AuthService implements IAuthService {
     await this.sendOTP(userData.email);
   }
 
-  async otpCheck(userData: {
-    name?: string;
-    email: string;
-    phone?: string;
-    password?: string;
-    otp: string;
-    isForgot?: boolean;
-  }): Promise<boolean> {
+  async otpCheck(userData: VerifyOtpRequestDto): Promise<boolean> {
     const isOtpValid = await this.AuthRepository.verifyOtp(
       userData.email,
       userData.otp
@@ -114,16 +108,12 @@ export class AuthService implements IAuthService {
     return true;
   }
 
-  async loginService(userData: { email: string; password: string }): Promise<{
-    accessToken: string;
-    refreshToken: string;
-    user: UserProfileData;
-  }> {
+  async loginService(userData: LoginRequestDto): Promise<LoginServiceResultDto> {
     const loggedUser = await this.AuthRepository.verifyUser(
       userData.email,
       userData.password
     );
-    console.log(loggedUser);
+
     const { _id, email, name, phone, DOB, gender, avatar } = loggedUser;
 
     let avatarUrl = null;
@@ -147,17 +137,20 @@ export class AuthService implements IAuthService {
       { expiresIn: "7d" }
     );
 
-    return {
-      accessToken,
-      refreshToken,
-      user: { _id, name, email, phone, DOB, gender, avatar: avatarUrl, },
-    };
+    const userProfile = AuthMapper.mapToUserProfileResponse({
+      _id,
+      name,
+      email,
+      phone,
+      DOB,
+      gender,
+      avatar: avatarUrl,
+    });
+
+    return AuthMapper.mapToLoginServiceResult(accessToken, refreshToken, userProfile);
   }
 
-  async resetPasswordService(userData: {
-    email: string;
-    password: string;
-  }): Promise<void> {
+  async resetPasswordService(userData: ResetPasswordRequestDto): Promise<void> {
     const hashedPassword = await bcrypt.hash(
       userData.password,
       this.saltRounds

@@ -1,36 +1,44 @@
+// src/interfaces/admin/adminServiceInterface.ts
+import { UserDto, PaginatedUsersDto } from "../../dto/admin/UserDTO";
+import { TutorDto, PaginatedTutorsDto } from "../../dto/admin/TutorDTO";
 import {
-  User,
-  Tutor,
-  Category,
-} from "../../interfaces/adminInterface/adminInterface";
+  CategoryDto,
+  PaginatedCategoriesDto,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+} from "../../dto/admin/CategoryDTO";
 
 export interface IAdminService {
-  // User methods - return raw data, not ResponseModel
+  // User methods - return DTOs
   getAllUsers(
     skip: number,
     limit: number,
     search: any
-  ): Promise<{ users: User[]; totalPages: number }>;
-  listUnlistUser(id: string): Promise<User>;
+  ): Promise<{ users: UserDto[]; totalPages: number; totalCount: number }>;
+  listUnlistUser(id: string): Promise<UserDto>;
 
-  // Tutor methods - return raw data, not ResponseModel
+  // Tutor methods - return DTOs
   getAllTutors(
     skip: number,
     limit: number,
     search: any
-  ): Promise<{ tutors: Tutor[]; totalPages: number }>;
-  listUnlistTutor(id: string): Promise<Tutor>;
+  ): Promise<{ tutors: TutorDto[]; totalPages: number; totalCount: number }>;
+  listUnlistTutor(id: string): Promise<TutorDto>;
 
-  // Category methods - return raw data, not ResponseModel
-  addCourseCategory(data: Category): Promise<Category>;
+  // Category methods - return DTOs
+  addCourseCategory(data: CreateCategoryDto): Promise<CategoryDto>;
   getAllCategories(
     skip: number,
     limit: number,
     search: any
-  ): Promise<{ category: Category[]; totalPages: number }>;
+  ): Promise<{
+    categories: CategoryDto[];
+    totalPages: number;
+    totalCount: number;
+  }>;
   updateCourseCategory(
     categoryId: string,
-    updateData: { name: string; description: string }
-  ): Promise<Category>;
-  toggleCategoryListStatus(categoryId: string): Promise<Category>;
+    updateData: UpdateCategoryDto
+  ): Promise<CategoryDto>;
+  toggleCategoryListStatus(categoryId: string): Promise<CategoryDto>;
 }

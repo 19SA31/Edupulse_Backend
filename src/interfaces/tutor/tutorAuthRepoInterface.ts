@@ -3,6 +3,7 @@ import {
   tutorType,
   TutorProfile,
   CreateTutorType,
+  ITutorDocs
 } from "../tutorInterface/tutorInterface";
 
 export interface ITutorAuthRepository {
@@ -22,4 +23,6 @@ export interface ITutorAuthRepository {
   verifyTutor(email: string, password: string): Promise<TutorProfile | null>;
 
   resetPassword(email: string, password: string): Promise<void>;
+
+  checkVerificationStatus(id:string):Promise<ITutorDocs | null>
 }

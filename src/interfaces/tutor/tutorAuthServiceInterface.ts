@@ -1,29 +1,17 @@
-import { GetTutorData } from "../tutorInterface/tutorInterface";
+import {
+  SignUpServiceDTO,
+  OtpCheckServiceDTO,
+  LoginServiceDTO,
+  LoginServiceResponseDTO,
+  ResetPasswordServiceDTO,
+} from "../../dto/tutor/TutorAuthDTO";
 
 export interface ITutorAuthInterface {
-  signUp(tutorData: {
-    email: string;
-    phone?: string;
-    isForgot?: boolean;
-  }): Promise<boolean>;
-
-  otpCheck(tutorData: {
-    name?: string;
-    email: string;
-    phone?: string;
-    password?: string;
-    otp: string;
-    isForgot?: boolean;
-  }): Promise<boolean>;
-
-  loginService(tutorData: { email: string; password: string }): Promise<{
-    accessToken: string;
-    refreshToken: string;
-    tutor: GetTutorData;
-  }>;
-
-  resetPasswordService(tutorData: {
-    email: string;
-    password: string;
-  }): Promise<void>;
+  signUp(tutorData: SignUpServiceDTO): Promise<boolean>;
+  
+  otpCheck(tutorData: OtpCheckServiceDTO): Promise<boolean>;
+  
+  loginService(tutorData: LoginServiceDTO): Promise<LoginServiceResponseDTO>;
+  
+  resetPasswordService(tutorData: ResetPasswordServiceDTO): Promise<void>;
 }

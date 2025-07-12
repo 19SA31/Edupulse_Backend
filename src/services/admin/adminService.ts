@@ -1,10 +1,10 @@
+// src/services/admin/AdminService.ts
 import { IAdminService } from "../../interfaces/admin/adminServiceInterface";
 import { IAdminRepositoryInterface } from "../../interfaces/admin/adminRepositoryInterface";
-import {
-  Tutor,
-  User,
-  Category,
-} from "../../interfaces/adminInterface/adminInterface";
+import { UserDto } from "../../dto/admin/UserDTO";
+import { TutorDto } from "../../dto/admin/TutorDTO";
+import { CategoryDto, CreateCategoryDto, UpdateCategoryDto } from "../../dto/admin/CategoryDTO";
+import { CategoryMapper } from "../../mappers/admin/CategoryMapper";
 
 export class AdminService implements IAdminService {
   private _adminRepository: IAdminRepositoryInterface;
@@ -17,7 +17,7 @@ export class AdminService implements IAdminService {
     skip: number,
     limit: number,
     search: any
-  ): Promise<{ users: User[]; totalPages: number }> {
+  ): Promise<{ users: UserDto[]; totalPages: number; totalCount: number }> {
     try {
       const result = await this._adminRepository.getAllUsers(skip, limit, search);
       return result;
@@ -31,7 +31,7 @@ export class AdminService implements IAdminService {
     skip: number,
     limit: number,
     search: any
-  ): Promise<{ tutors: Tutor[]; totalPages: number }> {
+  ): Promise<{ tutors: TutorDto[]; totalPages: number; totalCount: number }> {
     try {
       const result = await this._adminRepository.getAllTutors(skip, limit, search);
       return result;
@@ -41,7 +41,7 @@ export class AdminService implements IAdminService {
     }
   }
 
-  async listUnlistUser(id: string): Promise<User> {
+  async listUnlistUser(id: string): Promise<UserDto> {
     try {
       const user = await this._adminRepository.changeUserStatus(id);
       return user;
@@ -51,7 +51,7 @@ export class AdminService implements IAdminService {
     }
   }
 
-  async listUnlistTutor(id: string): Promise<Tutor> {
+  async listUnlistTutor(id: string): Promise<TutorDto> {
     try {
       const tutor = await this._adminRepository.changeTutorStatus(id);
       return tutor;
@@ -61,7 +61,7 @@ export class AdminService implements IAdminService {
     }
   }
 
-  async addCourseCategory(data: Category): Promise<Category> {
+  async addCourseCategory(data: CreateCategoryDto): Promise<CategoryDto> {
     try {
       const category = await this._adminRepository.addCategory(data);
       return category;
@@ -72,26 +72,32 @@ export class AdminService implements IAdminService {
   }
 
   async getAllCategories(
-    skip: number,
-    limit: number,
-    search: any
-  ): Promise<{ category: Category[]; totalPages: number }> {
-    try {
-      const result = await this._adminRepository.getAllCategories(skip, limit, search);
-      return result;
-    } catch (error: any) {
-      console.error("Error in AdminService getAllCategories:", error.message);
-      throw error; // Re-throw to let controller handle
-    }
+  skip: number,
+  limit: number,
+  search: any
+): Promise<{ categories: CategoryDto[]; totalPages: number; totalCount: number }> {
+  try {
+    // Get raw data from repository
+    const result = await this._adminRepository.getAllCategories(skip, limit, search);
+    
+    // Transform using mapper
+    const transformedCategories = CategoryMapper.toDtoArray(result.categories);
+    
+    return {
+      categories: transformedCategories,
+      totalPages: result.totalPages,
+      totalCount: result.totalCount
+    };
+  } catch (error: any) {
+    console.error("Error in AdminService getAllCategories:", error.message);
+    throw error;
   }
+}
 
   async updateCourseCategory(
     categoryId: string,
-    updateData: {
-      name: string;
-      description: string;
-    }
-  ): Promise<Category> {
+    updateData: UpdateCategoryDto
+  ): Promise<CategoryDto> {
     try {
       const category = await this._adminRepository.updateCategory(categoryId, updateData);
       return category;
@@ -101,7 +107,7 @@ export class AdminService implements IAdminService {
     }
   }
 
-  async toggleCategoryListStatus(categoryId: string): Promise<Category> {
+  async toggleCategoryListStatus(categoryId: string): Promise<CategoryDto> {
     try {
       const category = await this._adminRepository.toggleCategoryStatus(categoryId);
       return category;

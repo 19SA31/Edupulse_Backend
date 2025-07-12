@@ -1,6 +1,18 @@
 import { ITutorAuthInterface } from "../../interfaces/tutor/tutorAuthServiceInterface";
 import HTTP_statusCode from "../../enums/HttpStatusCode";
 import { Request, Response, NextFunction } from "express";
+import {
+  SendOtpRequestDTO,
+  SendOtpResponseDTO,
+  VerifyOtpRequestDTO,
+  VerifyOtpResponseDTO,
+  TutorLoginRequestDTO,
+  TutorLoginResponseDTO,
+  ResetPasswordRequestDTO,
+  ResetPasswordResponseDTO,
+  LogoutResponseDTO,
+} from "../../dto/tutor/TutorAuthDTO";
+import { TutorAuthMapper } from "../../mappers/tutor/TutorAuthMapper";
 
 // ResponseModel implementation at controller level
 export class ResponseModel<T = null> {
@@ -29,31 +41,36 @@ export class AuthTutorController {
   ): Promise<void> {
     try {
       console.log("inside create tutor auth");
-      const data = req.body;
-      console.log(data);
+      const requestDTO: SendOtpRequestDTO = req.body;
+      console.log(requestDTO);
       
-      await this.authService.signUp(data);
+      const serviceDTO = TutorAuthMapper.mapSendOtpRequestToService(requestDTO);
+      await this.authService.signUp(serviceDTO);
 
-      const response = new ResponseModel(true, "OTP sent successfully");
-      res.status(HTTP_statusCode.OK).json(response);
+      const responseDTO: SendOtpResponseDTO = TutorAuthMapper.mapSendOtpResponse(
+        true,
+        "OTP sent successfully"
+      );
+      
+      res.status(HTTP_statusCode.OK).json(responseDTO);
     } catch (error: any) {
-      let response: ResponseModel;
+      let responseDTO: SendOtpResponseDTO;
       
       if (error.message === "Email already in use") {
-        response = new ResponseModel(false, "Email already in use");
-        res.status(HTTP_statusCode.Conflict).json(response);
+        responseDTO = TutorAuthMapper.mapSendOtpResponse(false, "Email already in use");
+        res.status(HTTP_statusCode.Conflict).json(responseDTO);
       } else if (error.message === "Phone already in use") {
-        response = new ResponseModel(false, "Phone number already in use");
-        res.status(HTTP_statusCode.Conflict).json(response);
+        responseDTO = TutorAuthMapper.mapSendOtpResponse(false, "Phone number already in use");
+        res.status(HTTP_statusCode.Conflict).json(responseDTO);
       } else if (error.message === "Email not found") {
-        response = new ResponseModel(false, "Email not found");
-        res.status(HTTP_statusCode.NotFound).json(response);
+        responseDTO = TutorAuthMapper.mapSendOtpResponse(false, "Email not found");
+        res.status(HTTP_statusCode.NotFound).json(responseDTO);
       } else if (error.message === "Failed to send OTP email") {
-        response = new ResponseModel(false, "OTP not sent");
-        res.status(HTTP_statusCode.InternalServerError).json(response);
+        responseDTO = TutorAuthMapper.mapSendOtpResponse(false, "OTP not sent");
+        res.status(HTTP_statusCode.InternalServerError).json(responseDTO);
       } else {
-        response = new ResponseModel(false, "Something went wrong, please try again later");
-        res.status(HTTP_statusCode.InternalServerError).json(response);
+        responseDTO = TutorAuthMapper.mapSendOtpResponse(false, "Something went wrong, please try again later");
+        res.status(HTTP_statusCode.InternalServerError).json(responseDTO);
       }
       next(error);
     }
@@ -66,28 +83,33 @@ export class AuthTutorController {
   ): Promise<void> {
     try {
       console.log("inside verify otp controller");
-      const data = req.body;
-      console.log("inside verify otp data:", data);
+      const requestDTO: VerifyOtpRequestDTO = req.body;
+      console.log("inside verify otp data:", requestDTO);
       
-      await this.authService.otpCheck(data);
+      const serviceDTO = TutorAuthMapper.mapVerifyOtpRequestToService(requestDTO);
+      await this.authService.otpCheck(serviceDTO);
       
       console.log("OTP Verified Successfully!");
-      const response = new ResponseModel(true, "OTP verified successfully");
-      res.status(HTTP_statusCode.OK).json(response);
+      const responseDTO: VerifyOtpResponseDTO = TutorAuthMapper.mapVerifyOtpResponse(
+        true,
+        "OTP verified successfully"
+      );
+      
+      res.status(HTTP_statusCode.OK).json(responseDTO);
     } catch (error: any) {
       console.error("Error in verifyOtp:", error);
       
-      let response: ResponseModel;
+      let responseDTO: VerifyOtpResponseDTO;
       
       if (error.message === "Invalid OTP") {
-        response = new ResponseModel(false, "Invalid OTP");
-        res.status(HTTP_statusCode.BadRequest).json(response);
+        responseDTO = TutorAuthMapper.mapVerifyOtpResponse(false, "Invalid OTP");
+        res.status(HTTP_statusCode.BadRequest).json(responseDTO);
       } else if (error.message === "Password is required for new tutor registration") {
-        response = new ResponseModel(false, "Password is required");
-        res.status(HTTP_statusCode.BadRequest).json(response);
+        responseDTO = TutorAuthMapper.mapVerifyOtpResponse(false, "Password is required");
+        res.status(HTTP_statusCode.BadRequest).json(responseDTO);
       } else {
-        response = new ResponseModel(false, "Server error");
-        res.status(HTTP_statusCode.InternalServerError).json(response);
+        responseDTO = TutorAuthMapper.mapVerifyOtpResponse(false, "Server error");
+        res.status(HTTP_statusCode.InternalServerError).json(responseDTO);
       }
     }
   }
@@ -98,19 +120,22 @@ export class AuthTutorController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const data = req.body;
+      const requestDTO: TutorLoginRequestDTO = req.body;
       
-      const loginResult = await this.authService.loginService(data);
+      const serviceDTO = TutorAuthMapper.mapLoginRequestToService(requestDTO);
+      const loginResult = await this.authService.loginService(serviceDTO);
       console.log("tutorLogin response: ", loginResult);
 
-      const response = new ResponseModel(
-        true, 
-        "Tutor logged in successfully", 
-        {
-          accessToken: loginResult.accessToken,
-          refreshToken: loginResult.refreshToken,
-          tutor: loginResult.tutor,
-        }
+      const serviceResponseDTO = TutorAuthMapper.mapLoginServiceResponse(
+        loginResult.accessToken,
+        loginResult.refreshToken,
+        loginResult.tutor
+      );
+
+      const responseDTO: TutorLoginResponseDTO = TutorAuthMapper.mapTutorLoginResponse(
+        true,
+        "Tutor logged in successfully",
+        serviceResponseDTO
       );
 
       // Set cookies for successful login
@@ -128,22 +153,21 @@ export class AuthTutorController {
         maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
       });
       
-      
-      res.status(HTTP_statusCode.OK).json(response);
+      res.status(HTTP_statusCode.OK).json(responseDTO);
     } catch (error: any) {
       console.error("Error in login: ", error);
       
-      let response: ResponseModel;
+      let responseDTO: Partial<TutorLoginResponseDTO>;
       
       if (error.message === "Invalid email or password") {
-        response = new ResponseModel(false, "Invalid email or password");
-        res.status(HTTP_statusCode.BadRequest).json(response);
+        responseDTO = TutorAuthMapper.mapErrorResponse(false, "Invalid email or password");
+        res.status(HTTP_statusCode.BadRequest).json(responseDTO);
       } else if (error.message === "Tutor account is blocked") {
-        response = new ResponseModel(false, "Tutor account is blocked");
-        res.status(HTTP_statusCode.NoAccess).json(response);
+        responseDTO = TutorAuthMapper.mapErrorResponse(false, "Tutor account is blocked");
+        res.status(HTTP_statusCode.NoAccess).json(responseDTO);
       } else {
-        response = new ResponseModel(false, "Internal Server Error");
-        res.status(HTTP_statusCode.InternalServerError).json(response);
+        responseDTO = TutorAuthMapper.mapErrorResponse(false, "Internal Server Error");
+        res.status(HTTP_statusCode.InternalServerError).json(responseDTO);
       }
     }
   }
@@ -154,23 +178,28 @@ export class AuthTutorController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const data = req.body;
+      const requestDTO: ResetPasswordRequestDTO = req.body;
       
-      await this.authService.resetPasswordService(data);
+      const serviceDTO = TutorAuthMapper.mapResetPasswordRequestToService(requestDTO);
+      await this.authService.resetPasswordService(serviceDTO);
       
-      const response = new ResponseModel(true, "Password reset successfully");
-      res.status(HTTP_statusCode.OK).json(response);
+      const responseDTO: ResetPasswordResponseDTO = TutorAuthMapper.mapResetPasswordResponse(
+        true,
+        "Password reset successfully"
+      );
+      
+      res.status(HTTP_statusCode.OK).json(responseDTO);
     } catch (error: any) {
       console.error("Error in reset password: ", error);
       
-      let response: ResponseModel;
+      let responseDTO: ResetPasswordResponseDTO;
       
       if (error.message === "Email not found") {
-        response = new ResponseModel(false, "Email not found");
-        res.status(HTTP_statusCode.NotFound).json(response);
+        responseDTO = TutorAuthMapper.mapResetPasswordResponse(false, "Email not found");
+        res.status(HTTP_statusCode.NotFound).json(responseDTO);
       } else {
-        response = new ResponseModel(false, "Internal Server Error");
-        res.status(HTTP_statusCode.InternalServerError).json(response);
+        responseDTO = TutorAuthMapper.mapResetPasswordResponse(false, "Internal Server Error");
+        res.status(HTTP_statusCode.InternalServerError).json(responseDTO);
       }
     }
   }
@@ -183,11 +212,19 @@ export class AuthTutorController {
         sameSite: "strict",
       });
       
-      const response = new ResponseModel(true, "You have been logged out successfully");
-      res.status(HTTP_statusCode.OK).json(response);
+      const responseDTO: LogoutResponseDTO = TutorAuthMapper.mapLogoutResponse(
+        true,
+        "You have been logged out successfully"
+      );
+      
+      res.status(HTTP_statusCode.OK).json(responseDTO);
     } catch (error: any) {
-      const response = new ResponseModel(false, `Internal server error: ${error}`);
-      res.status(HTTP_statusCode.InternalServerError).json(response);
+      const responseDTO: LogoutResponseDTO = TutorAuthMapper.mapLogoutResponse(
+        false,
+        `Internal server error: ${error}`
+      );
+      
+      res.status(HTTP_statusCode.InternalServerError).json(responseDTO);
     }
   }
 }

@@ -42,5 +42,5 @@ const tutorSchema = new Schema<ITutor>({
     }
 })
 
-const userModel = model<ITutor>("Tutor",tutorSchema)
-export default userModel
+const tutorModel = model<ITutor>("Tutor",tutorSchema)
+export default tutorModel

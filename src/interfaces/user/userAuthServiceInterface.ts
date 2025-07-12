@@ -1,31 +1,14 @@
-import { UserProfileData, GetUserData } from "../userInterface/userInterface";
+import { 
+  SignUpRequestDto, 
+  VerifyOtpRequestDto, 
+  LoginRequestDto, 
+  ResetPasswordRequestDto,
+  LoginServiceResultDto 
+} from "../../dto/user/UserAuthDTO";
 
 export interface IAuthService {
-  signUp(userData: {
-    name?: string;
-    email: string;
-    phone?: string;
-    password?: string;
-    isForgot?: boolean;
-  }): Promise<void>;
-
-  otpCheck(userData: {
-    name?: string;
-    email: string;
-    phone?: string;
-    password?: string;
-    otp: string;
-    isForgot?: boolean;
-  }): Promise<boolean>;
-
-  loginService(userData: { email: string; password: string }): Promise<{
-    accessToken: string;
-    refreshToken: string;
-    user: UserProfileData;
-  }>;
-
-  resetPasswordService(userData: {
-    email: string;
-    password: string;
-  }): Promise<void>;
+  signUp(userData: SignUpRequestDto): Promise<void>;
+  otpCheck(userData: VerifyOtpRequestDto): Promise<boolean>;
+  loginService(userData: LoginRequestDto): Promise<LoginServiceResultDto>;
+  resetPasswordService(userData: ResetPasswordRequestDto): Promise<void>;
 }

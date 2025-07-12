@@ -48,7 +48,7 @@ export interface UpdateProfileData {
   DOB?: string;
   gender?: 'male' | 'female' | 'other';
   avatar?: Express.Multer.File | string | null; // Added string to handle filename assignment
-  cropData?: CropData;
+  cropData?: CropData | null;
 }
 
 // User creation interfaces

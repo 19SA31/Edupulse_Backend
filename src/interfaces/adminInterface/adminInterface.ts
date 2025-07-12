@@ -29,16 +29,7 @@ export interface User {
     
   }
 
-export interface GetUser{
-    users:User[],
-    totalPages:number
 
-  }
-
-  export interface GetTutor{
-    tutors:Tutor[],
-    totalPages:number,
-  }
   export interface Tutor {
     _id: ObjectId|any;
     tutorId: string; // Assuming UUID for doctorId
@@ -46,13 +37,22 @@ export interface GetUser{
     email: string;
     phone: string;
     password: string;
-    createdAt: Date;
+    
     isBlocked: boolean;
 
   }
 
  export interface ICategory {
   _id?: string;
+  name: string;
+  description: string;
+  isListed?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+ export interface ICategoryMap {
+  id?: string;
   name: string;
   description: string;
   isListed?: boolean;

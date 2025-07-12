@@ -1,24 +1,23 @@
 import {
-  DocumentFiles,
-  ServiceResponse,
-  VerificationSubmissionData,
-  VerificationStatusData,
-  VerificationDocumentsData
-} from "../tutorInterface/tutorInterface";
+  SubmitVerificationDocumentsRequestDTO,
+  SubmitVerificationDocumentsResponseDTO,
+  GetVerificationStatusRequestDTO,
+  GetVerificationStatusResponseDTO,
+  GetVerificationDocumentsRequestDTO,
+  GetVerificationDocumentsResponseDTO
+} from "../../dto/tutor/TutorDTO";
+import { ServiceResponse } from "../tutorInterface/tutorInterface";
 
 export interface ITutorService {
   submitVerificationDocuments(
-    documentFiles: DocumentFiles,
-    email?: string,
-    phone?: string
-  ): Promise<ServiceResponse<VerificationSubmissionData>>;
+    requestDTO: SubmitVerificationDocumentsRequestDTO
+  ): Promise<ServiceResponse<SubmitVerificationDocumentsResponseDTO>>;
 
   getVerificationStatus(
-    email?: string,
-    phone?: string
-  ): Promise<ServiceResponse<VerificationStatusData>>;
+    requestDTO: GetVerificationStatusRequestDTO
+  ): Promise<ServiceResponse<GetVerificationStatusResponseDTO>>;
 
   getVerificationDocuments(
-    tutorId: string
-  ): Promise<ServiceResponse<VerificationDocumentsData>>;
+    requestDTO: GetVerificationDocumentsRequestDTO
+  ): Promise<ServiceResponse<GetVerificationDocumentsResponseDTO>>;
 }
