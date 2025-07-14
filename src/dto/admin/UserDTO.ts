@@ -4,6 +4,7 @@ export interface UserDto {
   name: string;
   email: string;
   phone: string;
+  avatar:string | null;
   createdAt: string;
   isBlocked: boolean;
 }

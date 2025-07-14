@@ -35,7 +35,7 @@ export interface TutorDataDTO {
   name: string;
   email: string;
   isVerified: boolean;
-  verificationStatus: 'pending' | 'approved' | 'rejected';
+  verificationStatus: 'not_submitted'|'pending' | 'approved' | 'rejected';
 }
 
 export interface TutorLoginResponseDTO {

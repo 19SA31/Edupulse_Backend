@@ -8,6 +8,10 @@ const tutorDocsSchema = new Schema<ITutorDocs>({
     required: true,
     index: true,
   },
+  avatar:{
+    type: String,
+    required: true,
+  },
   degree: {
     type: String,
     required: true,

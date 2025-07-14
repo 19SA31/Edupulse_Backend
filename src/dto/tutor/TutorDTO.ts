@@ -4,6 +4,7 @@ export interface SubmitVerificationDocumentsRequestDTO {
   email?: string;
   phone?: string;
   files: {
+    avatar: Express.Multer.File
     degree: Express.Multer.File;
     aadharFront: Express.Multer.File;
     aadharBack: Express.Multer.File;
@@ -37,6 +38,7 @@ export interface GetVerificationDocumentsResponseDTO {
   verificationId: string;
   tutorId: string;
   documents: {
+    avatar:string,
     degree: string;
     aadharFront: string;
     aadharBack: string;
@@ -58,10 +60,11 @@ export interface TutorServiceDTO {
 export interface VerificationDocsServiceDTO {
   _id: string;
   tutorId: string;
+  avatar: string;
   degree: string;
   aadharFront: string;
   aadharBack: string;
-  verificationStatus: 'pending' | 'approved' | 'rejected';
+  verificationStatus: 'not_submitted'|'pending' | 'approved' | 'rejected';
   submittedAt: Date;
   reviewedAt?: Date;
   rejectionReason?: string;
@@ -69,18 +72,20 @@ export interface VerificationDocsServiceDTO {
 
 export interface CreateVerificationDocsDTO {
   tutorId: string;
+  avatar: string;
   degree: string;
   aadharFront: string;
   aadharBack: string;
-  verificationStatus: 'pending' | 'approved' | 'rejected';
+  verificationStatus: 'not_submitted'|'pending' | 'approved' | 'rejected';
   submittedAt: Date;
 }
 
 export interface UpdateVerificationDocsDTO {
+  avatar?: string
   degree?: string;
   aadharFront?: string;
   aadharBack?: string;
-  verificationStatus?: 'pending' | 'approved' | 'rejected';
+  verificationStatus?: 'not_submitted'|'pending' | 'approved' | 'rejected';
   submittedAt?: Date;
   reviewedAt?: Date;
   rejectionReason?: string;

@@ -25,6 +25,7 @@ export class TutorMapper {
       email,
       phone,
       files: {
+        avatar: files.avatar[0],
         degree: files.degree[0],
         aadharFront: files.aadharFront[0],
         aadharBack: files.aadharBack[0]
@@ -50,6 +51,7 @@ export class TutorMapper {
   // Service Layer Mappings
   static mapDocumentFilesToDocumentFiles(dto: SubmitVerificationDocumentsRequestDTO): DocumentFiles {
     return {
+      avatar: dto.files.avatar,
       degree: dto.files.degree,
       aadharFront: dto.files.aadharFront,
       aadharBack: dto.files.aadharBack
@@ -101,6 +103,7 @@ export class TutorMapper {
     return {
       _id: docs._id.toString(),
       tutorId: docs.tutorId.toString(),
+      avatar:docs.avatar,
       degree: docs.degree,
       aadharFront: docs.aadharFront,
       aadharBack: docs.aadharBack,
@@ -113,12 +116,14 @@ export class TutorMapper {
 
   static mapToCreateVerificationDocsDTO(
     tutorId: string,
+    avatar: string,
     degree: string,
     aadharFront: string,
     aadharBack: string
   ): CreateVerificationDocsDTO {
     return {
       tutorId,
+      avatar,
       degree,
       aadharFront,
       aadharBack,
@@ -128,6 +133,7 @@ export class TutorMapper {
   }
 
   static mapToUpdateVerificationDocsDTO(
+    avatar?: string,
     degree?: string,
     aadharFront?: string,
     aadharBack?: string,
@@ -136,6 +142,7 @@ export class TutorMapper {
   ): UpdateVerificationDocsDTO {
     const updateData: UpdateVerificationDocsDTO = {};
 
+    if (avatar) updateData.avatar = avatar;
     if (degree) updateData.degree = degree;
     if (aadharFront) updateData.aadharFront = aadharFront;
     if (aadharBack) updateData.aadharBack = aadharBack;

@@ -47,6 +47,7 @@ export class AdminRepository
         skip,
         limit
       );
+      
       const totalCount = await this._userRepository.countDocuments(
         searchFilter
       );
@@ -55,7 +56,7 @@ export class AdminRepository
 
       // Map to DTOs
       const userDtos = UserMapper.toDtoArray(users);
-
+      
       return { users: userDtos, totalPages, totalCount };
     } catch (error: any) {
       console.error("Error in AdminRepository getAllUsers:", error.message);
@@ -80,7 +81,7 @@ export class AdminRepository
         skip,
         limit
       );
-
+      console.log("tutors:",tutors)
       const totalCount = await this._tutorRepository.countDocuments(
         searchFilter
       );
@@ -89,7 +90,7 @@ export class AdminRepository
 
       // Map to DTOs
       const tutorDtos = TutorMapper.toDtoArray(tutors);
-
+      console.log("::",tutorDtos)
       return { tutors: tutorDtos, totalPages, totalCount };
     } catch (error: any) {
       console.error("Error in AdminRepository getAllTutors:", error.message);

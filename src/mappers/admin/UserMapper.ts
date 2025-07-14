@@ -9,6 +9,7 @@ export class UserMapper {
       name: user.name,
       email: user.email,
       phone: user.phone,
+      avatar:user.avatar,
       createdAt: user.createdAt.toISOString(),
       isBlocked: user.isBlocked,
     };

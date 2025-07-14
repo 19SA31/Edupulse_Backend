@@ -14,7 +14,7 @@ export interface User {
     password: string; 
     createdAt: Date;
     isBlocked: boolean;
-    
+    avatar:string;
   }
 
   export interface Tutor {
@@ -26,21 +26,10 @@ export interface User {
     password: string; 
     createdAt: Date;
     isBlocked: boolean;
-    
+    avatar:string;
   }
 
 
-  export interface Tutor {
-    _id: ObjectId|any;
-    tutorId: string; // Assuming UUID for doctorId
-    name: string;
-    email: string;
-    phone: string;
-    password: string;
-    
-    isBlocked: boolean;
-
-  }
 
  export interface ICategory {
   _id?: string;

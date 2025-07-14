@@ -5,12 +5,15 @@ import { UserDto } from "../../dto/admin/UserDTO";
 import { TutorDto } from "../../dto/admin/TutorDTO";
 import { CategoryDto, CreateCategoryDto, UpdateCategoryDto } from "../../dto/admin/CategoryDTO";
 import { CategoryMapper } from "../../mappers/admin/CategoryMapper";
+import { S3Service } from "../../utils/s3";
 
 export class AdminService implements IAdminService {
   private _adminRepository: IAdminRepositoryInterface;
+  private s3Service: S3Service;
 
   constructor(adminRepository: IAdminRepositoryInterface) {
     this._adminRepository = adminRepository;
+    this.s3Service = new S3Service();
   }
 
   async getAllUsers(
@@ -20,7 +23,27 @@ export class AdminService implements IAdminService {
   ): Promise<{ users: UserDto[]; totalPages: number; totalCount: number }> {
     try {
       const result = await this._adminRepository.getAllUsers(skip, limit, search);
-      return result;
+      const usersWithAvatars = await Promise.all(
+      result.users.map(async (user) => {
+        let avatarUrl = null;
+
+        if (user.avatar) {
+          try {
+            avatarUrl = await this.s3Service.getFile(user.avatar, "user_avatars");
+          } catch (error) {
+            console.warn(`Failed to generate avatar URL for user ${user.id}:`, error);
+          }
+        }
+
+        return { ...user, avatar: avatarUrl };
+      })
+    );
+      console.log("result",usersWithAvatars)
+      return {
+      users: usersWithAvatars,
+      totalPages: result.totalPages,
+      totalCount: result.totalCount,
+    };
     } catch (error: any) {
       console.error("Error in AdminService getAllUsers:", error.message);
       throw error; // Re-throw to let controller handle
@@ -34,6 +57,7 @@ export class AdminService implements IAdminService {
   ): Promise<{ tutors: TutorDto[]; totalPages: number; totalCount: number }> {
     try {
       const result = await this._adminRepository.getAllTutors(skip, limit, search);
+      console.log("result",result)
       return result;
     } catch (error: any) {
       console.error("Error in AdminService getAllTutors:", error.message);

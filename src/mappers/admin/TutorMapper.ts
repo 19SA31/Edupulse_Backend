@@ -9,6 +9,7 @@ export class TutorMapper {
       name: tutor.name,
       email: tutor.email,
       phone: tutor.phone,
+      avatar: tutor.avatar,
       createdAt: tutor.createdAt.toISOString(),
       isBlocked: tutor.isBlocked,
     };

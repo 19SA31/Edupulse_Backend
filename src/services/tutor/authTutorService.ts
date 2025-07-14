@@ -116,6 +116,7 @@ export class AuthTutorService implements ITutorAuthInterface {
     return true;
   }
 
+  // Updated login service - handles new users without verification documents
   async loginService(
     tutorData: LoginServiceDTO
   ): Promise<LoginServiceResponseDTO> {
@@ -132,13 +133,24 @@ export class AuthTutorService implements ITutorAuthInterface {
 
     const { _id, email, name, isVerified } = loggedTutor;
 
+    // Check verification status - returns null for new users
     const doc = await this.AuthRepository.checkVerificationStatus(_id);
 
+    let verificationStatus:
+      | "not_submitted"
+      | "pending"
+      | "approved"
+      | "rejected";
+
     if (!doc) {
-      throw new Error("Verification document not found");
+      verificationStatus = "not_submitted";
+    } else {
+      verificationStatus = doc.verificationStatus as
+        | "not_submitted"
+        | "pending"
+        | "approved"
+        | "rejected";
     }
-    console.log("inside service :",doc)
-    const { verificationStatus } = doc;
 
     const accessToken = jwt.sign(
       { id: _id, email, role: "tutor" },

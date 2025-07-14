@@ -17,7 +17,7 @@ export class AuthTutorRepository
   implements ITutorAuthRepository
 {
   private _otpRepository = new BaseRepository<any>(OtpModel);
-  private _tutorDocRepo=new BaseRepository<any>(TutorDocs)
+  private _tutorDocRepo = new BaseRepository<any>(TutorDocs);
 
   constructor() {
     super(tutorModel);
@@ -131,17 +131,18 @@ export class AuthTutorRepository
     }
   }
 
+  // Updated method - returns null instead of throwing error for new users
   async checkVerificationStatus(id: string): Promise<ITutorDocs | null> {
     try {
-      console.log(id)
-      const status = await this._tutorDocRepo.findOne({tutorId:id})
-      if(!status){
-        throw new Error("Tutor Not found")
-      }
-      return status
+      console.log("Checking verification status for tutor ID:", id);
+      const status = await this._tutorDocRepo.findOne({ tutorId: id });
+      
+      // Return null if no documents found (new user case)
+      // Don't throw error - this is a valid scenario
+      return status;
     } catch (error) {
-      console.error("error in check verification status:",error)
-      throw new Error("error in checking verification status")
+      console.error("Error in check verification status:", error);
+      throw new Error("Error in checking verification status");
     }
   }
 }

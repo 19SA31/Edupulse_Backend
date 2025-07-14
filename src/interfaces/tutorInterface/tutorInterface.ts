@@ -68,7 +68,7 @@ export interface GetTutorData {
   name: string;
   email: string;
   isVerified: boolean;
-  verificationStatus: 'pending' | 'approved' | 'rejected';
+  verificationStatus: 'not_submitted'|'pending' | 'approved' | 'rejected';
 
 }
 
@@ -89,22 +89,25 @@ export interface OTPDocument {
 export interface ITutorDocs extends Document {
   _id: string | ObjectId;
   tutorId: string | ObjectId;
+  avatar: string;
   degree: string;
   aadharFront: string;
   aadharBack: string;
-  verificationStatus: 'pending' | 'approved' | 'rejected';
+  verificationStatus: 'not_submitted'|'pending' | 'approved' | 'rejected';
   rejectionReason?: string;
   submittedAt: Date;
   reviewedAt?: Date;
 }
 
 export interface DocumentFiles {
+  avatar: Express.Multer.File;
   degree: Express.Multer.File;
   aadharFront: Express.Multer.File;
   aadharBack: Express.Multer.File;
 }
 
 export interface VerificationDocuments {
+  avatar: File;
   degree: File;
   aadharFront: File;
   aadharBack: File;
@@ -114,6 +117,7 @@ export interface VerificationDocuments {
 
 export interface TutorVerificationData {
   tutorId: string;
+  avatar: string;
   degree: string;
   aadharFront: string;
   aadharBack: string;
@@ -146,6 +150,7 @@ export interface VerificationDocumentsData {
   verificationId: string;
   tutorId: string;
   documents: {
+    avatar: string;
     degree: string;
     aadharFront: string;
     aadharBack: string;

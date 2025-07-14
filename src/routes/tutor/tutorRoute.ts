@@ -29,6 +29,7 @@ const upload = multer({
 });
 
 const uploadDocuments = upload.fields([
+  { name: 'avatar', maxCount: 1},
   { name: 'degree', maxCount: 1 },
   { name: 'aadharFront', maxCount: 1 },
   { name: 'aadharBack', maxCount: 1 }

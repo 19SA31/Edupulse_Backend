@@ -10,7 +10,7 @@ import {
   GetVerificationStatusResponseDTO,
   GetVerificationDocumentsRequestDTO,
   GetVerificationDocumentsResponseDTO,
-  VerificationDocsServiceDTO
+  VerificationDocsServiceDTO,
 } from "../../dto/tutor/TutorDTO";
 
 export class TutorService implements ITutorService {
@@ -32,24 +32,39 @@ export class TutorService implements ITutorService {
       );
 
       if (!tutor) {
-        return { success: false, message: "Tutor not found. Please register first." };
+        return {
+          success: false,
+          message: "Tutor not found. Please register first.",
+        };
       }
 
-      const existingDocs = await this.tutorRepository.findVerificationDocsByTutorId(tutor._id);
+      const existingDocs =
+        await this.tutorRepository.findVerificationDocsByTutorId(tutor._id);
 
       if (existingDocs && existingDocs.verificationStatus === "approved") {
-        return { success: false, message: "Verification documents already approved." };
+        return {
+          success: false,
+          message: "Verification documents already approved.",
+        };
       }
 
       const folderPath = `tutor-documents/${tutor._id}/`;
-      const documentFiles = TutorMapper.mapDocumentFilesToDocumentFiles(requestDTO);
+      const documentFiles =
+        TutorMapper.mapDocumentFilesToDocumentFiles(requestDTO);
 
-      const [degreeFileName, aadharFrontFileName, aadharBackFileName] = await Promise.all([
+      const [
+        avatarFileName,
+        degreeFileName,
+        aadharFrontFileName,
+        aadharBackFileName,
+      ] = await Promise.all([
+        this.s3Service.uploadFile(folderPath, documentFiles.avatar),
         this.s3Service.uploadFile(folderPath, documentFiles.degree),
         this.s3Service.uploadFile(folderPath, documentFiles.aadharFront),
         this.s3Service.uploadFile(folderPath, documentFiles.aadharBack),
       ]);
 
+      const avatarUrl = `${folderPath}${avatarFileName}`;
       const degreeUrl = `${folderPath}${degreeFileName}`;
       const aadharFrontUrl = `${folderPath}${aadharFrontFileName}`;
       const aadharBackUrl = `${folderPath}${aadharBackFileName}`;
@@ -60,16 +75,21 @@ export class TutorService implements ITutorService {
         if (existingDocs.verificationStatus !== "approved") {
           await this.deleteOldFiles(existingDocs);
           const updateDTO = TutorMapper.mapToUpdateVerificationDocsDTO(
+            avatarUrl,
             degreeUrl,
             aadharFrontUrl,
             aadharBackUrl,
-            'pending'
+            "pending"
           );
-          result = await this.tutorRepository.updateVerificationDocs(existingDocs._id, updateDTO);
+          result = await this.tutorRepository.updateVerificationDocs(
+            existingDocs._id,
+            updateDTO
+          );
         }
       } else {
         const createDTO = TutorMapper.mapToCreateVerificationDocsDTO(
           tutor._id,
+          avatarUrl,
           degreeUrl,
           aadharFrontUrl,
           aadharBackUrl
@@ -78,11 +98,12 @@ export class TutorService implements ITutorService {
       }
 
       if (result) {
-        const responseData = TutorMapper.mapToSubmitVerificationDocumentsResponse({
-          verificationId: result._id,
-          status: result.verificationStatus,
-          submittedAt: result.submittedAt,
-        });
+        const responseData =
+          TutorMapper.mapToSubmitVerificationDocumentsResponse({
+            verificationId: result._id,
+            status: result.verificationStatus,
+            submittedAt: result.submittedAt,
+          });
 
         return {
           success: true,
@@ -90,11 +111,17 @@ export class TutorService implements ITutorService {
           data: responseData,
         };
       } else {
-        return { success: false, message: "Failed to save verification documents" };
+        return {
+          success: false,
+          message: "Failed to save verification documents",
+        };
       }
     } catch (error: any) {
       console.error("Error in submitVerificationDocuments:", error);
-      return { success: false, message: "Error submitting verification documents" };
+      return {
+        success: false,
+        message: "Error submitting verification documents",
+      };
     }
   }
 
@@ -111,7 +138,8 @@ export class TutorService implements ITutorService {
         return { success: false, message: "Tutor not found" };
       }
 
-      const verificationDocs = await this.tutorRepository.findVerificationDocsByTutorId(tutor._id);
+      const verificationDocs =
+        await this.tutorRepository.findVerificationDocsByTutorId(tutor._id);
 
       if (!verificationDocs) {
         const responseData = TutorMapper.mapToGetVerificationStatusResponse({
@@ -141,7 +169,10 @@ export class TutorService implements ITutorService {
       };
     } catch (error: any) {
       console.error("Error in getVerificationStatus:", error);
-      return { success: false, message: "Error retrieving verification status" };
+      return {
+        success: false,
+        message: "Error retrieving verification status",
+      };
     }
   }
 
@@ -149,15 +180,20 @@ export class TutorService implements ITutorService {
     requestDTO: GetVerificationDocumentsRequestDTO
   ): Promise<ServiceResponse<GetVerificationDocumentsResponseDTO>> {
     try {
-      const verificationDocs = await this.tutorRepository.findVerificationDocsByTutorId(
-        requestDTO.tutorId
-      );
+      const verificationDocs =
+        await this.tutorRepository.findVerificationDocsByTutorId(
+          requestDTO.tutorId
+        );
 
       if (!verificationDocs) {
         return { success: false, message: "No verification documents found" };
       }
 
-      const [degreeUrl, aadharFrontUrl, aadharBackUrl] = await Promise.all([
+      const [avatarUrl, degreeUrl, aadharFrontUrl, aadharBackUrl] = await Promise.all([
+        this.s3Service.getFile(
+          this.getFileNameFromPath(verificationDocs.avatar),
+          this.getFolderFromPath(verificationDocs.avatar)
+        ),
         this.s3Service.getFile(
           this.getFileNameFromPath(verificationDocs.degree),
           this.getFolderFromPath(verificationDocs.degree)
@@ -176,6 +212,7 @@ export class TutorService implements ITutorService {
         verificationId: verificationDocs._id,
         tutorId: verificationDocs.tutorId,
         documents: {
+          avatar: avatarUrl,
           degree: degreeUrl,
           aadharFront: aadharFrontUrl,
           aadharBack: aadharBackUrl,
@@ -193,13 +230,19 @@ export class TutorService implements ITutorService {
       };
     } catch (error: any) {
       console.error("Error in getVerificationDocuments:", error);
-      return { success: false, message: "Error retrieving verification documents" };
+      return {
+        success: false,
+        message: "Error retrieving verification documents",
+      };
     }
   }
 
-  private async deleteOldFiles(existingDocs: VerificationDocsServiceDTO): Promise<void> {
+  private async deleteOldFiles(
+    existingDocs: VerificationDocsServiceDTO
+  ): Promise<void> {
     try {
       await Promise.all([
+        this.s3Service.deleteFile(existingDocs.avatar),
         this.s3Service.deleteFile(existingDocs.degree),
         this.s3Service.deleteFile(existingDocs.aadharFront),
         this.s3Service.deleteFile(existingDocs.aadharBack),

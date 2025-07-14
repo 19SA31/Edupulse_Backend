@@ -21,13 +21,13 @@ export class TutorController {
       const { email, phone } = req.body;
       console.log(files, email, phone);
 
-      if (!files?.degree || !files?.aadharFront || !files?.aadharBack) {
+      if (!files?.avatar || !files?.degree || !files?.aadharFront || !files?.aadharBack) {
         res
           .status(400)
           .json(
             new ResponseModel(
               false,
-              "All document files are required (degree, aadharFront, aadharBack)"
+              "All document files are required (avatar, degree, aadharFront, aadharBack)"
             )
           );
         return;
