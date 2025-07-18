@@ -1,45 +1,54 @@
 // src/interfaces/admin/adminRepositoryInterface.ts
-import { UserDto, PaginatedUsersDto } from "../../dto/admin/UserDTO";
-import { TutorDto, PaginatedTutorsDto } from "../../dto/admin/TutorDTO";
 import {
-  CategoryDto,
-  PaginatedCategoriesDto,
-  CreateCategoryDto,
-  UpdateCategoryDto,
-} from "../../dto/admin/CategoryDTO";
-import { ICategory } from "../adminInterface/adminInterface"; 
+  User,
+  Tutor,
+  Category,
+} from "../../interfaces/adminInterface/adminInterface";
+import { ITutorDocs } from "../../interfaces/tutorInterface/tutorInterface";
 
 export interface IAdminRepositoryInterface {
-  // User methods - return DTOs
+  // User methods - return raw data, not ResponseModel
   getAllUsers(
     skip: number,
     limit: number,
     search: string
-  ): Promise<{ users: UserDto[]; totalPages: number; totalCount: number }>;
-  changeUserStatus(id: string): Promise<UserDto>;
+  ): Promise<{ users: User[]; totalPages: number }>;
+  changeUserStatus(id: string): Promise<User>;
 
-  // Tutor methods - return DTOs
+  // Tutor methods - return raw data, not ResponseModel
   getAllTutors(
     skip: number,
     limit: number,
     search: string
-  ): Promise<{ tutors: TutorDto[]; totalPages: number; totalCount: number }>;
-  changeTutorStatus(id: string): Promise<TutorDto>;
+  ): Promise<{ tutors: Tutor[]; totalPages: number }>;
+  changeTutorStatus(id: string): Promise<Tutor>;
 
-  // Category methods - return DTOs
-  addCategory(data: CreateCategoryDto): Promise<CategoryDto>;
+  // TutorDocs methods - return raw data, not ResponseModel
+  getAllTutorDocs(
+    skip: number,
+    limit: number,
+    search: string
+  ): Promise<{
+    tutorDocs: (ITutorDocs & { tutor?: { name: string; email: string } })[];
+    totalPages: number;
+  }>;
+  verifyTutor(tutorId: string): Promise<void>;
+
+  rejectTutor(
+    tutorId: string,
+    reason: string
+  ): Promise<{ tutorEmail: string; tutorName: string } | null>;
+
+  // Category methods - return raw data, not ResponseModel
+  addCategory(data: Category): Promise<Category>;
   getAllCategories(
-  skip: number,
-  limit: number,
-  search: string
-): Promise<{
-  categories: ICategory[]; 
-  totalPages: number;
-  totalCount: number;
-}>;
+    skip: number,
+    limit: number,
+    search: string
+  ): Promise<{ category: Category[]; totalPages: number }>;
   updateCategory(
     categoryId: string,
-    updateData: UpdateCategoryDto
-  ): Promise<CategoryDto>;
-  toggleCategoryStatus(categoryId: string): Promise<CategoryDto>;
+    updateData: Partial<Pick<Category, "name" | "description">>
+  ): Promise<Category>;
+  toggleCategoryStatus(categoryId: string): Promise<Category>;
 }

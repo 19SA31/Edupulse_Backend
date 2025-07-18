@@ -110,23 +110,20 @@ class UserService implements IUserService {
         // Delete old avatar from S3 if exists
         if (existingUser.avatar) {
           try {
-            const oldFileName = this.extractFileNameFromUrl(existingUser.avatar);
-            if (oldFileName) {
-              await this.s3Service.deleteFile(`user_avatars/${oldFileName}`);
-              console.log("Old avatar deleted from S3");
-            }
+            await this.s3Service.deleteFile(existingUser.avatar);
+            console.log("Old avatar deleted from S3");
           } catch (deleteError) {
             console.warn('Failed to delete old avatar:', deleteError);
             // Continue with upload even if delete fails
           }
         }
 
-        // Upload new avatar to S3
-        const fileName = await this.s3Service.uploadFile('user_avatars/', processedFile);
+        // Upload new avatar to S3 and get the complete S3 key
+        const avatarS3Key = await this.s3Service.uploadFile('user_avatars', processedFile);
         
-        // Generate the avatar URL (you might want to store just the filename and generate URLs on demand)
-        updateData.avatar = fileName; // Store just the filename, generate URL when needed
-        console.log("New avatar uploaded:", fileName);
+        // Store the complete S3 key path in the database
+        updateData.avatar = avatarS3Key;
+        console.log("New avatar uploaded:", avatarS3Key);
 
       } catch (uploadError) {
         console.error('Avatar upload error:', uploadError);
@@ -139,11 +136,8 @@ class UserService implements IUserService {
       // Delete old avatar from S3 if exists
       if (existingUser.avatar) {
         try {
-          const oldFileName = this.extractFileNameFromUrl(existingUser.avatar);
-          if (oldFileName) {
-            await this.s3Service.deleteFile(`user_avatars/${oldFileName}`);
-            console.log("Avatar deleted from S3");
-          }
+          await this.s3Service.deleteFile(existingUser.avatar);
+          console.log("Avatar deleted from S3");
         } catch (deleteError) {
           console.warn('Failed to delete avatar:', deleteError);
         }
@@ -164,7 +158,7 @@ class UserService implements IUserService {
     let avatarUrl = null;
     if (updatedUser.avatar) {
       try {
-        avatarUrl = await this.s3Service.getFile(updatedUser.avatar, 'user_avatars');
+        avatarUrl = await this.s3Service.getFile(updatedUser.avatar);
       } catch (error) {
         console.warn('Failed to generate avatar URL:', error);
       }
@@ -199,7 +193,7 @@ class UserService implements IUserService {
     let avatarUrl = null;
     if (user.avatar) {
       try {
-        avatarUrl = await this.s3Service.getFile(user.avatar, 'user_avatars');
+        avatarUrl = await this.s3Service.getFile(user.avatar);
       } catch (error) {
         console.warn('Failed to generate avatar URL:', error);
       }
@@ -221,22 +215,6 @@ class UserService implements IUserService {
     };
 
     return { user: responseData };
-  }
-
-  private extractFileNameFromUrl(url: string): string | null {
-    try {
-      // If it's just a filename (not a full URL), return it as is
-      if (!url.includes('http')) {
-        return url;
-      }
-      
-      // Extract filename from S3 URL
-      const urlParts = url.split('/');
-      return urlParts[urlParts.length - 1];
-    } catch (error) {
-      console.error('Error extracting filename:', error);
-      return null;
-    }
   }
 }
 

@@ -48,15 +48,16 @@ export class TutorService implements ITutorService {
         };
       }
 
-      const folderPath = `tutor-documents/${tutor._id}/`;
+      const folderPath = `tutor-documents/${tutor._id}`;
       const documentFiles =
         TutorMapper.mapDocumentFilesToDocumentFiles(requestDTO);
 
+      // Upload all files and get their complete S3 key paths
       const [
-        avatarFileName,
-        degreeFileName,
-        aadharFrontFileName,
-        aadharBackFileName,
+        avatarS3Key,
+        degreeS3Key,
+        aadharFrontS3Key,
+        aadharBackS3Key,
       ] = await Promise.all([
         this.s3Service.uploadFile(folderPath, documentFiles.avatar),
         this.s3Service.uploadFile(folderPath, documentFiles.degree),
@@ -64,21 +65,16 @@ export class TutorService implements ITutorService {
         this.s3Service.uploadFile(folderPath, documentFiles.aadharBack),
       ]);
 
-      const avatarUrl = `${folderPath}${avatarFileName}`;
-      const degreeUrl = `${folderPath}${degreeFileName}`;
-      const aadharFrontUrl = `${folderPath}${aadharFrontFileName}`;
-      const aadharBackUrl = `${folderPath}${aadharBackFileName}`;
-
       let result: VerificationDocsServiceDTO | null = null;
 
       if (existingDocs) {
         if (existingDocs.verificationStatus !== "approved") {
           await this.deleteOldFiles(existingDocs);
           const updateDTO = TutorMapper.mapToUpdateVerificationDocsDTO(
-            avatarUrl,
-            degreeUrl,
-            aadharFrontUrl,
-            aadharBackUrl,
+            avatarS3Key,
+            degreeS3Key,
+            aadharFrontS3Key,
+            aadharBackS3Key,
             "pending"
           );
           result = await this.tutorRepository.updateVerificationDocs(
@@ -89,10 +85,10 @@ export class TutorService implements ITutorService {
       } else {
         const createDTO = TutorMapper.mapToCreateVerificationDocsDTO(
           tutor._id,
-          avatarUrl,
-          degreeUrl,
-          aadharFrontUrl,
-          aadharBackUrl
+          avatarS3Key,
+          degreeS3Key,
+          aadharFrontS3Key,
+          aadharBackS3Key
         );
         result = await this.tutorRepository.createVerificationDocs(createDTO);
       }
@@ -189,23 +185,12 @@ export class TutorService implements ITutorService {
         return { success: false, message: "No verification documents found" };
       }
 
+      // Generate signed URLs using the complete S3 key paths
       const [avatarUrl, degreeUrl, aadharFrontUrl, aadharBackUrl] = await Promise.all([
-        this.s3Service.getFile(
-          this.getFileNameFromPath(verificationDocs.avatar),
-          this.getFolderFromPath(verificationDocs.avatar)
-        ),
-        this.s3Service.getFile(
-          this.getFileNameFromPath(verificationDocs.degree),
-          this.getFolderFromPath(verificationDocs.degree)
-        ),
-        this.s3Service.getFile(
-          this.getFileNameFromPath(verificationDocs.aadharFront),
-          this.getFolderFromPath(verificationDocs.aadharFront)
-        ),
-        this.s3Service.getFile(
-          this.getFileNameFromPath(verificationDocs.aadharBack),
-          this.getFolderFromPath(verificationDocs.aadharBack)
-        ),
+        this.s3Service.getFile(verificationDocs.avatar),
+        this.s3Service.getFile(verificationDocs.degree),
+        this.s3Service.getFile(verificationDocs.aadharFront),
+        this.s3Service.getFile(verificationDocs.aadharBack),
       ]);
 
       const responseData = TutorMapper.mapToGetVerificationDocumentsResponse({
@@ -241,6 +226,7 @@ export class TutorService implements ITutorService {
     existingDocs: VerificationDocsServiceDTO
   ): Promise<void> {
     try {
+      // Delete files using their complete S3 key paths
       await Promise.all([
         this.s3Service.deleteFile(existingDocs.avatar),
         this.s3Service.deleteFile(existingDocs.degree),
@@ -250,14 +236,5 @@ export class TutorService implements ITutorService {
     } catch (error) {
       console.error("Error deleting old files:", error);
     }
-  }
-
-  private getFileNameFromPath(filePath: string): string {
-    return filePath.split("/").pop() || "";
-  }
-
-  private getFolderFromPath(filePath: string): string {
-    const parts = filePath.split("/");
-    return parts.slice(0, -1).join("/");
   }
 }

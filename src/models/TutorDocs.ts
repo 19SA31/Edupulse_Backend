@@ -26,7 +26,7 @@ const tutorDocsSchema = new Schema<ITutorDocs>({
   },
   verificationStatus: {
     type: String,
-    enum: ["pending", "approved", "rejected"],
+    enum: ["not_submitted","pending", "approved", "rejected"],
     default: "pending",
   },
   rejectionReason: {

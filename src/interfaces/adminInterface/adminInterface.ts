@@ -14,7 +14,7 @@ export interface User {
     password: string; 
     createdAt: Date;
     isBlocked: boolean;
-    avatar:string;
+    avatar:string | null;
   }
 
   export interface Tutor {
