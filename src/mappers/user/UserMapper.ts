@@ -19,32 +19,30 @@ import {
 } from '../../interfaces/userInterface/userInterface';
 
 export interface IUserMapper {
-  // Request mapping
+  
   mapUpdateProfileRequest(requestData: UpdateProfileRequestDTO): UpdateProfileDTO;
   mapUpdateProfileToServiceData(dto: UpdateProfileDTO): UpdateProfileData;
   mapCreateUserRequest(requestData: CreateUserRequestDTO): CreateUserType;
   
-  // Response mapping
+  
   mapDatabaseUserToResponse(user: IUser, avatarUrl?: string | null): UserProfileResponseDTO;
   mapUserProfileDataToResponse(userData: UserProfileData): UserProfileResponseDTO;
   
-  // Database mapping
+  
   mapUpdateDTOToDatabase(dto: UpdateProfileDTO): UpdateUserDatabaseDTO;
   mapDatabaseUserToProfileData(user: IUser): UserProfileData;
   
-  // Validation mapping
+  
   mapValidationErrors(errors: string[]): ValidationErrorDTO[];
   
-  // Utility mapping
+ 
   parseCropData(cropDataString: string): CropData | null;
   formatDateToISO(date: Date | undefined): string | undefined;
 }
 
 export class UserMapper implements IUserMapper {
   
-  /**
-   * Maps form data from HTTP request to DTO
-   */
+  
   mapUpdateProfileRequest(requestData: UpdateProfileRequestDTO): UpdateProfileDTO {
     const mappedData: UpdateProfileDTO = {};
     
@@ -68,7 +66,7 @@ export class UserMapper implements IUserMapper {
       mappedData.avatar = requestData.avatar;
     }
     
-    // Parse crop data if provided
+    
     if (requestData.cropData) {
       mappedData.cropData = this.parseCropData(requestData.cropData);
     }
@@ -76,9 +74,7 @@ export class UserMapper implements IUserMapper {
     return mappedData;
   }
 
-  /**
-   * Maps DTO to service layer data structure
-   */
+  
   mapUpdateProfileToServiceData(dto: UpdateProfileDTO): UpdateProfileData {
     const serviceData: UpdateProfileData = {};
     
@@ -109,9 +105,7 @@ export class UserMapper implements IUserMapper {
     return serviceData;
   }
 
-  /**
-   * Maps create user request to service data
-   */
+  
   mapCreateUserRequest(requestData: CreateUserRequestDTO): CreateUserType {
     return {
       name: requestData.name.trim(),
@@ -122,9 +116,7 @@ export class UserMapper implements IUserMapper {
     };
   }
 
-  /**
-   * Maps database user entity to response DTO
-   */
+  
   mapDatabaseUserToResponse(user: IUser, avatarUrl?: string | null): UserProfileResponseDTO {
     return {
       _id: user._id.toString(),
@@ -141,9 +133,7 @@ export class UserMapper implements IUserMapper {
     };
   }
 
-  /**
-   * Maps UserProfileData to response DTO
-   */
+  
   mapUserProfileDataToResponse(userData: UserProfileData): UserProfileResponseDTO {
     return {
       _id: userData._id,
@@ -160,9 +150,7 @@ export class UserMapper implements IUserMapper {
     };
   }
 
-  /**
-   * Maps update DTO to database update structure
-   */
+  
   mapUpdateDTOToDatabase(dto: UpdateProfileDTO): UpdateUserDatabaseDTO {
     const databaseData: UpdateUserDatabaseDTO = {};
     
@@ -183,19 +171,17 @@ export class UserMapper implements IUserMapper {
     }
     
     if (dto.avatar !== undefined) {
-      // Handle file upload or string assignment
+      
       if (typeof dto.avatar === 'string' || dto.avatar === null) {
         databaseData.avatar = dto.avatar;
       }
-      // For file uploads, this would be handled in the service layer
+      
     }
     
     return databaseData;
   }
 
-  /**
-   * Maps database user to UserProfileData
-   */
+  
   mapDatabaseUserToProfileData(user: IUser): UserProfileData {
     return {
       _id: user._id.toString(),
@@ -212,12 +198,10 @@ export class UserMapper implements IUserMapper {
     };
   }
 
-  /**
-   * Maps validation errors to DTO format
-   */
+  
   mapValidationErrors(errors: string[]): ValidationErrorDTO[] {
     return errors.map(error => {
-      // Extract field name from error message if possible
+      
       const fieldMatch = error.match(/^(\w+):/);
       const field = fieldMatch ? fieldMatch[1] : 'general';
       const message = fieldMatch ? error.substring(fieldMatch[0].length).trim() : error;
@@ -229,9 +213,7 @@ export class UserMapper implements IUserMapper {
     });
   }
 
-  /**
-   * Parses crop data from JSON string
-   */
+  
   parseCropData(cropDataString: string): CropData | null {
     try {
       const parsed = JSON.parse(cropDataString);
@@ -252,16 +234,12 @@ export class UserMapper implements IUserMapper {
     }
   }
 
-  /**
-   * Formats Date to ISO string
-   */
+  
   formatDateToISO(date: Date | undefined): string | undefined {
     return date ? date.toISOString() : undefined;
   }
 
-  /**
-   * Maps multiple users to summary DTOs
-   */
+  
   mapUsersToSummary(users: IUser[]): UserSummaryDTO[] {
     return users.map(user => ({
       _id: user._id.toString(),
@@ -271,9 +249,7 @@ export class UserMapper implements IUserMapper {
     }));
   }
 
-  /**
-   * Maps service response to controller response format
-   */
+  
   mapServiceResponseToControllerResponse(serviceData: { user: UserProfileData }): {
     user: UserProfileResponseDTO;
   } {
@@ -282,14 +258,12 @@ export class UserMapper implements IUserMapper {
     };
   }
 
-  /**
-   * Validates and maps phone number
-   */
+  
   mapAndValidatePhone(phone: string): string {
-    // Remove all non-digit characters
+    
     const cleanPhone = phone.replace(/\D/g, '');
     
-    // Basic validation
+  
     if (cleanPhone.length < 10 || cleanPhone.length > 15) {
       throw new Error('Phone number must be between 10 and 15 digits');
     }
@@ -297,13 +271,11 @@ export class UserMapper implements IUserMapper {
     return cleanPhone;
   }
 
-  /**
-   * Validates and maps email
-   */
+  
   mapAndValidateEmail(email: string): string {
     const cleanEmail = email.toLowerCase().trim();
     
-    // Basic email validation
+    
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(cleanEmail)) {
       throw new Error('Invalid email format');
@@ -312,9 +284,7 @@ export class UserMapper implements IUserMapper {
     return cleanEmail;
   }
 
-  /**
-   * Validates and maps name
-   */
+  
   mapAndValidateName(name: string): string {
     const cleanName = name.trim();
     
@@ -330,8 +300,8 @@ export class UserMapper implements IUserMapper {
   }
 }
 
-// Export singleton instance
+
 export const userMapper = new UserMapper();
 
-// Export the interface for dependency injection
+
 export default IUserMapper;

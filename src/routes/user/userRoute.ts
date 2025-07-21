@@ -1,4 +1,4 @@
-// routes/userRoutes.ts
+
 import express from "express";
 import multer from "multer";
 import { AuthController } from "../../controllers/user/Auth";
@@ -11,15 +11,15 @@ import { verifyToken } from "../../utils/jwt";
 
 const userRoute = express.Router();
 
-// Multer configuration for file uploads
+
 const storage = multer.memoryStorage();
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 5 * 1024 * 1024, 
   },
   fileFilter: (req, file, cb) => {
-    // Only allow image files
+   
     if (file.mimetype.startsWith("image/")) {
       cb(null, true);
     } else {
@@ -29,20 +29,19 @@ const upload = multer({
   },
 });
 
-// Single file upload for avatar (matches the frontend field name)
+
 const uploadAvatar = upload.single("avatar");
 
-// Auth instances
+
 const AuthRepositoryInstance = new AuthUserRepository();
 const AuthServiceInstance = new AuthService(AuthRepositoryInstance);
 const AuthControllerInstance = new AuthController(AuthServiceInstance);
 
-// Profile instances
+
 const userRepository = new UserRepository();
 const userService = new UserService(userRepository);
 const userController = new UserController(userService);
 
-// Auth routes
 userRoute.post(
   "/send-otp",
   AuthControllerInstance.sendOtp.bind(AuthControllerInstance)
@@ -64,7 +63,7 @@ userRoute.patch(
   AuthControllerInstance.resetPassword.bind(AuthControllerInstance)
 );
 
-// Profile routes
+
 userRoute.put(
   "/profile/update-profile",
   verifyToken("user"),
@@ -78,6 +77,6 @@ userRoute.get(
   userController.getUserProfile.bind(userController)
 );
 
-userRoute.get("categories", verifyToken("user"));
+
 
 export default userRoute;

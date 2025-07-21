@@ -10,7 +10,7 @@ import {
 } from "../../dto/admin/CategoryDTO";
 
 export interface IAdminService {
-  // User methods - return DTOs
+  
   getAllUsers(
     skip: number,
     limit: number,
@@ -18,7 +18,7 @@ export interface IAdminService {
   ): Promise<{ users: UserDto[]; totalPages: number; totalCount: number }>;
   listUnlistUser(id: string): Promise<UserDto>;
 
-  // Tutor methods - return DTOs
+  
   getAllTutors(
     skip: number,
     limit: number,
@@ -26,7 +26,7 @@ export interface IAdminService {
   ): Promise<{ tutors: TutorDto[]; totalPages: number; totalCount: number }>;
   listUnlistTutor(id: string): Promise<TutorDto>;
 
-  // TutorDocs methods - return DTOs
+  
   getAllTutorDocs(
     skip: number,
     limit: number,
@@ -49,7 +49,7 @@ export interface IAdminService {
     tutorName?: string;
   }>;
 
-  // Category methods - return DTOs
+ 
   addCourseCategory(data: CreateCategoryDto): Promise<CategoryDto>;
   getAllCategories(
     skip: number,

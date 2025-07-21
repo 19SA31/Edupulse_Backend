@@ -7,7 +7,7 @@ import {
 } from "../../dto/admin/AdminAuthDTO";
 
 export class AdminAuthMapper {
-  // Map request DTO to service input
+  
   static mapLoginRequestToService(dto: AdminLoginRequestDTO): {
     email: string;
     password: string;
@@ -18,7 +18,7 @@ export class AdminAuthMapper {
     };
   }
 
-  // Map database model to domain model
+  
   static mapModelToDomain(model: any): AdminDomain {
     return {
       _id: model._id?.toString(),
@@ -29,7 +29,7 @@ export class AdminAuthMapper {
     };
   }
 
-  // Map service result to controller response
+  
   static mapServiceResultToResponse(
     serviceResult: AdminLoginServiceResultDTO,
     success: boolean = true
@@ -54,14 +54,14 @@ export class AdminAuthMapper {
     };
   }
 
-  // Map logout response
+  
   static mapLogoutResponse(): AdminLogoutResponseDTO {
     return {
       message: "You have been logged out successfully",
     };
   }
 
-  // Sanitize admin data (remove sensitive info)
+  
   static sanitizeAdminData(admin: AdminDomain): Omit<AdminDomain, "password"> {
     const { password, ...sanitized } = admin;
     return sanitized;

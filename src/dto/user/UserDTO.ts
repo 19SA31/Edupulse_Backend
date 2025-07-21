@@ -1,14 +1,14 @@
 
 import { CropData } from '../../interfaces/userInterface/userInterface';
 
-// Request DTOs - Data coming from client
+
 export interface UpdateProfileRequestDTO {
   name?: string;
   phone?: string;
   DOB?: string;
   gender?: 'male' | 'female' | 'other';
   avatar?: Express.Multer.File | string | null;
-  cropData?: string; // JSON string from form data
+  cropData?: string; 
 }
 
 export interface UpdateProfileDTO {
@@ -38,13 +38,13 @@ export interface UserProfileResponseDTO {
   name: string;
   email: string;
   phone?: string;
-  DOB?: string; // ISO string format for client
+  DOB?: string; 
   gender?: 'male' | 'female' | 'other';
   avatar?: string | null;
   isBlocked?: boolean;
-  createdAt?: string; // ISO string format for client
-  updatedAt?: string; // ISO string format for client
-  lastLogin?: string; // ISO string format for client
+  createdAt?: string; 
+  updatedAt?: string; 
+  lastLogin?: string; 
 }
 
 export interface UserSummaryDTO {
@@ -62,7 +62,7 @@ export interface GetUserProfileResponseDTO {
   user: UserProfileResponseDTO;
 }
 
-// Internal DTOs - Data used within services
+
 export interface UserDatabaseDTO {
   _id: string;
   name: string;
@@ -86,7 +86,7 @@ export interface UpdateUserDatabaseDTO {
   avatar?: string | null;
 }
 
-// Validation DTOs
+
 export interface ValidationErrorDTO {
   field: string;
   message: string;
@@ -97,7 +97,7 @@ export interface ValidationResultDTO {
   errors: ValidationErrorDTO[];
 }
 
-// File upload DTOs
+
 export interface FileUploadDTO {
   file: Express.Multer.File;
   cropData?: CropData;

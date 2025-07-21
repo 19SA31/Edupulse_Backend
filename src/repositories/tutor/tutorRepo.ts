@@ -1,5 +1,5 @@
 import BaseRepository from '../BaseRepository';
-import { ITutor, ITutorDocs } from '../../interfaces/tutorInterface/tutorInterface';
+import { ITutor, UpdateProfileData } from '../../interfaces/tutorInterface/tutorInterface';
 import { ITutorRepository } from '../../interfaces/tutor/tutorRepoInterface';
 import { TutorDocs } from '../../models/TutorDocs';
 import TutorModel from '../../models/Tutors';
@@ -17,6 +17,56 @@ export class TutorRepository extends BaseRepository<ITutor> implements ITutorRep
   constructor() {
     super(TutorModel); 
     this.tutorDocsModel = TutorDocs; 
+  }
+
+  async findById(id: string): Promise<ITutor | null> {
+    try {
+      const tutor = await this.findOne({ _id: id });
+      return tutor 
+    } catch (error) {
+      console.error('Error finding tutor by ID:', error);
+      throw error;
+    }
+  }
+
+  async updateProfile(tutorId: string, updateData: UpdateProfileData): Promise<ITutor | null> {
+    try {
+      const updateObject: any = {};
+      
+      if (updateData.name !== undefined) updateObject.name = updateData.name;
+      if (updateData.phone !== undefined) updateObject.phone = updateData.phone;
+      if (updateData.DOB !== undefined) {
+        updateObject.DOB = updateData.DOB ? new Date(updateData.DOB) : null;
+      }
+      if (updateData.gender !== undefined) updateObject.gender = updateData.gender;
+      if (updateData.avatar !== undefined) updateObject.avatar = updateData.avatar;
+
+      const updatedTutor = await this.update(tutorId, updateObject);
+      return updatedTutor 
+    } catch (error) {
+      console.error('Error updating tutor profile:', error);
+      throw error;
+    }
+  }
+
+  async findByPhoneExcludingId(phone: string, excludeId: string): Promise<TutorServiceDTO | null> {
+    try {
+      const tutor = await this.findOne({ phone, _id: { $ne: excludeId } });
+      return tutor ? TutorMapper.mapTutorToServiceDTO(tutor) : null;
+    } catch (error) {
+      console.error('Error finding tutor by phone excluding ID:', error);
+      throw error;
+    }
+  }
+
+  async findByEmailExcludingId(email: string, excludeId: string): Promise<TutorServiceDTO | null> {
+    try {
+      const tutor = await this.findOne({ email, _id: { $ne: excludeId } });
+      return tutor ? TutorMapper.mapTutorToServiceDTO(tutor) : null;
+    } catch (error) {
+      console.error('Error finding tutor by email excluding ID:', error);
+      throw error;
+    }
   }
 
   async findTutorByEmailOrPhone(email?: string, phone?: string): Promise<TutorServiceDTO | null> {
@@ -71,9 +121,7 @@ export class TutorRepository extends BaseRepository<ITutor> implements ITutorRep
     }
   }
 
-  // ============================================================================
-  // VERIFICATION DOCUMENTS OPERATIONS
-  // ============================================================================
+
 
   async findVerificationDocsByTutorId(tutorId: string): Promise<VerificationDocsServiceDTO | null> {
     try {
@@ -208,7 +256,7 @@ export class TutorRepository extends BaseRepository<ITutor> implements ITutorRep
       const pipeline: any[] = [
         {
           $lookup: {
-            from: 'tutordocs', // Make sure this matches your TutorDocs collection name
+            from: 'tutordocs', 
             localField: '_id',
             foreignField: 'tutorId',
             as: 'verificationDocs'

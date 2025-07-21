@@ -19,22 +19,22 @@ export class TutorMapper {
     return tutors.map((tutor) => this.toDto(tutor));
   }
 
-  // Updated method to accept TutorDto[] instead of Tutor[]
+  
   static toPaginatedDto(
-    tutors: TutorDto[], // Changed from Tutor[] to TutorDto[]
+    tutors: TutorDto[], 
     totalPages: number,
     currentPage: number,
     totalCount: number
   ): PaginatedTutorsDto {
     return {
-      tutors: tutors, // No need to transform since they're already DTOs
+      tutors: tutors, 
       totalPages,
       currentPage,
       totalCount,
     };
   }
 
-  // Keep the original method for when you have full entities
+  
   static toPaginatedDtoFromEntities(
     tutors: Tutor[],
     totalPages: number,

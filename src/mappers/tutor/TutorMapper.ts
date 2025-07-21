@@ -16,7 +16,7 @@ import {
 } from "../../dto/tutor/TutorDTO";
 
 export class TutorMapper {
-  // Controller Layer Mappings
+  
   static mapSubmitVerificationDocumentsRequest(req: Request): SubmitVerificationDocumentsRequestDTO {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     const { email, phone } = req.body;
@@ -48,7 +48,7 @@ export class TutorMapper {
     };
   }
 
-  // Service Layer Mappings
+  
   static mapDocumentFilesToDocumentFiles(dto: SubmitVerificationDocumentsRequestDTO): DocumentFiles {
     return {
       avatar: dto.files.avatar,
@@ -88,7 +88,7 @@ export class TutorMapper {
     };
   }
 
-  // Repository Layer Mappings
+  
   static mapTutorToServiceDTO(tutor: ITutor): TutorServiceDTO {
     return {
       _id: tutor._id.toString(),
@@ -154,7 +154,7 @@ export class TutorMapper {
     return updateData;
   }
 
-  // Utility mappings for complex repository operations
+  
   static mapVerificationDocsArrayToServiceDTO(docsArray: ITutorDocs[]): VerificationDocsServiceDTO[] {
     return docsArray.map(docs => this.mapVerificationDocsToServiceDTO(docs));
   }

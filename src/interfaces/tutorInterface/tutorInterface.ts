@@ -1,8 +1,6 @@
 import mongoose, { Document, ObjectId } from "mongoose";
 
-// ============================================================================
-// CORE TUTOR INTERFACES
-// ============================================================================
+
 
 export interface ITutor extends Document {
   _id: string | ObjectId;
@@ -20,7 +18,7 @@ export interface ITutor extends Document {
   lastLogin?: Date;
 }
 
-// Added missing tutorType interface
+
 export interface tutorType {
   name?: string;  
   email: string;
@@ -43,6 +41,7 @@ export interface TutorProfile {
   email: string;
   phone: string;
   password: string;
+  avatar?: string | null; 
   isBlocked: boolean;
   isVerified: boolean;
   createdAt: Date;
@@ -69,12 +68,49 @@ export interface GetTutorData {
   email: string;
   isVerified: boolean;
   verificationStatus: 'not_submitted'|'pending' | 'approved' | 'rejected';
-
+}
+export interface GetTutorDataLogin {
+  id: string;
+  name: string;
+  email: string;
+  phone:string;
+  avatar?:string|null;
+  isVerified: boolean;
+  verificationStatus: 'not_submitted'|'pending' | 'approved' | 'rejected';
 }
 
-// ============================================================================
-// OTP INTERFACE
-// ============================================================================
+export interface CropData {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+ export interface UpdateProfileData {
+  name?: string;
+  phone?: string;
+  DOB?: string;
+  gender?: 'male' | 'female' | 'other';
+  avatar?: Express.Multer.File | string | null;
+  cropData?: CropData | null;
+}
+
+export interface TutorProfileData {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  DOB?: Date;
+  gender?: 'male' | 'female' | 'other';
+  avatar?: string | null; 
+  isBlocked?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+  lastLogin?: Date;
+}
+
+
+
 
 export interface OTPDocument {
   email: string;
@@ -82,9 +118,7 @@ export interface OTPDocument {
   createdTime: Date;
 }
 
-// ============================================================================
-// VERIFICATION DOCUMENTS INTERFACES
-// ============================================================================
+
 
 export interface ITutorDocs extends Document {
   _id: string | ObjectId;
@@ -128,9 +162,7 @@ export interface UpdateVerificationStatus {
   rejectionReason?: string;
 }
 
-// ============================================================================
-// SERVICE RESPONSE INTERFACES
-// ============================================================================
+
 
 export interface ServiceResponse<T = any> {
   success: boolean;

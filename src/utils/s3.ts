@@ -33,18 +33,13 @@ export class S3Service {
         console.log("S3 Service initialized with bucket:", bucketName);
     }
 
-    /**
-     * Upload a file to S3
-     * @param folderPath - The folder path in S3 (e.g., "user_avatars/", "tutor-documents/userId/")
-     * @param file - The file object from multer
-     * @returns The complete S3 key path (folder + filename)
-     */
+    
     async uploadFile(folderPath: string, file: any): Promise<string> {
         const extension = path.extname(file.originalname);
         const uniqueId = crypto.randomBytes(16).toString("hex");
         const uniqueName = `${uniqueId}${extension}`;
 
-        // Ensure folderPath ends with a slash
+        
         const normalizedFolderPath = folderPath.endsWith('/') ? folderPath : `${folderPath}/`;
         const fullKey = `${normalizedFolderPath}${uniqueName}`;
 
@@ -59,30 +54,24 @@ export class S3Service {
             const command = new PutObjectCommand(params);
             await this.s3.send(command);
             console.log(`File uploaded: ${fullKey}`);
-            return fullKey; // Return the complete key path
+            return fullKey; 
         } catch (error) {
             console.error("Error uploading file:", error);
             throw error;
         }
     }
 
-    /**
-     * Get a signed URL for a file - handles both full paths and filename+folder combinations
-     * @param filePathOrName - Either full S3 key path or just filename
-     * @param folder - Optional folder path (used only if filePathOrName is just a filename)
-     * @param expiresIn - URL expiration time in seconds (default: 1 hour)
-     * @returns A signed URL for the file
-     */
+    
     async getFile(filePathOrName: string, folder?: string, expiresIn: number = 3600): Promise<string> {
         try {
             let fullKey: string;
 
-            // If folder is provided, treat filePathOrName as just the filename
+            
             if (folder) {
                 const normalizedFolder = folder.endsWith('/') ? folder : `${folder}/`;
                 fullKey = `${normalizedFolder}${filePathOrName}`;
             } else {
-                // Otherwise, treat filePathOrName as the complete S3 key
+                
                 fullKey = filePathOrName;
             }
             
@@ -102,22 +91,17 @@ export class S3Service {
         }
     }
 
-    /**
-     * Delete a file from S3 - handles both full paths and filename+folder combinations
-     * @param filePathOrName - Either full S3 key path or just filename
-     * @param folder - Optional folder path (used only if filePathOrName is just a filename)
-     * @returns Deletion response
-     */
+    
     async deleteFile(filePathOrName: string, folder?: string): Promise<any> {
         try {
             let fullKey: string;
 
-            // If folder is provided, treat filePathOrName as just the filename
+           
             if (folder) {
                 const normalizedFolder = folder.endsWith('/') ? folder : `${folder}/`;
                 fullKey = `${normalizedFolder}${filePathOrName}`;
             } else {
-                // Otherwise, treat filePathOrName as the complete S3 key
+                
                 fullKey = filePathOrName;
             }
             
@@ -137,20 +121,12 @@ export class S3Service {
         }
     }
 
-    /**
-     * Extract filename from a full S3 key path
-     * @param fullPath - Complete S3 key path
-     * @returns Just the filename
-     */
+    
     public extractFileName(fullPath: string): string {
         return fullPath.split('/').pop() || '';
     }
 
-    /**
-     * Extract folder path from a full S3 key path
-     * @param fullPath - Complete S3 key path
-     * @returns The folder path without filename
-     */
+    
     public extractFolderPath(fullPath: string): string {
         const parts = fullPath.split('/');
         return parts.slice(0, -1).join('/');

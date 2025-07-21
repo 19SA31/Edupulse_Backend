@@ -7,7 +7,7 @@ import {
 import { ITutorDocs } from "../../interfaces/tutorInterface/tutorInterface";
 
 export interface IAdminRepositoryInterface {
-  // User methods - return raw data, not ResponseModel
+
   getAllUsers(
     skip: number,
     limit: number,
@@ -15,7 +15,7 @@ export interface IAdminRepositoryInterface {
   ): Promise<{ users: User[]; totalPages: number }>;
   changeUserStatus(id: string): Promise<User>;
 
-  // Tutor methods - return raw data, not ResponseModel
+
   getAllTutors(
     skip: number,
     limit: number,
@@ -23,7 +23,7 @@ export interface IAdminRepositoryInterface {
   ): Promise<{ tutors: Tutor[]; totalPages: number }>;
   changeTutorStatus(id: string): Promise<Tutor>;
 
-  // TutorDocs methods - return raw data, not ResponseModel
+  
   getAllTutorDocs(
     skip: number,
     limit: number,
@@ -39,7 +39,7 @@ export interface IAdminRepositoryInterface {
     reason: string
   ): Promise<{ tutorEmail: string; tutorName: string } | null>;
 
-  // Category methods - return raw data, not ResponseModel
+  
   addCategory(data: Category): Promise<Category>;
   getAllCategories(
     skip: number,

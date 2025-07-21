@@ -32,7 +32,7 @@ export class AuthAdminService implements IAdminAuthServiceInterface {
         };
       }
 
-      // Generate tokens
+      
       const tokenPayload = {
         id: verificationResult.admin?._id,
         email: verificationResult.admin?.email,

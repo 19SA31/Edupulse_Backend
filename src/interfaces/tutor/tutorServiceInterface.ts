@@ -4,11 +4,18 @@ import {
   GetVerificationStatusRequestDTO,
   GetVerificationStatusResponseDTO,
   GetVerificationDocumentsRequestDTO,
-  GetVerificationDocumentsResponseDTO
+  GetVerificationDocumentsResponseDTO,
 } from "../../dto/tutor/TutorDTO";
+import { UpdateProfileData, TutorProfileData } from "../tutorInterface/tutorInterface"; 
 import { ServiceResponse } from "../tutorInterface/tutorInterface";
 
 export interface ITutorService {
+  updateProfile(
+    tutorId: string,
+    updateData: UpdateProfileData
+  ): Promise<{ tutor: TutorProfileData }>;
+
+  getTutorProfile(tutorId: string): Promise<{ tutor: TutorProfileData }>;
   submitVerificationDocuments(
     requestDTO: SubmitVerificationDocumentsRequestDTO
   ): Promise<ServiceResponse<SubmitVerificationDocumentsResponseDTO>>;

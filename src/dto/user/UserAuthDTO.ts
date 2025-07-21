@@ -26,7 +26,7 @@ export interface ResetPasswordRequestDto {
   password: string;
 }
 
-// Response DTOs
+
 export interface SignUpResponseDto {
   success: boolean;
   message: string;
@@ -67,7 +67,7 @@ export interface UserProfileResponseDto {
   avatar?: string;
 }
 
-// Internal Service DTOs
+
 export interface LoginServiceResultDto {
   accessToken: string;
   refreshToken: string;

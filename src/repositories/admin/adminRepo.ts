@@ -103,7 +103,7 @@ export class AdminRepository
         "Error in AdminRepository changeUserStatus:",
         error.message
       );
-      throw error; // Re-throw to let service/controller handle
+      throw error; 
     }
   }
 
@@ -123,13 +123,13 @@ export class AdminRepository
         "Error in AdminRepository changeTutorStatus:",
         error.message
       );
-      throw error; // Re-throw to let service/controller handle
+      throw error; 
     }
   }
 
   async addCategory(data: Category): Promise<Category> {
     try {
-      // Check if a category with the same name already exists (case-insensitive)
+      
       const existingCategory = await this._categoryRepository.findOne({
         name: { $regex: new RegExp(`^${data.name}$`, "i") },
       });
@@ -138,14 +138,14 @@ export class AdminRepository
         throw new Error(`Category with name '${data.name}' already exists`);
       }
 
-      // Create the new category if no duplicate exists
+      
       const newCategory = await this._categoryRepository.create(
         data as Category
       );
       return newCategory;
     } catch (error: any) {
       console.error("Error in AdminRepository addCategory:", error.message);
-      throw error; // Re-throw to let service/controller handle
+      throw error; 
     }
   }
 
@@ -188,7 +188,7 @@ export class AdminRepository
     updateData: { name: string; description: string }
   ): Promise<Category> {
     try {
-      // Check if category exists
+      
       const existingCategory = await this._categoryRepository.findOne({
         _id: categoryId,
       });
@@ -197,7 +197,7 @@ export class AdminRepository
         throw new Error("Category not found");
       }
 
-      // Check if another category with the same name already exists (excluding current category)
+      
       const duplicateCategory = await this._categoryRepository.findOne({
         name: { $regex: new RegExp(`^${updateData.name}$`, "i") },
         _id: { $ne: categoryId },
@@ -209,7 +209,7 @@ export class AdminRepository
         );
       }
 
-      // Update the category using BaseRepository's update method
+      
       const updatedCategory = await this._categoryRepository.update(
         categoryId,
         updateData
@@ -222,7 +222,7 @@ export class AdminRepository
       return updatedCategory;
     } catch (error: any) {
       console.error("Error in AdminRepository updateCategory:", error.message);
-      throw error; // Re-throw to let service/controller handle
+      throw error; 
     }
   }
 
@@ -236,7 +236,7 @@ export class AdminRepository
         throw new Error("Category not found");
       }
 
-      // Toggle the isListed status and update using BaseRepository's update method
+      
       const updatedCategory = await this._categoryRepository.update(
         categoryId,
         { isListed: !category.isListed }
@@ -252,7 +252,7 @@ export class AdminRepository
         "Error in AdminRepository toggleCategoryStatus:",
         error.message
       );
-      throw error; // Re-throw to let service/controller handle
+      throw error; 
     }
   }
 
@@ -267,11 +267,11 @@ export class AdminRepository
     try {
       let pipeline: any[] = [];
 
-      // Add search filter if provided
+      
       if (search) {
         pipeline.push({
           $lookup: {
-            from: "tutors", // Collection name for tutors
+            from: "tutors", 
             localField: "tutorId",
             foreignField: "_id",
             as: "tutor",
@@ -293,7 +293,7 @@ export class AdminRepository
           },
         });
       } else {
-        // Always populate tutor information
+        
         pipeline.push({
           $lookup: {
             from: "tutors",
@@ -310,18 +310,18 @@ export class AdminRepository
         });
       }
 
-      // Add pagination
+      
       pipeline.push(
         { $sort: { submittedAt: -1 } },
         { $skip: skip },
         { $limit: limit }
       );
 
-      // Execute aggregation pipeline
+      
       const tutorDocs = await this._tutorDocsRepository.aggregate(pipeline);
 
-      // Get total count for pagination
-      const countPipeline = pipeline.slice(0, -2); // Remove skip and limit
+      
+      const countPipeline = pipeline.slice(0, -2); 
       countPipeline.push({ $count: "total" });
       const countResult = await this._tutorDocsRepository.aggregate(
         countPipeline
@@ -339,7 +339,7 @@ export class AdminRepository
 
   async verifyTutor(tutorId: string): Promise<void> {
     try {
-      // Find the tutor docs first
+     
       const tutorDocs = await this._tutorDocsRepository.findOne({
         tutorId: tutorId,
       });
@@ -348,13 +348,13 @@ export class AdminRepository
         throw new Error("Tutor not found");
       }
 
-      // Update tutor docs status to verified
+      
       await this._tutorDocsRepository.update(tutorDocs._id.toString(), {
         isVerified: true,
         verificationStatus: "verified",
       });
 
-      // Update tutor isVerified to true
+      
       await this._tutorRepository.update(tutorId, {
         isVerified: true,
       });
@@ -369,7 +369,7 @@ export class AdminRepository
     reason: string
   ): Promise<{ tutorEmail: string; tutorName: string } | null> {
     try {
-      // Find the tutor docs first
+      
       const tutorDocs = await this._tutorDocsRepository.findOne({
         tutorId: tutorId,
       });
@@ -378,21 +378,21 @@ export class AdminRepository
         throw new Error("Tutor not found");
       }
 
-      // Get tutor info for email
+      
       const tutor = await this._tutorRepository.findOne({ _id: tutorId });
 
       if (!tutor) {
         throw new Error("Tutor not found");
       }
 
-      // Update tutor docs status to rejected
+      
       await this._tutorDocsRepository.update(tutorDocs._id.toString(), {
         verificationStatus: "rejected",
         rejectionReason: reason,
         reviewedAt: new Date(),
       });
 
-      // Note: isVerified is already false by default, so no need to update tutor table
+      
 
       return {
         tutorEmail: tutor.email,

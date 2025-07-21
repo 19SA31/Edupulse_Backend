@@ -2,8 +2,8 @@
 export interface TutorDocsDto {
   id: string;
   tutorId: string;
-  tutorName?: string; // Optional tutor name for display
-  tutorEmail?: string; // Optional tutor email for display
+  tutorName?: string; 
+  tutorEmail?: string; 
   avatar: string;
   degree: string;
   aadharFront: string;

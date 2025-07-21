@@ -23,10 +23,10 @@ export class AuthController {
     next: NextFunction
   ): Promise<void> {
     try {
-      // Map request body to DTO
+      
       const signUpDto: SignUpRequestDto = AuthMapper.mapToSignUpRequest(req.body);
       
-      // Input validation
+      
       if (!signUpDto.email) {
         const response = new ResponseModel(false, "Email is required");
         res.status(HTTP_statusCode.BadRequest).json(response);
@@ -49,17 +49,17 @@ export class AuthController {
     next: NextFunction
   ): Promise<void> {
     try {
-      // Map request body to DTO
+      
       const verifyOtpDto: VerifyOtpRequestDto = AuthMapper.mapToVerifyOtpRequest(req.body);
       
-      // Input validation
+      
       if (!verifyOtpDto.email || !verifyOtpDto.otp) {
         const response = new ResponseModel(false, "Email and OTP are required");
         res.status(HTTP_statusCode.BadRequest).json(response);
         return;
       }
 
-      // Additional validation for new user registration
+      
       if (!verifyOtpDto.isForgot && !verifyOtpDto.password) {
         const response = new ResponseModel(false, "Password is required for registration");
         res.status(HTTP_statusCode.BadRequest).json(response);
@@ -88,10 +88,10 @@ export class AuthController {
     next: NextFunction
   ): Promise<void> {
     try {
-      // Map request body to DTO
+      
       const loginDto: LoginRequestDto = AuthMapper.mapToLoginRequest(req.body);
       
-      // Input validation
+      
       if (!loginDto.email || !loginDto.password) {
         const response = new ResponseModel(false, "Email and password are required");
         res.status(HTTP_statusCode.BadRequest).json(response);
@@ -100,14 +100,14 @@ export class AuthController {
       
       const loginResult = await this.authService.loginService(loginDto);
       
-      // Map service result to response DTO
+      
       const response = AuthMapper.mapToLoginResponse(
         true, 
         "User logged in successfully", 
         loginResult
       );
       
-      // Set HTTP-only cookies
+      
       this.setAuthCookies(res, loginResult.accessToken, loginResult.refreshToken);
       
       res.status(HTTP_statusCode.OK).json(response);
@@ -123,10 +123,10 @@ export class AuthController {
     next: NextFunction
   ): Promise<void> {
     try {
-      // Map request body to DTO
+      
       const resetPasswordDto: ResetPasswordRequestDto = AuthMapper.mapToResetPasswordRequest(req.body);
       
-      // Input validation
+      
       if (!resetPasswordDto.email || !resetPasswordDto.password) {
         const response = new ResponseModel(false, "Email and new password are required");
         res.status(HTTP_statusCode.BadRequest).json(response);
@@ -145,7 +145,7 @@ export class AuthController {
 
   async logoutUser(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      // Clear authentication cookies
+      
       this.clearAuthCookies(res);
       
       const response = AuthMapper.mapToLogoutResponse(true, "You have been logged out successfully");
@@ -158,7 +158,7 @@ export class AuthController {
     }
   }
 
-  // Private helper methods for error handling
+  
   private handleSendOtpError(error: any, res: Response, next: NextFunction): void {
     console.error("Error in sendOtp:", error);
     
@@ -251,7 +251,7 @@ export class AuthController {
     next(error);
   }
 
-  // Helper method to set authentication cookies
+  
   private setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
     res.cookie("RefreshToken", refreshToken, {
       httpOnly: true,
@@ -268,7 +268,7 @@ export class AuthController {
     });
   }
 
-  // Helper method to clear authentication cookies
+  
   private clearAuthCookies(res: Response): void {
     res.clearCookie("RefreshToken", {
       httpOnly: true,

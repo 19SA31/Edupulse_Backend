@@ -81,12 +81,12 @@ export class AuthService implements IAuthService {
       return false;
     }
 
-    // If it's a forgot password flow, just return true after OTP verification
+    
     if (userData.isForgot) {
       return true;
     }
 
-    // For new user registration, create the user
+    
     if (!userData.password) {
       throw new Error("Password is required for new user registration");
     }

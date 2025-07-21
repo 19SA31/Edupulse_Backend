@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import {
   CreateTutorType,
-  GetTutorData,
+  GetTutorDataLogin,
 } from "../../interfaces/tutorInterface/tutorInterface";
 import {
   SignUpServiceDTO,
@@ -116,7 +116,7 @@ export class AuthTutorService implements ITutorAuthInterface {
     return true;
   }
 
-  // Updated login service - handles new users without verification documents
+  
   async loginService(
     tutorData: LoginServiceDTO
   ): Promise<LoginServiceResponseDTO> {
@@ -133,7 +133,7 @@ export class AuthTutorService implements ITutorAuthInterface {
 
     const { _id, email, name, isVerified } = loggedTutor;
 
-    // Check verification status - returns null for new users
+    
     const doc = await this.AuthRepository.checkVerificationStatus(_id);
 
     let verificationStatus:
@@ -164,10 +164,12 @@ export class AuthTutorService implements ITutorAuthInterface {
       { expiresIn: "7d" }
     );
 
-    const tutorResponseData: GetTutorData = {
+    const tutorResponseData: GetTutorDataLogin = {
       id: _id,
       name,
       email,
+      phone: loggedTutor.phone,
+      avatar: loggedTutor.avatar || null, 
       isVerified,
       verificationStatus: verificationStatus,
     };

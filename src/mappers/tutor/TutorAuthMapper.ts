@@ -1,6 +1,6 @@
-// /src/mappers/tutor/TutorAuthMapper.ts
+// Updated TutorAuthMapper.ts
 
-import { GetTutorData } from "../../interfaces/tutorInterface/tutorInterface";
+import { GetTutorData, GetTutorDataLogin } from "../../interfaces/tutorInterface/tutorInterface";
 import {
   SendOtpRequestDTO,
   SendOtpResponseDTO,
@@ -20,7 +20,7 @@ import {
 } from "../../dto/tutor/TutorAuthDTO";
 
 export class TutorAuthMapper {
-  // Request mappers - Controller to Service
+  
   static mapSendOtpRequestToService(dto: SendOtpRequestDTO): SignUpServiceDTO {
     return {
       email: dto.email,
@@ -54,7 +54,7 @@ export class TutorAuthMapper {
     };
   }
 
-  // Response mappers - Service to Controller
+  
   static mapSendOtpResponse(success: boolean, message: string): SendOtpResponseDTO {
     return {
       success,
@@ -69,20 +69,23 @@ export class TutorAuthMapper {
     };
   }
 
-  static mapTutorDataFromService(tutorData: GetTutorData): TutorDataDTO {
+
+  static mapTutorDataFromService(tutorData: GetTutorDataLogin): TutorDataDTO {
     return {
       id: tutorData.id,
       name: tutorData.name,
       email: tutorData.email,
+      phone: tutorData.phone, 
+      avatar: tutorData.avatar,
       isVerified: tutorData.isVerified,
-      verificationStatus:tutorData.verificationStatus
+      verificationStatus: tutorData.verificationStatus
     };
   }
 
   static mapLoginServiceResponse(
     accessToken: string,
     refreshToken: string,
-    tutor: GetTutorData
+    tutor: GetTutorDataLogin
   ): LoginServiceResponseDTO {
     return {
       accessToken,
@@ -121,7 +124,7 @@ export class TutorAuthMapper {
     };
   }
 
-  // Error response mappers
+  
   static mapErrorResponse(success: boolean, message: string): {
     success: boolean;
     message: string;

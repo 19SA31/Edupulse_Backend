@@ -30,24 +30,24 @@ export class AdminService implements IAdminService {
     search: any
   ): Promise<{ users: UserDto[]; totalPages: number; totalCount: number }> {
     try {
-      // Get raw data from repository
+      
       const result = await this._adminRepository.getAllUsers(
         skip,
         limit,
         search
       );
 
-      // Transform entities to DTOs using mapper
+      
       const userDtos = UserMapper.toDtoArray(result.users);
 
-      // Process avatars for each user DTO
+      
       const usersWithAvatars = await Promise.all(
         userDtos.map(async (userDto) => {
           let avatarUrl = "";
 
           if (userDto.avatar) {
             try {
-              // Use the complete S3 key path stored in the database
+              
               avatarUrl = await this.s3Service.getFile(userDto.avatar);
             } catch (error) {
               console.warn(
@@ -61,7 +61,7 @@ export class AdminService implements IAdminService {
         })
       );
 
-      // Calculate total count from repository data
+      
       const totalCount =
         result.users.length > 0
           ? Math.ceil(
@@ -79,7 +79,7 @@ export class AdminService implements IAdminService {
       };
     } catch (error: any) {
       console.error("Error in AdminService getAllUsers:", error.message);
-      throw error; // Re-throw to let controller handle
+      throw error; 
     }
   }
 
@@ -89,24 +89,24 @@ export class AdminService implements IAdminService {
     search: any
   ): Promise<{ tutors: TutorDto[]; totalPages: number; totalCount: number }> {
     try {
-      // Get raw data from repository
+      
       const result = await this._adminRepository.getAllTutors(
         skip,
         limit,
         search
       );
 
-      // Transform entities to DTOs using mapper
+     
       const tutorDtos = TutorMapper.toDtoArray(result.tutors);
 
-      // Process avatars for each tutor DTO
+      
       const tutorsWithAvatars = await Promise.all(
         tutorDtos.map(async (tutorDto) => {
           let avatarUrl = "";
 
           if (tutorDto.avatar) {
             try {
-              // Use the complete S3 key path stored in the database
+              
               avatarUrl = await this.s3Service.getFile(tutorDto.avatar);
             } catch (error) {
               console.warn(
@@ -120,7 +120,7 @@ export class AdminService implements IAdminService {
         })
       );
 
-      // Calculate total count from repository data
+      
       const totalCount =
         result.tutors.length > 0
           ? Math.ceil(
@@ -138,57 +138,57 @@ export class AdminService implements IAdminService {
       };
     } catch (error: any) {
       console.error("Error in AdminService getAllTutors:", error.message);
-      throw error; // Re-throw to let controller handle
+      throw error; 
     }
   }
 
   async listUnlistUser(id: string): Promise<UserDto> {
     try {
-      // Get raw entity from repository
+      
       const user = await this._adminRepository.changeUserStatus(id);
 
-      // Transform entity to DTO using mapper
+     
       const userDto = UserMapper.toDto(user);
 
       return userDto;
     } catch (error: any) {
       console.error("Error in AdminService listUnlistUser:", error.message);
-      throw error; // Re-throw to let controller handle
+      throw error; 
     }
   }
 
   async listUnlistTutor(id: string): Promise<TutorDto> {
     try {
-      // Get raw entity from repository
+      
       const tutor = await this._adminRepository.changeTutorStatus(id);
 
-      // Transform entity to DTO using mapper
+     
       const tutorDto = TutorMapper.toDto(tutor);
 
       return tutorDto;
     } catch (error: any) {
       console.error("Error in AdminService listUnlistTutor:", error.message);
-      throw error; // Re-throw to let controller handle
+      throw error; 
     }
   }
 
   async addCourseCategory(data: CreateCategoryDto): Promise<CategoryDto> {
     try {
-      // Transform DTO to entity using mapper
+     
       const categoryEntity = CategoryMapper.fromCreateDto(data);
 
-      // Pass entity to repository
+      
       const createdCategory = await this._adminRepository.addCategory(
         categoryEntity
       );
 
-      // Transform result back to DTO using mapper
+      
       const categoryDto = CategoryMapper.toDto(createdCategory);
 
       return categoryDto;
     } catch (error: any) {
       console.error("Error in AdminService addCourseCategory:", error.message);
-      throw error; // Re-throw to let controller handle
+      throw error; 
     }
   }
 
@@ -202,17 +202,17 @@ export class AdminService implements IAdminService {
     totalCount: number;
   }> {
     try {
-      // Get raw data from repository
+      
       const result = await this._adminRepository.getAllCategories(
         skip,
         limit,
         search
       );
 
-      // Transform entities to DTOs using mapper
+      
       const categoryDtos = CategoryMapper.toDtoArray(result.category);
 
-      // Calculate total count from repository data
+      
       const totalCount =
         result.category.length > 0
           ? Math.ceil(
@@ -238,16 +238,16 @@ export class AdminService implements IAdminService {
     updateData: UpdateCategoryDto
   ): Promise<CategoryDto> {
     try {
-      // Transform DTO to partial entity using mapper
+      
       const updateEntity = CategoryMapper.fromUpdateDto(updateData);
 
-      // Pass entity to repository
+      
       const updatedCategory = await this._adminRepository.updateCategory(
         categoryId,
         updateEntity
       );
 
-      // Transform result back to DTO using mapper
+      
       const categoryDto = CategoryMapper.toDto(updatedCategory);
 
       return categoryDto;
@@ -256,18 +256,18 @@ export class AdminService implements IAdminService {
         "Error in AdminService updateCourseCategory:",
         error.message
       );
-      throw error; // Re-throw to let controller handle
+      throw error; 
     }
   }
 
   async toggleCategoryListStatus(categoryId: string): Promise<CategoryDto> {
     try {
-      // Get raw entity from repository
+      
       const category = await this._adminRepository.toggleCategoryStatus(
         categoryId
       );
 
-      // Transform entity to DTO using mapper
+      
       const categoryDto = CategoryMapper.toDto(category);
 
       return categoryDto;
@@ -276,7 +276,7 @@ export class AdminService implements IAdminService {
         "Error in AdminService toggleCategoryListStatus:",
         error.message
       );
-      throw error; // Re-throw to let controller handle
+      throw error; 
     }
   }
 
@@ -290,17 +290,17 @@ export class AdminService implements IAdminService {
     totalCount: number;
   }> {
     try {
-      // Get raw data from repository
+      
       const result = await this._adminRepository.getAllTutorDocs(
         skip,
         limit,
         search
       );
 
-      // Transform entities to DTOs using mapper
+      
       const tutorDocsDtos = TutorDocsMapper.toDtoArray(result.tutorDocs);
 
-      // Process document URLs for each tutor docs DTO
+      
       const tutorDocsWithUrls = await Promise.all(
         tutorDocsDtos.map(async (tutorDocsDto) => {
           let avatarUrl = "";
@@ -309,7 +309,7 @@ export class AdminService implements IAdminService {
           let aadharBackUrl = "";
 
           try {
-            // Use the complete S3 key paths stored in the database
+            
             if (tutorDocsDto.avatar) {
               avatarUrl = await this.s3Service.getFile(tutorDocsDto.avatar);
             }
@@ -343,7 +343,7 @@ export class AdminService implements IAdminService {
         })
       );
 
-      // Calculate total count from repository data
+      
       const totalCount =
         result.tutorDocs.length > 0
           ? Math.ceil(
@@ -362,7 +362,7 @@ export class AdminService implements IAdminService {
       };
     } catch (error: any) {
       console.error("Error in AdminService getAllTutorDocs:", error.message);
-      throw error; // Re-throw to let controller handle
+      throw error; 
     }
   }
 
@@ -370,7 +370,7 @@ export class AdminService implements IAdminService {
     tutorId: string
   ): Promise<{ success: boolean; message?: string }> {
     try {
-      // Call repository to verify tutor
+      
       await this._adminRepository.verifyTutor(tutorId);
 
       return {
@@ -386,7 +386,7 @@ export class AdminService implements IAdminService {
         };
       }
 
-      throw error; // Re-throw to let controller handle
+      throw error; 
     }
   }
 
@@ -401,7 +401,7 @@ export class AdminService implements IAdminService {
     rejectionReason?: string;
   }> {
     try {
-      // Call repository to reject tutor
+      
       const result = await this._adminRepository.rejectTutor(tutorId, reason);
 
       if (!result) {
@@ -415,7 +415,7 @@ export class AdminService implements IAdminService {
         success: true,
         tutorEmail: result.tutorEmail,
         tutorName: result.tutorName,
-        rejectionReason: reason, // Use the reason parameter directly
+        rejectionReason: reason, 
       };
     } catch (error: any) {
       console.error("Error in AdminService rejectTutor:", error.message);
@@ -427,7 +427,7 @@ export class AdminService implements IAdminService {
         };
       }
 
-      throw error; // Re-throw to let controller handle
+      throw error; 
     }
   }
 }

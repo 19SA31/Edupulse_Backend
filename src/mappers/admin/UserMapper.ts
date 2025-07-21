@@ -19,22 +19,22 @@ export class UserMapper {
     return users.map((user) => this.toDto(user));
   }
 
-  // Updated method to accept UserDto[] instead of User[]
+  
   static toPaginatedDto(
-    users: UserDto[], // Changed from User[] to UserDto[]
+    users: UserDto[], 
     totalPages: number,
     currentPage: number,
     totalCount: number
   ): PaginatedUsersDto {
     return {
-      users: users, // No need to transform since they're already DTOs
+      users: users, 
       totalPages,
       currentPage,
       totalCount,
     };
   }
 
-  // Keep the original method for when you have full entities
+  
   static toPaginatedDtoFromEntities(
     users: User[],
     totalPages: number,

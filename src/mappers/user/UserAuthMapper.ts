@@ -14,7 +14,7 @@ import {
 } from "../../dto/user/UserAuthDTO";
 
 export class AuthMapper {
-  // Request Mappers
+  
   static mapToSignUpRequest(reqBody: any): SignUpRequestDto {
     return {
       name: reqBody.name,
@@ -50,7 +50,7 @@ export class AuthMapper {
     };
   }
 
-  // Response Mappers
+  
   static mapToSignUpResponse(
     success: boolean,
     message: string
@@ -109,7 +109,7 @@ export class AuthMapper {
     };
   }
 
-  // Domain to DTO Mappers
+  
   static mapToUserProfileResponse(user: any): UserProfileResponseDto {
     return {
       _id: user._id,

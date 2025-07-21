@@ -26,7 +26,7 @@ export const uploadToCloudinary = (file: Express.Multer.File): Promise<string> =
       }
     );
 
-    uploadStream.end(file.buffer); // Important for memoryStorage!
+    uploadStream.end(file.buffer); 
   });
 };
 

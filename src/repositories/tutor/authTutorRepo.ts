@@ -112,7 +112,7 @@ export class AuthTutorRepository
       return formattedUserData;
     } catch (error: any) {
       console.error("Error in tutor verification:", error);
-      throw error; // Re-throw to preserve specific error messages like "blocked"
+      throw error; 
     }
   }
 
@@ -131,14 +131,13 @@ export class AuthTutorRepository
     }
   }
 
-  // Updated method - returns null instead of throwing error for new users
+  
   async checkVerificationStatus(id: string): Promise<ITutorDocs | null> {
     try {
       console.log("Checking verification status for tutor ID:", id);
       const status = await this._tutorDocRepo.findOne({ tutorId: id });
       
-      // Return null if no documents found (new user case)
-      // Don't throw error - this is a valid scenario
+      
       return status;
     } catch (error) {
       console.error("Error in check verification status:", error);

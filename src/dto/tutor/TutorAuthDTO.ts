@@ -1,4 +1,4 @@
-// /src/dto/tutor/TutorAuthDTO.ts
+// Updated TutorAuthDTO.ts
 
 export interface SendOtpRequestDTO {
   email: string;
@@ -30,10 +30,13 @@ export interface TutorLoginRequestDTO {
   password: string;
 }
 
+// Updated TutorDataDTO to include phone and avatar
 export interface TutorDataDTO {
   id: string;
   name: string;
   email: string;
+  phone: string; // Add phone
+  avatar?: string | null; // Add avatar
   isVerified: boolean;
   verificationStatus: 'not_submitted'|'pending' | 'approved' | 'rejected';
 }

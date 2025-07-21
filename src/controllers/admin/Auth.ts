@@ -18,23 +18,23 @@ export class AuthAdminController {
     next: NextFunction
   ): Promise<void> {
     try {
-      // Map request to DTO
+      
       const loginRequestDTO: AdminLoginRequestDTO = {
         email: req.body.email,
         password: req.body.password
       };
 
-      // Validate input (you can add validation here)
+      
       if (!loginRequestDTO.email || !loginRequestDTO.password) {
         const response = new ResponseModel(false, "Email and password are required");
         res.status(HTTP_statusCode.BadRequest).json(response);
         return;
       }
 
-      // Map DTO to service input
+      
       const serviceInput = AdminAuthMapper.mapLoginRequestToService(loginRequestDTO);
       
-      // Call service
+      
       const serviceResult = await this.authService.loginService(serviceInput);
       
       if (!serviceResult.isValid) {
@@ -44,7 +44,7 @@ export class AuthAdminController {
         return;
       }
 
-      // Set cookies for successful login
+      
       res.cookie("RefreshToken", serviceResult.refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -61,7 +61,7 @@ export class AuthAdminController {
 
       console.log("admin logged in successfully");
       
-      // Map service result to response DTO
+      
       const responseDTO = AdminAuthMapper.mapServiceResultToResponse(serviceResult, true);
       const response = new ResponseModel(true, responseDTO.message, {
         accessToken: responseDTO.accessToken,

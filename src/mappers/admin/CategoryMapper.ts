@@ -23,22 +23,22 @@ export class CategoryMapper {
     };
   }
 
-  // Helper method to safely format dates
+  
   private static formatDate(dateValue: any): string | undefined {
     if (!dateValue) return undefined;
     
-    // If it's already a Date object
+    
     if (dateValue instanceof Date) {
       return dateValue.toISOString();
     }
     
-    // If it's a string, try to parse it
+    
     if (typeof dateValue === 'string') {
       const date = new Date(dateValue);
       return isNaN(date.getTime()) ? undefined : date.toISOString();
     }
     
-    // If it's a number (timestamp)
+    
     if (typeof dateValue === 'number') {
       const date = new Date(dateValue);
       return isNaN(date.getTime()) ? undefined : date.toISOString();

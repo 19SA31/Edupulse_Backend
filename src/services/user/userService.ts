@@ -21,13 +21,13 @@ class UserService implements IUserService {
     console.log("inside service for update profile", userId);
     console.log("updateData received:", updateData);
 
-    // Validate user exists
+    
     const existingUser = await this.userRepository.findById(userId);
     if (!existingUser) {
       throw new Error('User not found');
     }
 
-    // Validate name if provided
+    
     if (updateData.name !== undefined) {
       if (!updateData.name || updateData.name.trim().length < 2) {
         throw new Error('Name must be at least 2 characters long');
@@ -38,7 +38,7 @@ class UserService implements IUserService {
       updateData.name = updateData.name.trim();
     }
 
-    // Validate phone if provided
+    
     if (updateData.phone !== undefined) {
       if (!updateData.phone) {
         throw new Error('Phone number is required');
@@ -51,7 +51,7 @@ class UserService implements IUserService {
         throw new Error('Please enter a valid phone number (10-15 digits)');
       }
 
-      // Check if phone is already taken by another user
+      
       const existingPhoneUser = await this.userRepository.findByPhoneExcludingId(cleanPhone, userId);
       if (existingPhoneUser) {
         throw new Error('Phone number is already registered with another account');
@@ -60,7 +60,7 @@ class UserService implements IUserService {
       updateData.phone = cleanPhone;
     }
 
-    // Validate DOB if provided
+    
     if (updateData.DOB !== undefined && updateData.DOB) {
       const dobDate = new Date(updateData.DOB);
       const today = new Date();
@@ -69,7 +69,7 @@ class UserService implements IUserService {
         throw new Error('Date of birth cannot be in the future');
       }
       
-      // Check if user is at least 13 years old
+      
       const minAge = new Date();
       minAge.setFullYear(today.getFullYear() - 13);
       
@@ -78,14 +78,14 @@ class UserService implements IUserService {
       }
     }
 
-    // Validate gender if provided
+   
     if (updateData.gender !== undefined && updateData.gender) {
       if (!['male', 'female', 'other'].includes(updateData.gender)) {
         throw new Error('Invalid gender selection');
       }
     }
 
-    // Handle avatar upload if provided
+    
     if (updateData.avatar && updateData.avatar !== null && typeof updateData.avatar === 'object' && 'buffer' in updateData.avatar) {
       try {
         console.log("Processing avatar upload");
@@ -93,7 +93,7 @@ class UserService implements IUserService {
         const avatarFile = updateData.avatar as Express.Multer.File;
         let processedBuffer = avatarFile.buffer;
 
-        // Apply crop data if provided
+        
         if (updateData.cropData) {
           const { x, y, width, height } = updateData.cropData;
           console.log("Applying crop data:", updateData.cropData);
@@ -101,27 +101,27 @@ class UserService implements IUserService {
           processedBuffer = await cropAndSave(x, y, width, height, avatarFile.buffer) as Buffer;
         }
 
-        // Create a processed file object for S3 upload
+        
         const processedFile = {
           ...avatarFile,
           buffer: processedBuffer
         };
 
-        // Delete old avatar from S3 if exists
+      
         if (existingUser.avatar) {
           try {
             await this.s3Service.deleteFile(existingUser.avatar);
             console.log("Old avatar deleted from S3");
           } catch (deleteError) {
             console.warn('Failed to delete old avatar:', deleteError);
-            // Continue with upload even if delete fails
+            
           }
         }
 
-        // Upload new avatar to S3 and get the complete S3 key
+        
         const avatarS3Key = await this.s3Service.uploadFile('user_avatars', processedFile);
         
-        // Store the complete S3 key path in the database
+        
         updateData.avatar = avatarS3Key;
         console.log("New avatar uploaded:", avatarS3Key);
 
@@ -130,10 +130,10 @@ class UserService implements IUserService {
         throw new Error('Failed to upload avatar. Please try again.');
       }
     } else if (updateData.avatar === null) {
-      // Handle explicit avatar deletion
+      
       console.log("Deleting avatar");
       
-      // Delete old avatar from S3 if exists
+      
       if (existingUser.avatar) {
         try {
           await this.s3Service.deleteFile(existingUser.avatar);
@@ -144,17 +144,17 @@ class UserService implements IUserService {
       }
     }
 
-    // Remove cropData from updateData before saving to database
+    
     const { cropData, ...dataToUpdate } = updateData;
 
-    // Update user profile
+   
     const updatedUser = await this.userRepository.updateProfile(userId, dataToUpdate);
     
     if (!updatedUser) {
       throw new Error('Failed to update profile');
     }
 
-    // Generate avatar URL if avatar exists
+    
     let avatarUrl = null;
     if (updatedUser.avatar) {
       try {
@@ -164,7 +164,6 @@ class UserService implements IUserService {
       }
     }
 
-    // Format response data according to UserProfileData interface
     const responseData: UserProfileData = {
       _id: updatedUser._id.toString(),
       name: updatedUser.name,
@@ -172,7 +171,7 @@ class UserService implements IUserService {
       phone: updatedUser.phone,
       DOB: updatedUser.DOB,
       gender: updatedUser.gender,
-      avatar: avatarUrl, // Return the signed URL
+      avatar: avatarUrl, 
       isBlocked: updatedUser.isBlocked,
       createdAt: updatedUser.createdAt,
       updatedAt: updatedUser.updatedAt,
@@ -189,7 +188,7 @@ class UserService implements IUserService {
       throw new Error('User not found');
     }
 
-    // Generate avatar URL if avatar exists
+    
     let avatarUrl = null;
     if (user.avatar) {
       try {
@@ -199,7 +198,7 @@ class UserService implements IUserService {
       }
     }
 
-    // Format response data according to UserProfileData interface
+    
     const responseData: UserProfileData = {
       _id: user._id.toString(),
       name: user.name,
@@ -207,7 +206,7 @@ class UserService implements IUserService {
       phone: user.phone,
       DOB: user.DOB,
       gender: user.gender,
-      avatar: avatarUrl, // Return the signed URL
+      avatar: avatarUrl, 
       isBlocked: user.isBlocked,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
