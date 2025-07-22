@@ -18,20 +18,20 @@ import { AuthMapper } from "../../mappers/user/UserAuthMapper";
 dotenv.config();
 
 export class AuthService implements IAuthService {
-  private AuthRepository: IAuthRepository;
-  private s3Service: S3Service;
-  private saltRounds: number = 10;
+  private _AuthRepository: IAuthRepository;
+  private _s3Service: S3Service;
+  private _saltRounds: number = 10;
 
   constructor(AuthRepository: IAuthRepository) {
-    this.AuthRepository = AuthRepository;
-    this.s3Service = new S3Service();
+    this._AuthRepository = AuthRepository;
+    this._s3Service = new S3Service();
   }
 
   private async sendOTP(email: string): Promise<void> {
     const GeneratedOTP: string = Math.floor(
       1000 + Math.random() * 9000
     ).toString();
-    const hashedOTP: string = await bcrypt.hash(GeneratedOTP, this.saltRounds);
+    const hashedOTP: string = await bcrypt.hash(GeneratedOTP, this._saltRounds);
 
     const subject = "OTP Verification";
     const sendMailStatus: boolean = await sendMail(
@@ -44,11 +44,11 @@ export class AuthService implements IAuthService {
       throw new Error("Otp not send");
     }
 
-    await this.AuthRepository.saveOTP(email, hashedOTP);
+    await this._AuthRepository.saveOTP(email, hashedOTP);
   }
 
   async signUp(userData: SignUpRequestDto): Promise<void> {
-    const userExistence = await this.AuthRepository.existUser(
+    const userExistence = await this._AuthRepository.existUser(
       userData.email,
       userData.phone
     );
@@ -72,7 +72,7 @@ export class AuthService implements IAuthService {
   }
 
   async otpCheck(userData: VerifyOtpRequestDto): Promise<boolean> {
-    const isOtpValid = await this.AuthRepository.verifyOtp(
+    const isOtpValid = await this._AuthRepository.verifyOtp(
       userData.email,
       userData.otp
     );
@@ -93,7 +93,7 @@ export class AuthService implements IAuthService {
 
     const hashedPassword: string = await bcrypt.hash(
       userData.password,
-      this.saltRounds
+      this._saltRounds
     );
 
     const newUserData: CreateUserType = {
@@ -104,12 +104,12 @@ export class AuthService implements IAuthService {
       createdAt: new Date(),
     };
 
-    await this.AuthRepository.createUser(newUserData);
+    await this._AuthRepository.createUser(newUserData);
     return true;
   }
 
   async loginService(userData: LoginRequestDto): Promise<LoginServiceResultDto> {
-    const loggedUser = await this.AuthRepository.verifyUser(
+    const loggedUser = await this._AuthRepository.verifyUser(
       userData.email,
       userData.password
     );
@@ -119,7 +119,7 @@ export class AuthService implements IAuthService {
     let avatarUrl = null;
     if (avatar) {
       try {
-        avatarUrl = await this.s3Service.getFile(avatar, "user_avatars");
+        avatarUrl = await this._s3Service.getFile(avatar);
       } catch (error) {
         console.warn("Failed to generate avatar URL:", error);
       }
@@ -153,9 +153,9 @@ export class AuthService implements IAuthService {
   async resetPasswordService(userData: ResetPasswordRequestDto): Promise<void> {
     const hashedPassword = await bcrypt.hash(
       userData.password,
-      this.saltRounds
+      this._saltRounds
     );
 
-    await this.AuthRepository.resetPassword(userData.email, hashedPassword);
+    await this._AuthRepository.resetPassword(userData.email, hashedPassword);
   }
 }

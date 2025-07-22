@@ -76,6 +76,8 @@ export class TutorAuthMapper {
       name: tutorData.name,
       email: tutorData.email,
       phone: tutorData.phone, 
+      DOB:tutorData.DOB,
+      gender:tutorData.gender,
       avatar: tutorData.avatar,
       isVerified: tutorData.isVerified,
       verificationStatus: tutorData.verificationStatus

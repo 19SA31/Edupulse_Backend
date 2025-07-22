@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import { S3Service } from "../../utils/s3";
 import { ITutorAuthInterface } from "../../interfaces/tutor/tutorAuthServiceInterface";
 import { ITutorAuthRepository } from "../../interfaces/tutor/tutorAuthRepoInterface";
 import sendMail from "../../config/emailConfig";
@@ -21,18 +22,20 @@ import { TutorAuthMapper } from "../../mappers/tutor/TutorAuthMapper";
 dotenv.config();
 
 export class AuthTutorService implements ITutorAuthInterface {
-  private AuthRepository: ITutorAuthRepository;
-  private saltRounds: number = 10;
+  private _AuthRepository: ITutorAuthRepository;
+  private _saltRounds: number = 10;
+  private _s3Service: S3Service;
 
-  constructor(AuthRepository: ITutorAuthRepository) {
-    this.AuthRepository = AuthRepository;
+  constructor(_AuthRepository: ITutorAuthRepository) {
+    this._AuthRepository = _AuthRepository;
+    this._s3Service = new S3Service();
   }
 
   private async sendOTP(email: string): Promise<void> {
     const GeneratedOTP: string = Math.floor(
       1000 + Math.random() * 9000
     ).toString();
-    const hashedOTP: string = await bcrypt.hash(GeneratedOTP, this.saltRounds);
+    const hashedOTP: string = await bcrypt.hash(GeneratedOTP, this._saltRounds);
     console.log("inside sendOTP:", GeneratedOTP);
 
     const subject = "OTP Verification";
@@ -46,13 +49,13 @@ export class AuthTutorService implements ITutorAuthInterface {
       throw new Error("Failed to send OTP email");
     }
 
-    await this.AuthRepository.saveOTP(email, hashedOTP);
+    await this._AuthRepository.saveOTP(email, hashedOTP);
   }
 
   async signUp(tutorData: SignUpServiceDTO): Promise<boolean> {
     console.log("Reached tutor signup");
 
-    const response = await this.AuthRepository.existTutor(
+    const response = await this._AuthRepository.existTutor(
       tutorData.email,
       tutorData.phone
     );
@@ -80,7 +83,7 @@ export class AuthTutorService implements ITutorAuthInterface {
   async otpCheck(tutorData: OtpCheckServiceDTO): Promise<boolean> {
     console.log("Reached otpCheck service");
 
-    const isOtpValid = await this.AuthRepository.verifyOtp(
+    const isOtpValid = await this._AuthRepository.verifyOtp(
       tutorData.email,
       tutorData.otp
     );
@@ -101,7 +104,7 @@ export class AuthTutorService implements ITutorAuthInterface {
 
     const hashedPassword: string = await bcrypt.hash(
       tutorData.password,
-      this.saltRounds
+      this._saltRounds
     );
 
     const newtutorData: CreateTutorType = {
@@ -112,7 +115,7 @@ export class AuthTutorService implements ITutorAuthInterface {
       createdAt: new Date(),
     };
 
-    await this.AuthRepository.createTutor(newtutorData);
+    await this._AuthRepository.createTutor(newtutorData);
     return true;
   }
 
@@ -122,7 +125,7 @@ export class AuthTutorService implements ITutorAuthInterface {
   ): Promise<LoginServiceResponseDTO> {
     console.log("Reached login service");
 
-    const loggedTutor = await this.AuthRepository.verifyTutor(
+    const loggedTutor = await this._AuthRepository.verifyTutor(
       tutorData.email,
       tutorData.password
     );
@@ -131,10 +134,10 @@ export class AuthTutorService implements ITutorAuthInterface {
       throw new Error("Invalid email or password");
     }
 
-    const { _id, email, name, isVerified } = loggedTutor;
-
+    const { _id, email, name, isVerified, avatar, phone, DOB, gender } = loggedTutor;
+    console.log("inside service,", loggedTutor)
     
-    const doc = await this.AuthRepository.checkVerificationStatus(_id);
+    const doc = await this._AuthRepository.checkVerificationStatus(_id);
 
     let verificationStatus:
       | "not_submitted"
@@ -164,12 +167,23 @@ export class AuthTutorService implements ITutorAuthInterface {
       { expiresIn: "7d" }
     );
 
+    let avatarUrl = null;
+    if (avatar) {
+      try {
+        avatarUrl = await this._s3Service.getFile(avatar);
+      } catch (error) {
+        console.warn("Failed to generate avatar URL:", error);
+      }
+    }
+
     const tutorResponseData: GetTutorDataLogin = {
       id: _id,
       name,
       email,
-      phone: loggedTutor.phone,
-      avatar: loggedTutor.avatar || null, 
+      phone,
+      DOB,
+      gender,
+      avatar: avatarUrl|| null, 
       isVerified,
       verificationStatus: verificationStatus,
     };
@@ -186,9 +200,9 @@ export class AuthTutorService implements ITutorAuthInterface {
   ): Promise<void> {
     const hashedPassword = await bcrypt.hash(
       tutorData.password,
-      this.saltRounds
+      this._saltRounds
     );
 
-    await this.AuthRepository.resetPassword(tutorData.email, hashedPassword);
+    await this._AuthRepository.resetPassword(tutorData.email, hashedPassword);
   }
 }

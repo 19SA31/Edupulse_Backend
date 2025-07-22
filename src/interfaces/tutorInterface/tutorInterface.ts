@@ -41,6 +41,8 @@ export interface TutorProfile {
   email: string;
   phone: string;
   password: string;
+  DOB:Date;
+  gender?: 'male' | 'female' | 'other';
   avatar?: string | null; 
   isBlocked: boolean;
   isVerified: boolean;
@@ -74,6 +76,8 @@ export interface GetTutorDataLogin {
   name: string;
   email: string;
   phone:string;
+  DOB:Date;
+  gender?: 'male' | 'female' | 'other';
   avatar?:string|null;
   isVerified: boolean;
   verificationStatus: 'not_submitted'|'pending' | 'approved' | 'rejected';

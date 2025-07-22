@@ -3,7 +3,6 @@ import HTTP_statusCode from "../../enums/HttpStatusCode";
 import { Request, Response, NextFunction } from "express";
 import { ResponseModel } from "../../models/ResponseModel";
 import { AdminAuthMapper } from "../../mappers/admin/AdminAuthMapper";
-import { AdminLoginRequestDTO } from "../../dto/admin/AdminAuthDTO";
 
 export class AuthAdminController {
   private authService: IAdminAuthServiceInterface;
@@ -18,22 +17,15 @@ export class AuthAdminController {
     next: NextFunction
   ): Promise<void> {
     try {
-      
-      const loginRequestDTO: AdminLoginRequestDTO = {
-        email: req.body.email,
-        password: req.body.password
-      };
+      const { email, password } = req.body;
 
-      
-      if (!loginRequestDTO.email || !loginRequestDTO.password) {
+      if (!email || !password) {
         const response = new ResponseModel(false, "Email and password are required");
         res.status(HTTP_statusCode.BadRequest).json(response);
         return;
       }
 
-      
-      const serviceInput = AdminAuthMapper.mapLoginRequestToService(loginRequestDTO);
-      
+      const serviceInput = AdminAuthMapper.mapLoginRequestToService({ email, password });
       
       const serviceResult = await this.authService.loginService(serviceInput);
       
@@ -44,7 +36,6 @@ export class AuthAdminController {
         return;
       }
 
-      
       res.cookie("RefreshToken", serviceResult.refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -60,7 +51,6 @@ export class AuthAdminController {
       });
 
       console.log("admin logged in successfully");
-      
       
       const responseDTO = AdminAuthMapper.mapServiceResultToResponse(serviceResult, true);
       const response = new ResponseModel(true, responseDTO.message, {
