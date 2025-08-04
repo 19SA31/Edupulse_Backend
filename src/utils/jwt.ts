@@ -6,7 +6,7 @@ dotenv.config();
 
 const secret_key = process.env.JWT_SECRET as string;
 
-// Extend Request interface to include user info
+
 export interface AuthRequest extends Request {
   user?: {
     id: string;
@@ -37,7 +37,6 @@ const verifyToken = (requiredRole: string) => {
               });
             }
 
-            // 🔥 ADD USER INFO TO REQUEST OBJECT
             req.user = {
               id: id,
               email: email,
