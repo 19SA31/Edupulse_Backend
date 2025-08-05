@@ -73,39 +73,46 @@ export class CourseMapper {
     return chapters.map((chapter) => ({
       title: chapter.title,
       description: chapter.description,
-      modules: (chapter.modules || chapter.lessons || []).map((lesson) => ({
+      lessons: (chapter.lessons || []).map((lesson: LessonDto) => ({
         title: lesson.title,
         description: lesson.description,
         documents: lesson.documents || [],
         videos: lesson.videos || [],
         order: lesson.order,
       })),
+
       order: chapter.order,
     }));
   }
 
-  static mapFileDto(fileName: string, originalName?: string): { fileName: string; originalName?: string } {
+  static mapFileDto(
+    fileName: string,
+    originalName?: string
+  ): { fileName: string; originalName?: string } {
     return {
       fileName,
       originalName,
     };
   }
 
-  static mapFileDtoFromExisting(fileDto: FileDto): { fileName: string; originalName?: string } {
+  static mapFileDtoFromExisting(fileDto: FileDto): {
+    fileName: string;
+    originalName?: string;
+  } {
     return {
-      fileName: fileDto.name, 
+      fileName: fileDto.name,
       originalName: fileDto.name,
     };
   }
 
   static mapProcessedChapter(
     chapter: ChapterDto,
-    processedModules: any[]
+    processedLessons: any[]
   ): any {
     return {
       title: chapter.title,
       description: chapter.description,
-      modules: processedModules,
+      lessons: processedLessons,
       order: chapter.order,
     };
   }

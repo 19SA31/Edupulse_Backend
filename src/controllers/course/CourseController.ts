@@ -32,87 +32,94 @@ export class CourseController {
   }
 
   async createCourse(req: Request, res: Response): Promise<void> {
-  try {
-    const {
-      title,
-      description,
-      benefits,
-      requirements,
-      category,
-      price,
-      chapters,
-    } = req.body;
-    console.log(
-      "course-create-contr",
-      title,
-      description,
-      benefits,
-      requirements,
-      category,
-      price,
-      chapters
-    );
-
-    let parsedChapters;
     try {
-      parsedChapters =
-        typeof chapters === "string" ? JSON.parse(chapters) : chapters;
-    } catch (parseError) {
-      res
-        .status(400)
-        .json(new ResponseModel(false, "Invalid chapters data format"));
-      return;
-    }
+      const {
+        title,
+        description,
+        benefits,
+        requirements,
+        category,
+        price,
+        chapters,
+      } = req.body;
 
-    const tutorId = (req as AuthRequest).user?.id;
-    console.log("Tutor ID from token:", tutorId);
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-    if (!tutorId) {
-      res
-        .status(401)
-        .json(new ResponseModel(false, "Unauthorized: Tutor ID not found"));
-      return;
-    }
+      Object.entries(files).forEach(([fieldName, fileArray]) => {
 
-    if (!title || !description || !category || !price || !parsedChapters) {
-      res
-        .status(400)
-        .json(new ResponseModel(false, "Missing required fields"));
-      return;
-    }
+        fileArray.forEach((file, index) => {
+          console.log(`  File ${index}:`, {
+            originalname: file.originalname,
+            size: file.size,
+            mimetype: file.mimetype,
+            fieldname: file.fieldname,
+          });
+        });
+      });
 
-    const courseDto: CreateCourseDto = {
-      title,
-      description,
-      benefits: benefits || "",
-      requirements: requirements || "",
-      category,
-      price: parseFloat(price),
-      chapters: parsedChapters,
-      tutorId,
-    };
+      let parsedChapters;
+      try {
+        parsedChapters =
+          typeof chapters === "string" ? JSON.parse(chapters) : chapters;
+        parsedChapters.forEach((chapter: any, chapterIndex: number) => {
+          chapter.lessons?.forEach((lesson: any, lessonIndex: number) => {
+          });
+        });
+      } catch (parseError) {
+        console.error("Error parsing chapters:", parseError);
+        res
+          .status(400)
+          .json(new ResponseModel(false, "Invalid chapters data format"));
+        return;
+      }
 
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-    const thumbnailFile = files?.thumbnail?.[0];
+      const tutorId = (req as AuthRequest).user?.id;
 
-    const createdCourse = await this._CourseService.createCourse(
-      courseDto,
-      files,
-      thumbnailFile
-    );
+      if (!tutorId) {
+        res
+          .status(401)
+          .json(new ResponseModel(false, "Unauthorized: Tutor ID not found"));
+        return;
+      }
 
-    res
-      .status(201)
-      .json(
-        new ResponseModel(true, "Course created successfully", createdCourse)
+      if (!title || !description || !category || !price || !parsedChapters) {
+        res
+          .status(400)
+          .json(new ResponseModel(false, "Missing required fields"));
+        return;
+      }
+
+      const courseDto: CreateCourseDto = {
+        title,
+        description,
+        benefits: benefits || "",
+        requirements: requirements || "",
+        category,
+        price: parseFloat(price),
+        chapters: parsedChapters,
+        tutorId,
+      };
+
+      const thumbnailFile = files?.thumbnail?.[0];
+
+      const createdCourse = await this._CourseService.createCourse(
+        courseDto,
+        files,
+        thumbnailFile
       );
-  } catch (error: any) {
-    console.error("Error in CourseController.createCourse:", error);
-    res
-      .status(500)
-      .json(
-        new ResponseModel(false, "Failed to create course", error.message)
-      );
+
+      res
+        .status(201)
+        .json(
+          new ResponseModel(true, "Course created successfully", createdCourse)
+        );
+    } catch (error: any) {
+      console.error("Error in CourseController.createCourse:", error);
+      res
+        .status(500)
+        .json(
+          new ResponseModel(false, "Failed to create course", error.message)
+        );
+    }
   }
-}
 }

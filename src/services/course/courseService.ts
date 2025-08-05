@@ -46,6 +46,7 @@ export class CourseService implements ICourseService {
         courseDto.chapters,
         files
       );
+      console.log("processed chapters",processedChapters)
 
       const courseData: Partial<ICourse> = {
         title: courseDto.title,
@@ -65,6 +66,7 @@ export class CourseService implements ICourseService {
       };
 
       const createdCourse = await this._courseRepo.createCourse(courseData);
+      console.log("createdCourse service:", createdCourse)
       return CourseMapper.toEntity(createdCourse);
     } catch (error: any) {
       console.error("Error in CourseService.createCourse:", error);
@@ -84,7 +86,7 @@ export class CourseService implements ICourseService {
       const chapter = chapters[chapterIndex];
       const processedLessons = [];
 
-      const lessons = chapter.lessons || chapter.modules || [];
+      const lessons = chapter.lessons || [];
 
       for (let lessonIndex = 0; lessonIndex < lessons.length; lessonIndex++) {
         const lesson = lessons[lessonIndex];
@@ -97,7 +99,7 @@ export class CourseService implements ICourseService {
             docIndex < lesson.documents.length;
             docIndex++
           ) {
-            const fieldName = `module_documents_${chapterIndex}_${lessonIndex}_${docIndex}`;
+            const fieldName = `lesson_documents_${chapterIndex}_${lessonIndex}_${docIndex}`;
             const fileArray = files[fieldName];
 
             if (fileArray && fileArray.length > 0) {
@@ -129,7 +131,7 @@ export class CourseService implements ICourseService {
             videoIndex < lesson.videos.length;
             videoIndex++
           ) {
-            const fieldName = `module_videos_${chapterIndex}_${lessonIndex}_${videoIndex}`;
+            const fieldName = `lesson_videos_${chapterIndex}_${lessonIndex}_${videoIndex}`;
             const fileArray = files[fieldName];
 
             if (fileArray && fileArray.length > 0) {
@@ -163,7 +165,7 @@ export class CourseService implements ICourseService {
       processedChapters.push({
         title: chapter.title,
         description: chapter.description,
-        modules: processedLessons,
+        lessons: processedLessons,
         order: chapter.order || chapterIndex,
       });
     }

@@ -1,11 +1,15 @@
-import express from "express";
-import multer from "multer";
+import express from "express"; 
 import { AuthenticationController } from "../../controllers/Authentication/Auth";
 import { TutorController } from "../../controllers/tutor/TutorController";
 import { TutorService } from "../../services/tutor/tutorService";
 import { TutorRepository } from "../../repositories/tutor/tutorRepo";
 import { S3Service } from "../../utils/s3";
 import { verifyToken } from "../../utils/jwt";
+import { 
+  uploadDocuments, 
+  uploadAvatar, 
+  uploadCourseFiles 
+} from "../../utils/multer";
 
 import { AuthService } from "../../services/user/authUserService";
 import { AuthUserRepository } from "../../repositories/user/authUserRepo";
@@ -20,82 +24,11 @@ import { CourseController } from "../../controllers/course/CourseController";
 
 const tutorRoute = express.Router();
 
-const storage = multer.memoryStorage();
-
-const uploadDocumentsConfig = multer({
-  storage: storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024,
-  },
-  fileFilter: (req, file, cb) => {
-    if (
-      file.mimetype.startsWith("image/") ||
-      file.mimetype === "application/pdf"
-    ) {
-      cb(null, true);
-    } else {
-      const error = new Error("Only image and PDF files are allowed") as any;
-      error.code = "LIMIT_FILE_TYPE";
-      cb(error, false);
-    }
-  },
-});
-
-const uploadAvatarConfig = multer({
-  storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024,
-  },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
-      cb(null, true);
-    } else {
-      const error = new Error("Only image files are allowed") as any;
-      error.code = "LIMIT_FILE_TYPE";
-      cb(error, false);
-    }
-  },
-});
-
-const uploadCourseConfig = multer({
-  storage: storage,
-  limits: {
-    fileSize: 100 * 1024 * 1024, 
-  },
-  fileFilter: (req, file, cb) => {
-    
-    if (
-      file.mimetype.startsWith("image/") ||
-      file.mimetype.startsWith("video/") ||
-      file.mimetype === "application/pdf" ||
-      file.mimetype === "application/msword" ||
-      file.mimetype ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-      file.mimetype === "text/plain"
-    ) {
-      cb(null, true);
-    } else {
-      const error = new Error("Invalid file type for course materials") as any;
-      error.code = "LIMIT_FILE_TYPE";
-      cb(error, false);
-    }
-  },
-});
-
-const uploadCourseFiles = uploadCourseConfig.any();
-
-const uploadDocuments = uploadDocumentsConfig.fields([
-  { name: "avatar", maxCount: 1 },
-  { name: "degree", maxCount: 1 },
-  { name: "aadharFront", maxCount: 1 },
-  { name: "aadharBack", maxCount: 1 },
-]);
-
-const uploadAvatar = uploadAvatarConfig.single("avatar");
 
 const AuthRepositoryInstance = new AuthUserRepository();
 const TutorAuthRepositoryInstance = new AuthTutorRepository();
 const AuthAdminRepositoryInstance = new AuthAdminRepository();
+
 
 const AuthServiceInstance = new AuthService(AuthRepositoryInstance);
 const TutorAuthServiceInstance = new AuthTutorService(
@@ -104,6 +37,7 @@ const TutorAuthServiceInstance = new AuthTutorService(
 const AuthAdminServiceInstance = new AuthAdminService(
   AuthAdminRepositoryInstance
 );
+
 
 const AuthenticationControllerInstance = new AuthenticationController(
   AuthServiceInstance,
@@ -119,6 +53,7 @@ const tutorController = new TutorController(tutorService);
 const courseRepository = new CourseRepository();
 const courseService = new CourseService(courseRepository, s3Service);
 const courseController = new CourseController(courseService);
+
 
 tutorRoute.post(
   "/send-otp",
@@ -155,6 +90,7 @@ tutorRoute.patch(
   )
 );
 
+
 tutorRoute.post(
   "/verify-documents",
   verifyToken("tutor"),
@@ -168,6 +104,7 @@ tutorRoute.get(
   tutorController.getVerificationStatus.bind(tutorController)
 );
 
+
 tutorRoute.get(
   "/profile",
   verifyToken("tutor"),
@@ -180,6 +117,7 @@ tutorRoute.put(
   uploadAvatar,
   tutorController.updateTutorProfile.bind(tutorController)
 );
+
 
 tutorRoute.get(
   "/course/get-category",

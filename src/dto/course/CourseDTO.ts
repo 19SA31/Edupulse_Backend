@@ -23,7 +23,6 @@ export interface ChapterDto {
   title: string;
   description: string;
   lessons?: LessonDto[]; 
-  modules?: LessonDto[]; 
   order?: number;
 }
 

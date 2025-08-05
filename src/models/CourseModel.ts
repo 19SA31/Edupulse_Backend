@@ -34,7 +34,7 @@ const chapterSchema = new Schema({
     type: String,
     required: true,
   },
-  modules: [lessonSchema],
+  lessons: [lessonSchema],
   order: {
     type: Number,
     default: 0,
