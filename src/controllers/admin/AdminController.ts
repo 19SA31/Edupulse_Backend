@@ -3,6 +3,7 @@ import HTTP_statusCode from "../../enums/HttpStatusCode";
 import { IAdminService } from "../../interfaces/admin/adminServiceInterface";
 import { ResponseModel } from "../../models/ResponseModel";
 import { sendRejectionEmail } from "../../config/emailConfig";
+import { ValidationError } from "../../errors/ValidationError";
 
 export class AdminController {
   private _AdminService: IAdminService;
@@ -153,9 +154,10 @@ export class AdminController {
     } catch (error: any) {
       console.error("Error in addCategory controller:", error.message);
 
-      if (error.message.includes("already exists")) {
-        const response = new ResponseModel(false, error.message, null);
-        res.status(HTTP_statusCode.BadRequest).json(response);
+      if (error instanceof ValidationError) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(new ResponseModel(false, error.message, null));
       } else {
         const response = new ResponseModel(
           false,

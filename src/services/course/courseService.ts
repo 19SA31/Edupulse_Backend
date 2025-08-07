@@ -65,6 +65,7 @@ export class CourseService implements ICourseService {
         updatedAt: new Date(),
       };
 
+
       const createdCourse = await this._courseRepo.createCourse(courseData);
       console.log("createdCourse service:", createdCourse)
       return CourseMapper.toEntity(createdCourse);

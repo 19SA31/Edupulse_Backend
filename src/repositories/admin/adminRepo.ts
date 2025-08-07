@@ -103,7 +103,7 @@ export class AdminRepository
         "Error in AdminRepository changeUserStatus:",
         error.message
       );
-      throw error; 
+      throw error;
     }
   }
 
@@ -123,30 +123,26 @@ export class AdminRepository
         "Error in AdminRepository changeTutorStatus:",
         error.message
       );
-      throw error; 
+      throw error;
     }
   }
 
   async addCategory(data: Category): Promise<Category> {
     try {
-      
-      const existingCategory = await this._categoryRepository.findOne({
-        name: { $regex: new RegExp(`^${data.name}$`, "i") },
-      });
-
-      if (existingCategory) {
-        throw new Error(`Category with name '${data.name}' already exists`);
-      }
-
-      
       const newCategory = await this._categoryRepository.create(
         data as Category
       );
       return newCategory;
     } catch (error: any) {
       console.error("Error in AdminRepository addCategory:", error.message);
-      throw error; 
+      throw error;
     }
+  }
+
+  async findCategoryByName(name: string): Promise<Category | null> {
+    return await this._categoryRepository.findOne({
+      name: { $regex: new RegExp(`^${name}$`, "i") },
+    });
   }
 
   async getAllCategories(
@@ -188,7 +184,6 @@ export class AdminRepository
     updateData: { name: string; description: string }
   ): Promise<Category> {
     try {
-      
       const existingCategory = await this._categoryRepository.findOne({
         _id: categoryId,
       });
@@ -197,7 +192,6 @@ export class AdminRepository
         throw new Error("Category not found");
       }
 
-      
       const duplicateCategory = await this._categoryRepository.findOne({
         name: { $regex: new RegExp(`^${updateData.name}$`, "i") },
         _id: { $ne: categoryId },
@@ -209,7 +203,6 @@ export class AdminRepository
         );
       }
 
-      
       const updatedCategory = await this._categoryRepository.update(
         categoryId,
         updateData
@@ -222,7 +215,7 @@ export class AdminRepository
       return updatedCategory;
     } catch (error: any) {
       console.error("Error in AdminRepository updateCategory:", error.message);
-      throw error; 
+      throw error;
     }
   }
 
@@ -236,7 +229,6 @@ export class AdminRepository
         throw new Error("Category not found");
       }
 
-      
       const updatedCategory = await this._categoryRepository.update(
         categoryId,
         { isListed: !category.isListed }
@@ -252,7 +244,7 @@ export class AdminRepository
         "Error in AdminRepository toggleCategoryStatus:",
         error.message
       );
-      throw error; 
+      throw error;
     }
   }
 
@@ -267,11 +259,10 @@ export class AdminRepository
     try {
       let pipeline: any[] = [];
 
-      
       if (search) {
         pipeline.push({
           $lookup: {
-            from: "tutors", 
+            from: "tutors",
             localField: "tutorId",
             foreignField: "_id",
             as: "tutor",
@@ -293,7 +284,6 @@ export class AdminRepository
           },
         });
       } else {
-        
         pipeline.push({
           $lookup: {
             from: "tutors",
@@ -310,18 +300,15 @@ export class AdminRepository
         });
       }
 
-      
       pipeline.push(
         { $sort: { submittedAt: -1 } },
         { $skip: skip },
         { $limit: limit }
       );
 
-      
       const tutorDocs = await this._tutorDocsRepository.aggregate(pipeline);
 
-      
-      const countPipeline = pipeline.slice(0, -2); 
+      const countPipeline = pipeline.slice(0, -2);
       countPipeline.push({ $count: "total" });
       const countResult = await this._tutorDocsRepository.aggregate(
         countPipeline
@@ -339,7 +326,6 @@ export class AdminRepository
 
   async verifyTutor(tutorId: string): Promise<void> {
     try {
-     
       const tutorDocs = await this._tutorDocsRepository.findOne({
         tutorId: tutorId,
       });
@@ -348,13 +334,11 @@ export class AdminRepository
         throw new Error("Tutor not found");
       }
 
-      
       await this._tutorDocsRepository.update(tutorDocs._id.toString(), {
         isVerified: true,
         verificationStatus: "verified",
       });
 
-      
       await this._tutorRepository.update(tutorId, {
         isVerified: true,
       });
@@ -369,7 +353,6 @@ export class AdminRepository
     reason: string
   ): Promise<{ tutorEmail: string; tutorName: string } | null> {
     try {
-      
       const tutorDocs = await this._tutorDocsRepository.findOne({
         tutorId: tutorId,
       });
@@ -378,21 +361,17 @@ export class AdminRepository
         throw new Error("Tutor not found");
       }
 
-      
       const tutor = await this._tutorRepository.findOne({ _id: tutorId });
 
       if (!tutor) {
         throw new Error("Tutor not found");
       }
 
-      
       await this._tutorDocsRepository.update(tutorDocs._id.toString(), {
         verificationStatus: "rejected",
         rejectionReason: reason,
         reviewedAt: new Date(),
       });
-
-      
 
       return {
         tutorEmail: tutor.email,

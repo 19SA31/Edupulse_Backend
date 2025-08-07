@@ -5,11 +5,13 @@ import cors from "cors"
 import connectDB from "./config/db"
 import { createServer } from "http"
 import routes from "./routes/route"
+import morgan = require("morgan")
 
 
 dotenv.config()
 
 const app = express()
+app.use(morgan('dev'));
 app.use(express.json())
 
 app.use(

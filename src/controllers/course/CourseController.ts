@@ -4,6 +4,7 @@ import { ResponseModel } from "../../models/ResponseModel";
 import HTTP_statusCode from "../../enums/HttpStatusCode";
 import { ICourseService } from "../../interfaces/course/courseServiceInterface";
 import { CreateCourseDto } from "../../dto/course/CourseDTO";
+import { ValidationError } from "../../errors/ValidationError";
 
 export class CourseController {
   private _CourseService: ICourseService;
@@ -45,25 +46,12 @@ export class CourseController {
 
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-      Object.entries(files).forEach(([fieldName, fileArray]) => {
-
-        fileArray.forEach((file, index) => {
-          console.log(`  File ${index}:`, {
-            originalname: file.originalname,
-            size: file.size,
-            mimetype: file.mimetype,
-            fieldname: file.fieldname,
-          });
-        });
-      });
-
       let parsedChapters;
       try {
         parsedChapters =
           typeof chapters === "string" ? JSON.parse(chapters) : chapters;
         parsedChapters.forEach((chapter: any, chapterIndex: number) => {
-          chapter.lessons?.forEach((lesson: any, lessonIndex: number) => {
-          });
+          chapter.lessons?.forEach((lesson: any, lessonIndex: number) => {});
         });
       } catch (parseError) {
         console.error("Error parsing chapters:", parseError);
@@ -115,11 +103,15 @@ export class CourseController {
         );
     } catch (error: any) {
       console.error("Error in CourseController.createCourse:", error);
-      res
-        .status(500)
-        .json(
-          new ResponseModel(false, "Failed to create course", error.message)
-        );
+      if (error instanceof ValidationError) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(new ResponseModel(false, error.message, null));
+      } else {
+        res
+          .status(500)
+          .json(new ResponseModel(false, "Failed to create course", error.message));
+      }
     }
   }
 }

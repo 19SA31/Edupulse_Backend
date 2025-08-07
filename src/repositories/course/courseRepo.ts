@@ -22,4 +22,7 @@ export class CourseRepository
   async createCourse(courseData: Partial<ICourse>): Promise<ICourse> {
     return this.create(courseData as ICourse);
   }
+  async checkSameTutor(tutorId: string): Promise<ICourse> {
+    return await this.findOne({tutorId:tutorId})
+  }
 }

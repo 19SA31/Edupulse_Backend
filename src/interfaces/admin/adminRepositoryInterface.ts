@@ -1,4 +1,3 @@
-// src/interfaces/admin/adminRepositoryInterface.ts
 import {
   User,
   Tutor,
@@ -7,14 +6,12 @@ import {
 import { ITutorDocs } from "../../interfaces/tutorInterface/tutorInterface";
 
 export interface IAdminRepositoryInterface {
-
   getAllUsers(
     skip: number,
     limit: number,
     search: string
   ): Promise<{ users: User[]; totalPages: number }>;
   changeUserStatus(id: string): Promise<User>;
-
 
   getAllTutors(
     skip: number,
@@ -23,7 +20,6 @@ export interface IAdminRepositoryInterface {
   ): Promise<{ tutors: Tutor[]; totalPages: number }>;
   changeTutorStatus(id: string): Promise<Tutor>;
 
-  
   getAllTutorDocs(
     skip: number,
     limit: number,
@@ -39,8 +35,8 @@ export interface IAdminRepositoryInterface {
     reason: string
   ): Promise<{ tutorEmail: string; tutorName: string } | null>;
 
-  
   addCategory(data: Category): Promise<Category>;
+  findCategoryByName(name: string): Promise<Category | null>;
   getAllCategories(
     skip: number,
     limit: number,
