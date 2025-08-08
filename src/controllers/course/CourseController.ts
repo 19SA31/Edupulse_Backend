@@ -32,6 +32,50 @@ export class CourseController {
     }
   }
 
+  async getAllUnpublishedCourses(req: Request, res: Response): Promise<void> {
+    try {
+      const { page = 1, limit = 10, search } = req.query;
+
+      const pageNumber = parseInt(page as string, 10);
+      const pageLimit = parseInt(limit as string, 10);
+      const skip = (pageNumber - 1) * pageLimit;
+
+      const searchTerm = search ? (search as string).trim() : undefined;
+
+      const result = await this._CourseService.getUnpublishedCourses(
+        skip,
+        pageLimit,
+        searchTerm
+      );
+
+      console.log("fetched Courses", result);
+
+      res.status(HTTP_statusCode.OK).json(
+        new ResponseModel(true, "Courses fetched successfully", {
+          courses: result.courses,
+          pagination: {
+            currentPage: pageNumber,
+            totalPages: result.totalPages,
+            totalCount: result.totalCount,
+            limit: pageLimit,
+          },
+        })
+      );
+    } catch (error: unknown) {
+      console.error("Error in getAllUnpublishedCourses:", error);
+
+      if (error instanceof ValidationError || error instanceof Error) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(new ResponseModel(false, (error as Error).message, null));
+      } else {
+        res
+          .status(500)
+          .json(new ResponseModel(false, "Failed to fetch courses", null));
+      }
+    }
+  }
+
   async createCourse(req: Request, res: Response): Promise<void> {
     try {
       const {
@@ -110,7 +154,9 @@ export class CourseController {
       } else {
         res
           .status(500)
-          .json(new ResponseModel(false, "Failed to create course", error.message));
+          .json(
+            new ResponseModel(false, "Failed to create course", error.message)
+          );
       }
     }
   }

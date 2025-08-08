@@ -1,7 +1,7 @@
 import express from "express";
 import { AuthenticationController } from "../../controllers/Authentication/Auth";
 import { AdminController } from "../../controllers/admin/AdminController";
-
+import { S3Service } from "../../utils/s3";
 
 import { AuthService } from "../../services/user/authUserService";
 import { AuthUserRepository } from "../../repositories/user/authUserRepo";
@@ -12,22 +12,28 @@ import { AuthAdminRepository } from "../../repositories/admin/authAdminRepo";
 import { AdminService } from "../../services/admin/adminService";
 import { AdminRepository } from "../../repositories/admin/adminRepo";
 
+import { CourseRepository } from "../../repositories/course/courseRepo";
+import { CourseService } from "../../services/course/courseService";
+import { CourseController } from "../../controllers/course/CourseController";
+
 import { verifyToken } from "../../utils/jwt";
 
 const adminRoutes = express.Router();
 
-
+const s3Service = new S3Service();
 const AuthRepositoryInstance = new AuthUserRepository();
 const TutorAuthRepositoryInstance = new AuthTutorRepository();
 const AuthAdminRepositoryInstance = new AuthAdminRepository();
 const AdminRepositoryInstance = new AdminRepository();
 
-
 const AuthServiceInstance = new AuthService(AuthRepositoryInstance);
-const TutorAuthServiceInstance = new AuthTutorService(TutorAuthRepositoryInstance);
-const AuthAdminServiceInstance = new AuthAdminService(AuthAdminRepositoryInstance);
+const TutorAuthServiceInstance = new AuthTutorService(
+  TutorAuthRepositoryInstance
+);
+const AuthAdminServiceInstance = new AuthAdminService(
+  AuthAdminRepositoryInstance
+);
 const AdminServiceInstance = new AdminService(AdminRepositoryInstance);
-
 
 const AuthenticationControllerInstance = new AuthenticationController(
   AuthServiceInstance,
@@ -35,22 +41,25 @@ const AuthenticationControllerInstance = new AuthenticationController(
   AuthAdminServiceInstance
 );
 
-
 const AdminControllerInstance = new AdminController(AdminServiceInstance);
 
+const courseRepository = new CourseRepository();
+const courseService = new CourseService(courseRepository, s3Service);
+const courseController = new CourseController(courseService);
 
 adminRoutes.post(
   "/login",
-  AuthenticationControllerInstance.adminLogin.bind(AuthenticationControllerInstance)
+  AuthenticationControllerInstance.adminLogin.bind(
+    AuthenticationControllerInstance
+  )
 );
 
 adminRoutes.post(
   "/logout",
-  AuthenticationControllerInstance.logoutAdmin.bind(AuthenticationControllerInstance)
+  AuthenticationControllerInstance.logoutAdmin.bind(
+    AuthenticationControllerInstance
+  )
 );
-
-
-
 
 adminRoutes.get(
   "/users",
@@ -94,7 +103,6 @@ adminRoutes.put(
   AdminControllerInstance.rejectTutor.bind(AdminControllerInstance)
 );
 
-
 adminRoutes.get(
   "/categories",
   verifyToken("admin"),
@@ -117,6 +125,12 @@ adminRoutes.put(
   "/toggle-category/:id",
   verifyToken("admin"),
   AdminControllerInstance.toggleCategoryStatus.bind(AdminControllerInstance)
+);
+
+adminRoutes.get(
+  "/publish-courses",
+  verifyToken("admin"),
+  courseController.getAllUnpublishedCourses.bind(courseController)
 );
 
 export default adminRoutes;

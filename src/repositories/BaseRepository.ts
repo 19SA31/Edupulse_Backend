@@ -1,4 +1,4 @@
-import { Model, Document } from "mongoose";
+import { Model, Document, PopulateOptions } from "mongoose";
 class BaseRepository<T extends Document> {
   private _model: Model<T>;
   constructor(model: Model<T>) {
@@ -27,10 +27,20 @@ class BaseRepository<T extends Document> {
   async findWithPagination(
     filter: object,
     skip: number,
-    limit: number
+    limit: number,
+    populateOptions?: PopulateOptions[]
   ): Promise<T[]> {
-    return this._model.find(filter).skip(skip).limit(limit).exec();
+    let query = this._model.find(filter).skip(skip).limit(limit);
+
+    if (populateOptions) {
+      for (const pop of populateOptions) {
+        query = query.populate(pop);
+      }
+    }
+
+    return query.exec();
   }
+
   async countDocuments(filter: object): Promise<number> {
     return this._model.countDocuments(filter).exec();
   }

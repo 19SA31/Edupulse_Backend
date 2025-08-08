@@ -21,7 +21,7 @@ export interface IChapter {
 }
 
 
-export interface ICourse {
+export interface Course {
   _id?: Types.ObjectId;
   title: string;
   description: string;

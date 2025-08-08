@@ -3,8 +3,7 @@ import { ICourseRepoInterface } from "../../interfaces/course/courseRepoInterfac
 import courseModel from "../../models/CourseModel";
 import categoryModel from "../../models/CategoryModel";
 import { Category } from "../../interfaces/course/courseInterface";
-import { ICourse } from "../../interfaces/course/courseInterface";
-
+import { Course } from "../../interfaces/course/courseInterface";
 
 export class CourseRepository
   extends BaseRepository<any>
@@ -16,13 +15,42 @@ export class CourseRepository
   private _categoryRepository = new BaseRepository<any>(categoryModel);
 
   async getCategories(): Promise<Category[]> {
-      return await this._categoryRepository.findAll()   
+    return await this._categoryRepository.findAll();
   }
 
-  async createCourse(courseData: Partial<ICourse>): Promise<ICourse> {
-    return this.create(courseData as ICourse);
+  async createCourse(courseData: Partial<Course>): Promise<Course> {
+    return this.create(courseData as Course);
   }
-  async checkSameTutor(tutorId: string): Promise<ICourse> {
-    return await this.findOne({tutorId:tutorId})
+  async checkSameTutor(tutorId: string): Promise<Course> {
+    return await this.findOne({ tutorId: tutorId });
+  }
+  async unpublishedCourses(
+    skip: number,
+    limit: number,
+    search?: string
+  ): Promise<{
+    courses: Course[];
+    totalCount: number;
+  }> {
+    let filter: any = {
+      isPublished: false,
+    };
+    if (search && search.trim() !== "") {
+      filter.$or = [
+        { title: { $regex: search.trim(), $options: "i" } },
+        { description: { $regex: search.trim(), $options: "i" } },
+      ];
+    }
+    const courses = await this.findWithPagination(filter, skip, limit, [
+      { path: "tutorId", select: "name" },
+      { path: "categoryId", select: "name" },
+    ]);
+
+    const totalCount = await this.countDocuments(filter);
+
+    return {
+      courses,
+      totalCount,
+    };
   }
 }

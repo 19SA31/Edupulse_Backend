@@ -1,5 +1,5 @@
 import { model, Schema } from "mongoose";
-import { ICourse } from "../interfaces/course/courseInterface";
+import { Course } from "../interfaces/course/courseInterface";
 
 const fileSchema = new Schema({
   fileName: {
@@ -41,7 +41,7 @@ const chapterSchema = new Schema({
   },
 });
 
-const courseSchema = new Schema<ICourse>({
+const courseSchema = new Schema<Course>({
   title: {
     type: String,
     required: true,
@@ -99,5 +99,5 @@ const courseSchema = new Schema<ICourse>({
   },
 });
 
-const courseModel = model<ICourse>("Course", courseSchema);
+const courseModel = model<Course>("Course", courseSchema);
 export default courseModel;

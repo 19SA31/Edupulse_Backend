@@ -36,3 +36,51 @@ export interface CreateCourseDto {
   chapters: ChapterDto[];
   tutorId: string;
 }
+export interface CourseForReview {
+  _id: string;
+  title: string;
+  description: string;
+  benefits: string;
+  requirements: string;
+  categoryId: {
+    name: string;
+  };
+  price: number;
+  thumbnailImage: string;
+  tutorId: {
+    name: string;
+  };
+  isPublished: boolean;
+  isListed: boolean;
+  enrollmentCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+  chapters: ChapterForReview[];
+}
+
+export interface ChapterForReview {
+  title: string;
+  description: string;
+  lessons: LessonForReview[];
+}
+
+export interface LessonForReview {
+  title: string;
+  description: string;
+  documents: any[];
+  videos: any[];
+}
+
+export interface DocumentFile {
+  _id: string;
+  fileName: string;
+  signedUrl: string;
+  originalName: string;
+}
+
+export interface VideoFile {
+  _id: string;
+  fileName: string;
+  signedUrl: string;
+  originalName: string;
+}

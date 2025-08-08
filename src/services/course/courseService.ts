@@ -3,8 +3,9 @@ import { CategoryMapper } from "../../mappers/course/categoryMapper";
 import { CourseMapper } from "../../mappers/course/courseMapper";
 import { ICourseService } from "../../interfaces/course/courseServiceInterface";
 import { ICourseRepoInterface } from "../../interfaces/course/courseRepoInterface";
-import { ICourse } from "../../interfaces/course/courseInterface";
+import { Course } from "../../interfaces/course/courseInterface";
 import {
+  CourseForReview,
   CreateCourseDto,
   ChapterDto,
   LessonDto,
@@ -31,7 +32,7 @@ export class CourseService implements ICourseService {
     courseDto: CreateCourseDto,
     files: { [fieldname: string]: Express.Multer.File[] },
     thumbnailFile?: Express.Multer.File
-  ): Promise<ICourse> {
+  ): Promise<Course> {
     try {
       let thumbnailUrl = "";
       if (thumbnailFile) {
@@ -46,9 +47,9 @@ export class CourseService implements ICourseService {
         courseDto.chapters,
         files
       );
-      console.log("processed chapters",processedChapters)
+      console.log("processed chapters", processedChapters);
 
-      const courseData: Partial<ICourse> = {
+      const courseData: Partial<Course> = {
         title: courseDto.title,
         description: courseDto.description,
         benefits: courseDto.benefits,
@@ -65,9 +66,8 @@ export class CourseService implements ICourseService {
         updatedAt: new Date(),
       };
 
-
       const createdCourse = await this._courseRepo.createCourse(courseData);
-      console.log("createdCourse service:", createdCourse)
+      console.log("createdCourse service:", createdCourse);
       return CourseMapper.toEntity(createdCourse);
     } catch (error: any) {
       console.error("Error in CourseService.createCourse:", error);
@@ -91,7 +91,6 @@ export class CourseService implements ICourseService {
 
       for (let lessonIndex = 0; lessonIndex < lessons.length; lessonIndex++) {
         const lesson = lessons[lessonIndex];
-
 
         const processedDocuments = [];
         if (lesson.documents && Array.isArray(lesson.documents)) {
@@ -123,7 +122,6 @@ export class CourseService implements ICourseService {
             }
           }
         }
-
 
         const processedVideos = [];
         if (lesson.videos && Array.isArray(lesson.videos)) {
@@ -181,5 +179,36 @@ export class CourseService implements ICourseService {
     } catch (deleteError) {
       console.warn("Failed to delete file:", deleteError);
     }
+  }
+
+  async getUnpublishedCourses(
+    skip: number,
+    limit: number,
+    search?: string
+  ): Promise<{
+    courses: CourseForReview[];
+    totalPages: number;
+    totalCount: number;
+  }> {
+    const { courses, totalCount } = await this._courseRepo.unpublishedCourses(
+      skip,
+      limit,
+      search
+    );
+
+    console.log("unpublished courses", courses);
+
+    const mappedCourses = await CourseMapper.toCourseDtoForReview(
+      courses,
+      this.s3Service
+    );
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      courses: mappedCourses,
+      totalPages,
+      totalCount,
+    };
   }
 }
