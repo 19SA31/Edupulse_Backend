@@ -3,23 +3,24 @@ import { CategoryMapper } from "../../mappers/course/categoryMapper";
 import { CourseMapper } from "../../mappers/course/courseMapper";
 import { ICourseService } from "../../interfaces/course/courseServiceInterface";
 import { ICourseRepoInterface } from "../../interfaces/course/courseRepoInterface";
-import { Course } from "../../interfaces/course/courseInterface";
+import { Course, CourseReject } from "../../interfaces/course/courseInterface";
 import {
   CourseForReview,
   CreateCourseDto,
   ChapterDto,
-  LessonDto,
-  FileDto,
+  PublishedCourseDto,
+  CourseRejectDto,
+  CourseListingDto,
 } from "../../dto/course/CourseDTO";
 import { S3Service } from "../../utils/s3";
 
 export class CourseService implements ICourseService {
   private _courseRepo: ICourseRepoInterface;
-  private s3Service: S3Service;
+  private _s3Service: S3Service;
 
   constructor(courseRepo: ICourseRepoInterface, s3Service: S3Service) {
     this._courseRepo = courseRepo;
-    this.s3Service = s3Service;
+    this._s3Service = s3Service;
   }
 
   async getAllCategories(): Promise<CategoryDTOArr> {
@@ -37,7 +38,7 @@ export class CourseService implements ICourseService {
       let thumbnailUrl = "";
       if (thumbnailFile) {
         const folderPath = `courses/thumbnails`;
-        thumbnailUrl = await this.s3Service.uploadFile(
+        thumbnailUrl = await this._s3Service.uploadFile(
           folderPath,
           thumbnailFile
         );
@@ -59,7 +60,6 @@ export class CourseService implements ICourseService {
         thumbnailImage: thumbnailUrl,
         chapters: processedChapters,
         tutorId: courseDto.tutorId as any,
-        isPublished: false,
         isListed: true,
         enrollmentCount: 0,
         createdAt: new Date(),
@@ -105,7 +105,7 @@ export class CourseService implements ICourseService {
             if (fileArray && fileArray.length > 0) {
               const file = fileArray[0];
               try {
-                const fileName = await this.s3Service.uploadFile(
+                const fileName = await this._s3Service.uploadFile(
                   `courses/documents/chapter_${chapterIndex}/lesson_${lessonIndex}`,
                   file
                 );
@@ -136,7 +136,7 @@ export class CourseService implements ICourseService {
             if (fileArray && fileArray.length > 0) {
               const file = fileArray[0];
               try {
-                const fileName = await this.s3Service.uploadFile(
+                const fileName = await this._s3Service.uploadFile(
                   `courses/videos/chapter_${chapterIndex}/lesson_${lessonIndex}`,
                   file
                 );
@@ -174,7 +174,7 @@ export class CourseService implements ICourseService {
 
   private async safeDeleteFile(fileKey: string): Promise<void> {
     try {
-      await this.s3Service.deleteFile(fileKey);
+      await this._s3Service.deleteFile(fileKey);
       console.log("File deleted from S3:", fileKey);
     } catch (deleteError) {
       console.warn("Failed to delete file:", deleteError);
@@ -200,7 +200,7 @@ export class CourseService implements ICourseService {
 
     const mappedCourses = await CourseMapper.toCourseDtoForReview(
       courses,
-      this.s3Service
+      this._s3Service
     );
 
     const totalPages = Math.ceil(totalCount / limit);
@@ -210,5 +210,58 @@ export class CourseService implements ICourseService {
       totalPages,
       totalCount,
     };
+  }
+  async publishCourse(courseId: string): Promise<PublishedCourseDto> {
+    try {
+      const publishedCourse = await this._courseRepo.publishCourse(courseId);
+
+      return CourseMapper.toPublishedCourseDto(publishedCourse);
+    } catch (error: unknown) {
+      console.error("Error in Course publish service:", error);
+      throw error;
+    }
+  }
+
+  async rejectCourse(courseId: string): Promise<CourseRejectDto> {
+    try {
+      const { course, tutor } = await this._courseRepo.rejectCourse(courseId);
+      console.log("reject service", course, tutor);
+      return CourseMapper.toCourseRejectDto(course, tutor);
+    } catch (error: unknown) {
+      console.error("Error in Course reject service:", error);
+      throw error;
+    }
+  }
+
+  async getPublishedCoursesForListing(
+    skip: number,
+    limit: number,
+    search: any
+  ): Promise<{
+    courses: CourseListingDto[];
+    totalPages: number;
+    totalCount: number;
+  }> {
+    try {
+      const result = await this._courseRepo.getPublishedCoursesWithDetails(
+        skip,
+        limit,
+        search
+      );
+      console.log("...",result)
+      const courseDtos = CourseMapper.toDTOArray(result.courses);
+
+      return {
+        courses: courseDtos,
+        totalPages: result.totalPages,
+        totalCount: result.totalCount,
+      };
+    } catch (error: any) {
+      console.error(
+        "Error in CourseService getPublishedCoursesForListing:",
+        error.message
+      );
+      throw error;
+    }
   }
 }

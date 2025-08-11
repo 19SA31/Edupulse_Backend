@@ -1,5 +1,6 @@
 // interfaces/course/courseInterface.ts
 import { Types } from 'mongoose';
+import { Tutor } from '../adminInterface/adminInterface';
 
 export interface IFile {
   fileName: string;
@@ -32,11 +33,15 @@ export interface Course {
   thumbnailImage?: string;
   chapters: IChapter[];
   tutorId: Types.ObjectId;
-  isPublished: boolean;
+  isPublished: string;
   isListed: boolean;
   enrollmentCount: number;
   createdAt: Date;
   updatedAt: Date;
+}
+export interface CourseReject{
+  course:Course,
+  tutor:Tutor
 }
 
 export interface Category{

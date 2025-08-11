@@ -321,7 +321,6 @@ export class AdminController {
         return;
       }
 
-      // Call service to reject tutor
       const result = await this._AdminService.rejectTutor(tutorId, reason);
 
       if (!result) {
@@ -335,11 +334,10 @@ export class AdminController {
       }
 
       if (result.success) {
-        // Send rejection email using the original reason parameter
         const emailSent = await sendRejectionEmail(
           result.tutorEmail!,
           result.tutorName!,
-          reason // Use the original reason parameter
+          reason
         );
 
         if (!emailSent) {
@@ -353,7 +351,7 @@ export class AdminController {
           "Tutor rejected successfully",
           {
             tutorId,
-            reason: reason, // Use the original reason parameter
+            reason: reason,
             emailSent,
           }
         );

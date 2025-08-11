@@ -5,6 +5,11 @@ import {
   LessonForReview,
   DocumentFile,
   VideoFile,
+  RejectedCourseDto,
+  TutorBasicDto,
+  CourseRejectDto,
+  PublishedCourseDto,
+  CourseListingDto,
 } from "../../dto/course/CourseDTO";
 import { S3Service } from "../../utils/s3";
 
@@ -153,5 +158,72 @@ export class CourseMapper {
         };
       })
     );
+  }
+
+  static toPublishedCourseDto(course: Course): PublishedCourseDto {
+    return {
+      _id: course._id?.toString() || "",
+      title: course.title,
+      description: course.description,
+      benefits: course.benefits,
+      requirements: course.requirements,
+      categoryId: course.categoryId?.toString() || "",
+      price: course.price,
+      thumbnailImage: course.thumbnailImage || "",
+      tutorId: course.tutorId?.toString() || "",
+      isPublished: course.isPublished,
+      isListed: course.isListed,
+      enrollmentCount: course.enrollmentCount,
+      createdAt: course.createdAt,
+      updatedAt: course.updatedAt,
+    };
+  }
+
+  static toRejectedCourseDto(course: Course): RejectedCourseDto {
+    return {
+      _id: course._id?.toString() || "",
+      title: course.title,
+      description: course.description,
+      benefits: course.benefits,
+      requirements: course.requirements,
+      categoryId: course.categoryId?.toString() || "",
+      price: course.price,
+      thumbnailImage: course.thumbnailImage || "",
+      tutorId: course.tutorId?.toString() || "",
+      isPublished: course.isPublished,
+      isListed: course.isListed,
+      enrollmentCount: course.enrollmentCount,
+      createdAt: course.createdAt,
+      updatedAt: course.updatedAt,
+    };
+  }
+
+  static toTutorBasicDto(tutor: any): TutorBasicDto {
+    return {
+      _id: tutor._id?.toString() || "",
+      name: tutor.name || "",
+      email: tutor.email || "",
+    };
+  }
+
+  static toCourseRejectDto(course: Course, tutor: any): CourseRejectDto {
+    return {
+      course: this.toRejectedCourseDto(course),
+      tutor: this.toTutorBasicDto(tutor),
+    };
+  }
+
+  static toDTO(course: any): CourseListingDto {
+    return {
+      courseId: course._id.toString(),
+      courseName: course.title,
+      courseCategory: course.categoryId?.name || "Unknown",
+      tutorName: course.tutorId?.name || "Unknown",
+      isListed: course.isListed,
+    };
+  }
+
+  static toDTOArray(courses: any[]): CourseListingDto[] {
+    return courses.map((course) => this.toDTO(course));
   }
 }

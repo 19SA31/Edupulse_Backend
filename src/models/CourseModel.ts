@@ -78,12 +78,13 @@ const courseSchema = new Schema<Course>({
     required: true,
   },
   isPublished: {
-    type: Boolean,
-    default: false,
+    type: String,
+    enum: ["draft","published","rejected"],
+    default: "draft",
   },
   isListed: {
     type: Boolean,
-    default: true,
+    default: false,
   },
   enrollmentCount: {
     type: Number,

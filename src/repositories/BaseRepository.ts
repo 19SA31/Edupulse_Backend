@@ -52,6 +52,20 @@ class BaseRepository<T extends Document> {
       throw error;
     }
   }
+  async findWithConditionAndPopulate(
+    condition: object,
+    populateOptions?: PopulateOptions[]
+  ): Promise<T[]> {
+    let query = this._model.find(condition);
+
+    if (populateOptions) {
+      for (const pop of populateOptions) {
+        query = query.populate(pop);
+      }
+    }
+
+    return query.exec();
+  }
 }
 
 export default BaseRepository;

@@ -133,4 +133,22 @@ adminRoutes.get(
   courseController.getAllUnpublishedCourses.bind(courseController)
 );
 
+adminRoutes.put(
+  "/publish-course/:id",
+  verifyToken("admin"),
+  courseController.publishCourse.bind(courseController)
+);
+
+adminRoutes.put(
+  "/reject-course/:id",
+  verifyToken("admin"),
+  courseController.rejectCourse.bind(courseController)
+);
+
+adminRoutes.get(
+  "/course-listing",
+  verifyToken("admin"),
+  courseController.getPublishedCourses.bind(courseController)
+);
+
 export default adminRoutes;

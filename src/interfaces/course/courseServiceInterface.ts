@@ -1,6 +1,13 @@
 import { CategoryDTOArr } from "../../dto/course/CategoryDTO";
-import { CreateCourseDto, CourseForReview } from "../../dto/course/CourseDTO";
+import {
+  CreateCourseDto,
+  CourseForReview,
+  PublishedCourseDto,
+  CourseRejectDto,
+  CourseListingDto
+} from "../../dto/course/CourseDTO";
 import { Course } from "./courseInterface";
+
 export interface ICourseService {
   getAllCategories(): Promise<CategoryDTOArr>;
   createCourse(
@@ -14,6 +21,17 @@ export interface ICourseService {
     search?: string
   ): Promise<{
     courses: CourseForReview[];
+    totalPages: number;
+    totalCount: number;
+  }>;
+  publishCourse(courseId: string): Promise<PublishedCourseDto>;
+  rejectCourse(courseId: string): Promise<CourseRejectDto>;
+  getPublishedCoursesForListing(
+    skip: number,
+    limit: number,
+    search: any
+  ): Promise<{
+    courses: CourseListingDto[];
     totalPages: number;
     totalCount: number;
   }>;

@@ -84,3 +84,57 @@ export interface VideoFile {
   signedUrl: string;
   originalName: string;
 }
+
+export interface PublishedCourseDto {
+  _id: string;
+  title: string;
+  description: string;
+  benefits: string;
+  requirements: string;
+  categoryId: string;
+  price: number;
+  thumbnailImage: string;
+  tutorId: string;
+  isPublished: string;
+  isListed: boolean;
+  enrollmentCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface RejectedCourseDto {
+  _id: string;
+  title: string;
+  description: string;
+  benefits: string;
+  requirements: string;
+  categoryId: string;
+  price: number;
+  thumbnailImage: string;
+  tutorId: string;
+  isPublished: string;
+  isListed: boolean;
+  enrollmentCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TutorBasicDto {
+  _id: string;
+  name: string;
+  email: string;
+}
+
+export interface CourseRejectDto {
+  course: RejectedCourseDto;
+  tutor: TutorBasicDto;
+}
+
+
+export interface CourseListingDto{
+  courseId:string;
+  courseName:string;
+  courseCategory:string;
+  tutorName:string;
+  isListed:boolean
+}
