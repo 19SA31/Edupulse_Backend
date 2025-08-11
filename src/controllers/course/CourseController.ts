@@ -266,7 +266,7 @@ export class CourseController {
         pageLimit,
         search
       );
-      console.log(result)
+      console.log(result);
       const response = new ResponseModel(
         true,
         "Courses fetched successfully",
@@ -274,11 +274,7 @@ export class CourseController {
       );
 
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
-      console.error(
-        "Error in CourseController.getPublishedCourses:",
-        error.message
-      );
+    } catch (error: unknown) {
       if (error instanceof ValidationError) {
         res
           .status(HTTP_statusCode.BadRequest)
@@ -286,7 +282,31 @@ export class CourseController {
       } else {
         const response = new ResponseModel(
           false,
-          "An unexpected error occurred",
+          "Error in getPublishedCourse controller",
+          null
+        );
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
+    }
+  }
+
+  async listUnlistCourse(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      console.log("listUnlistCourse", id);
+      await this._CourseService.listUnlistCourseService(id);
+      res
+        .status(HTTP_statusCode.OK)
+        .json(new ResponseModel(true, "Course listing changed successfully"));
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(new ResponseModel(false, error.message, null));
+      } else {
+        const response = new ResponseModel(
+          false,
+          "Error in listUnlist Course",
           null
         );
         res.status(HTTP_statusCode.InternalServerError).json(response);

@@ -35,4 +35,5 @@ export interface ICourseService {
     totalPages: number;
     totalCount: number;
   }>;
+  listUnlistCourseService(id:string): Promise<void>
 }

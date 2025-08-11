@@ -151,4 +151,10 @@ adminRoutes.get(
   courseController.getPublishedCourses.bind(courseController)
 );
 
+adminRoutes.put(
+  "/listunlist-course/:id",
+  verifyToken("admin"),
+  courseController.listUnlistCourse.bind(courseController)
+);
+
 export default adminRoutes;

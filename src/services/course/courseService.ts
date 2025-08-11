@@ -248,7 +248,7 @@ export class CourseService implements ICourseService {
         limit,
         search
       );
-      console.log("...",result)
+      console.log("...", result);
       const courseDtos = CourseMapper.toDTOArray(result.courses);
 
       return {
@@ -261,6 +261,15 @@ export class CourseService implements ICourseService {
         "Error in CourseService getPublishedCoursesForListing:",
         error.message
       );
+      throw error;
+    }
+  }
+
+  async listUnlistCourseService(id: string): Promise<void> {
+    try {
+      await this._courseRepo.listUnlistCourse(id);
+    } catch (error: any) {
+      console.error("Error in AdminService listUnlistUser:", error.message);
       throw error;
     }
   }

@@ -116,4 +116,13 @@ export class CourseRepository
 
     return { courses, totalPages, totalCount };
   }
+
+  async listUnlistCourse(id: string): Promise<void> {
+    const course = await this.findOne({ _id: id });
+    if (!course) {
+      throw new Error("course not found");
+    }
+    course.isListed = !course.isListed;
+    await course.save();
+  }
 }

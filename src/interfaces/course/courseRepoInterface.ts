@@ -24,4 +24,5 @@ export interface ICourseRepoInterface {
     totalPages: number;
     totalCount: number;
   }>;
+  listUnlistCourse(id:string): Promise<void>
 }
