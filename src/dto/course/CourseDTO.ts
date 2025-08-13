@@ -138,3 +138,14 @@ export interface CourseListingDto{
   tutorName:string;
   isListed:boolean
 }
+
+export interface ListedCourseDTO {
+  courseId: string;
+  title: string;
+  description: string;
+  price: number;
+  thumbnailImage: string;
+  categoryName: string;
+  tutorName: string;
+  enrollmentCount: number;
+}

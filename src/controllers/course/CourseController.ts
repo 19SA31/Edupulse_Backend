@@ -313,4 +313,62 @@ export class CourseController {
       }
     }
   }
+
+  async getAllListedCourses(req: Request, res: Response): Promise<void> {
+    try {
+      const listedCourses = await this._CourseService.getAllListedCourses();
+
+      res
+        .status(HTTP_statusCode.OK)
+        .json(
+          new ResponseModel(
+            true,
+            "Successfully fetched all listed courses",
+            listedCourses
+          )
+        );
+    } catch (error: unknown) {
+      if (error instanceof ValidationError) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(new ResponseModel(false, error.message, null));
+      } else {
+        const response = new ResponseModel(
+          false,
+          "Error fetching listed courses",
+          null
+        );
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
+    }
+  }
+
+  async getAllListedCategories(req: Request, res: Response): Promise<void> {
+    try {
+      const listedCategories =
+        await this._CourseService.getAllListedCategories();
+      res
+        .status(HTTP_statusCode.OK)
+        .json(
+          new ResponseModel(
+            true,
+            "Successfully fetched all listed categories",
+            listedCategories
+          )
+        );
+    } catch (error: unknown) {
+      if (error instanceof ValidationError) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(new ResponseModel(false, error.message, null));
+      } else {
+        const response = new ResponseModel(
+          false,
+          "Error fetching listed courses",
+          null
+        );
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
+    }
+  }
 }

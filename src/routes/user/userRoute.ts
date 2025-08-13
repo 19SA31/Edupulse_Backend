@@ -5,7 +5,14 @@ import UserController from "../../controllers/user/UserController";
 import UserService from "../../services/user/userService";
 import UserRepository from "../../repositories/user/userRepo";
 import { verifyToken } from "../../utils/jwt";
+import { S3Service } from "../../utils/s3";
 
+import { CourseController } from "../../controllers/course/CourseController";
+import { TutorController } from "../../controllers/tutor/TutorController";
+import { CourseService } from "../../services/course/courseService";
+import { TutorService } from "../../services/tutor/tutorService";
+import { CourseRepository } from "../../repositories/course/courseRepo";
+import { TutorRepository } from "../../repositories/tutor/tutorRepo";
 
 import { AuthService } from "../../services/user/authUserService";
 import { AuthUserRepository } from "../../repositories/user/authUserRepo";
@@ -15,7 +22,7 @@ import { AuthAdminService } from "../../services/admin/authAdminService";
 import { AuthAdminRepository } from "../../repositories/admin/authAdminRepo";
 
 const userRoute = express.Router();
-
+const s3Service = new S3Service();
 const storage = multer.memoryStorage();
 const upload = multer({
   storage: storage,
@@ -34,16 +41,17 @@ const upload = multer({
 
 const uploadAvatar = upload.single("avatar");
 
-
 const AuthRepositoryInstance = new AuthUserRepository();
 const TutorAuthRepositoryInstance = new AuthTutorRepository();
 const AuthAdminRepositoryInstance = new AuthAdminRepository();
 
-
 const AuthServiceInstance = new AuthService(AuthRepositoryInstance);
-const TutorAuthServiceInstance = new AuthTutorService(TutorAuthRepositoryInstance);
-const AuthAdminServiceInstance = new AuthAdminService(AuthAdminRepositoryInstance);
-
+const TutorAuthServiceInstance = new AuthTutorService(
+  TutorAuthRepositoryInstance
+);
+const AuthAdminServiceInstance = new AuthAdminService(
+  AuthAdminRepositoryInstance
+);
 
 const AuthenticationControllerInstance = new AuthenticationController(
   AuthServiceInstance,
@@ -51,38 +59,55 @@ const AuthenticationControllerInstance = new AuthenticationController(
   AuthAdminServiceInstance
 );
 
-
 const userRepository = new UserRepository();
 const userService = new UserService(userRepository);
 const userController = new UserController(userService);
 
+const courseRepository = new CourseRepository();
+const courseService = new CourseService(courseRepository, s3Service);
+const courseController = new CourseController(courseService);
+
+
+const tutorRepository = new TutorRepository();
+const tutorService = new TutorService(tutorRepository, s3Service);
+const tutorController = new TutorController(tutorService);
 
 userRoute.post(
   "/send-otp",
-  AuthenticationControllerInstance.sendUserOtp.bind(AuthenticationControllerInstance)
+  AuthenticationControllerInstance.sendUserOtp.bind(
+    AuthenticationControllerInstance
+  )
 );
 
 userRoute.post(
   "/verify-otp",
-  AuthenticationControllerInstance.verifyUserOtp.bind(AuthenticationControllerInstance)
+  AuthenticationControllerInstance.verifyUserOtp.bind(
+    AuthenticationControllerInstance
+  )
 );
 
 userRoute.post(
   "/login",
-  AuthenticationControllerInstance.userLogin.bind(AuthenticationControllerInstance)
+  AuthenticationControllerInstance.userLogin.bind(
+    AuthenticationControllerInstance
+  )
 );
 
 userRoute.post(
   "/logout",
-  AuthenticationControllerInstance.logoutUser.bind(AuthenticationControllerInstance)
+  AuthenticationControllerInstance.logoutUser.bind(
+    AuthenticationControllerInstance
+  )
 );
 
 userRoute.patch(
   "/reset-password",
-  AuthenticationControllerInstance.resetUserPassword.bind(AuthenticationControllerInstance)
+  AuthenticationControllerInstance.resetUserPassword.bind(
+    AuthenticationControllerInstance
+  )
 );
 
-// User-specific routes using UserController
+
 userRoute.put(
   "/profile/update-profile",
   verifyToken("user"),
@@ -94,6 +119,22 @@ userRoute.get(
   "/profile",
   verifyToken("user"),
   userController.getUserProfile.bind(userController)
+);
+
+
+userRoute.get(
+  "/listed-tutors",
+  tutorController.getAllListedTutors.bind(tutorController)
+);
+
+userRoute.get(
+  "/listed-courses",
+  courseController.getAllListedCourses.bind(courseController)
+);
+
+userRoute.get(
+  "/listed-categories",
+  courseController.getAllListedCategories.bind(courseController)
 );
 
 export default userRoute;

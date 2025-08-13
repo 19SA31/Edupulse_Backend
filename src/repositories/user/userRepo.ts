@@ -1,4 +1,4 @@
-// repositories/userRepository.ts
+
 import BaseRepository from '../BaseRepository';
 import userModel from '../../models/Users';
 import { IUser, UpdateProfileData } from '../../interfaces/userInterface/userInterface'

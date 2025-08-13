@@ -1,4 +1,4 @@
-import { ITutor, ITutorDocs } from "../tutorInterface/tutorInterface";
+import { Tutor } from "../tutorInterface/tutorInterface";
 import {
   TutorServiceDTO,
   VerificationDocsServiceDTO,
@@ -13,11 +13,11 @@ export interface ITutorRepository {
     email?: string,
     phone?: string
   ): Promise<TutorServiceDTO | null>;
-  findById(id: string): Promise<ITutor | null>;
+  findById(id: string): Promise<Tutor | null>;
   updateProfile(
     tutorId: string,
     updateData: UpdateProfileData
-  ): Promise<ITutor | null>;
+  ): Promise<Tutor | null>;
   findByPhoneExcludingId(
     phone: string,
     excludeId: string
@@ -64,4 +64,5 @@ export interface ITutorRepository {
  
   findVerificationDocsWithTutorInfo(tutorId: string): Promise<any>;
   findAllVerificationDocsWithTutorInfo(): Promise<any[]>;
+  findAllListedTutors(): Promise<Tutor[]>;
 }

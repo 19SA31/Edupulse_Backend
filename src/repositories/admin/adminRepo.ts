@@ -4,8 +4,8 @@ import userModel from "../../models/Users";
 import tutorModel from "../../models/Tutors";
 import adminModel from "../../models/Admin";
 import categoryModel from "../../models/CategoryModel";
-import { TutorDocs } from "../../models/TutorDocs";
-import { ITutorDocs } from "../../interfaces/tutorInterface/tutorInterface";
+import { TutorDocuments } from "../../models/TutorDocs";
+import { TutorDocs } from "../../interfaces/tutorInterface/tutorInterface";
 import {
   Category,
   Tutor,
@@ -24,7 +24,7 @@ export class AdminRepository
   private _userRepository = new BaseRepository<any>(userModel);
   private _tutorRepository = new BaseRepository<any>(tutorModel);
   private _categoryRepository = new BaseRepository<any>(categoryModel);
-  private _tutorDocsRepository = new BaseRepository<any>(TutorDocs);
+  private _tutorDocsRepository = new BaseRepository<any>(TutorDocuments);
 
   async getAllUsers(
     skip: number,
@@ -253,7 +253,7 @@ export class AdminRepository
     limit: number,
     search: string
   ): Promise<{
-    tutorDocs: (ITutorDocs & { tutor?: { name: string; email: string } })[];
+    tutorDocs: (TutorDocs & { tutor?: { name: string; email: string } })[];
     totalPages: number;
   }> {
     try {

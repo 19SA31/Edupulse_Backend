@@ -125,4 +125,27 @@ export class CourseRepository
     course.isListed = !course.isListed;
     await course.save();
   }
+  async findAllListedCourses(): Promise<Course[]> {
+    try {
+      const populateOptions = [
+        { path: "categoryId", select: "name" },
+        { path: "tutorId", select: "name" },
+      ];
+
+      return await this.findWithConditionAndPopulate(
+        { isListed: true },
+        populateOptions
+      );
+    } catch (error) {
+      throw new Error(`Failed to find listed courses: ${error}`);
+    }
+  }
+
+  async findAllListedCategories(): Promise<Category[]> {
+    try {
+      return await this._categoryRepository.findWithCondition({ isListed: true });
+    } catch (error) {
+      throw new Error(`Failed to find listed categories: ${error}`);
+    }
+  }
 }

@@ -4,8 +4,11 @@ import {
   CourseForReview,
   PublishedCourseDto,
   CourseRejectDto,
-  CourseListingDto
+  CourseListingDto,
+  ListedCourseDTO
 } from "../../dto/course/CourseDTO";
+import { ListedTutorDTO } from "../../dto/tutor/TutorDTO";
+import { ListedCategoryDTO } from "../../dto/course/CategoryDTO";
 import { Course } from "./courseInterface";
 
 export interface ICourseService {
@@ -36,4 +39,6 @@ export interface ICourseService {
     totalCount: number;
   }>;
   listUnlistCourseService(id:string): Promise<void>
+  getAllListedCourses(): Promise<ListedCourseDTO[]>;
+  getAllListedCategories(): Promise<ListedCategoryDTO[]>;
 }

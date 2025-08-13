@@ -1,7 +1,11 @@
 // /src/mappers/tutor/TutorMapper.ts
 
 import { Request } from "express";
-import { ITutor, ITutorDocs, DocumentFiles } from "../../interfaces/tutorInterface/tutorInterface";
+import {
+  Tutor,
+  TutorDocs,
+  DocumentFiles,
+} from "../../interfaces/tutorInterface/tutorInterface";
 import {
   SubmitVerificationDocumentsRequestDTO,
   SubmitVerificationDocumentsResponseDTO,
@@ -12,12 +16,14 @@ import {
   TutorServiceDTO,
   VerificationDocsServiceDTO,
   CreateVerificationDocsDTO,
-  UpdateVerificationDocsDTO
+  UpdateVerificationDocsDTO,
+  ListedTutorDTO,
 } from "../../dto/tutor/TutorDTO";
 
 export class TutorMapper {
-  
-  static mapSubmitVerificationDocumentsRequest(req: Request): SubmitVerificationDocumentsRequestDTO {
+  static mapSubmitVerificationDocumentsRequest(
+    req: Request
+  ): SubmitVerificationDocumentsRequestDTO {
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     const { email, phone } = req.body;
 
@@ -28,55 +34,66 @@ export class TutorMapper {
         avatar: files.avatar[0],
         degree: files.degree[0],
         aadharFront: files.aadharFront[0],
-        aadharBack: files.aadharBack[0]
-      }
+        aadharBack: files.aadharBack[0],
+      },
     };
   }
 
-  static mapGetVerificationStatusRequest(req: Request): GetVerificationStatusRequestDTO {
+  static mapGetVerificationStatusRequest(
+    req: Request
+  ): GetVerificationStatusRequestDTO {
     const { email, phone } = req.query;
     return {
       email: email as string,
-      phone: phone as string
+      phone: phone as string,
     };
   }
 
-  static mapGetVerificationDocumentsRequest(req: Request): GetVerificationDocumentsRequestDTO {
+  static mapGetVerificationDocumentsRequest(
+    req: Request
+  ): GetVerificationDocumentsRequestDTO {
     const { tutorId } = req.params;
     return {
-      tutorId
+      tutorId,
     };
   }
 
-  
-  static mapDocumentFilesToDocumentFiles(dto: SubmitVerificationDocumentsRequestDTO): DocumentFiles {
+  static mapDocumentFilesToDocumentFiles(
+    dto: SubmitVerificationDocumentsRequestDTO
+  ): DocumentFiles {
     return {
       avatar: dto.files.avatar,
       degree: dto.files.degree,
       aadharFront: dto.files.aadharFront,
-      aadharBack: dto.files.aadharBack
+      aadharBack: dto.files.aadharBack,
     };
   }
 
-  static mapToSubmitVerificationDocumentsResponse(data: any): SubmitVerificationDocumentsResponseDTO {
+  static mapToSubmitVerificationDocumentsResponse(
+    data: any
+  ): SubmitVerificationDocumentsResponseDTO {
     return {
       verificationId: data.verificationId,
       status: data.status,
-      submittedAt: data.submittedAt
+      submittedAt: data.submittedAt,
     };
   }
 
-  static mapToGetVerificationStatusResponse(data: any): GetVerificationStatusResponseDTO {
+  static mapToGetVerificationStatusResponse(
+    data: any
+  ): GetVerificationStatusResponseDTO {
     return {
       status: data.status,
       tutorId: data.tutorId,
       submittedAt: data.submittedAt,
       reviewedAt: data.reviewedAt,
-      rejectionReason: data.rejectionReason
+      rejectionReason: data.rejectionReason,
     };
   }
 
-  static mapToGetVerificationDocumentsResponse(data: any): GetVerificationDocumentsResponseDTO {
+  static mapToGetVerificationDocumentsResponse(
+    data: any
+  ): GetVerificationDocumentsResponseDTO {
     return {
       verificationId: data.verificationId,
       tutorId: data.tutorId,
@@ -84,33 +101,34 @@ export class TutorMapper {
       verificationStatus: data.verificationStatus,
       submittedAt: data.submittedAt,
       reviewedAt: data.reviewedAt,
-      rejectionReason: data.rejectionReason
+      rejectionReason: data.rejectionReason,
     };
   }
 
-  
-  static mapTutorToServiceDTO(tutor: ITutor): TutorServiceDTO {
+  static mapTutorToServiceDTO(tutor: Tutor): TutorServiceDTO {
     return {
       _id: tutor._id.toString(),
       email: tutor.email,
       phone: tutor.phone,
       name: tutor.name,
-      isVerified: tutor.isVerified
+      isVerified: tutor.isVerified,
     };
   }
 
-  static mapVerificationDocsToServiceDTO(docs: ITutorDocs): VerificationDocsServiceDTO {
+  static mapVerificationDocsToServiceDTO(
+    docs: TutorDocs
+  ): VerificationDocsServiceDTO {
     return {
       _id: docs._id.toString(),
       tutorId: docs.tutorId.toString(),
-      avatar:docs.avatar,
+      avatar: docs.avatar,
       degree: docs.degree,
       aadharFront: docs.aadharFront,
       aadharBack: docs.aadharBack,
       verificationStatus: docs.verificationStatus,
       submittedAt: docs.submittedAt,
       reviewedAt: docs.reviewedAt,
-      rejectionReason: docs.rejectionReason
+      rejectionReason: docs.rejectionReason,
     };
   }
 
@@ -127,8 +145,8 @@ export class TutorMapper {
       degree,
       aadharFront,
       aadharBack,
-      verificationStatus: 'pending',
-      submittedAt: new Date()
+      verificationStatus: "pending",
+      submittedAt: new Date(),
     };
   }
 
@@ -137,7 +155,7 @@ export class TutorMapper {
     degree?: string,
     aadharFront?: string,
     aadharBack?: string,
-    verificationStatus?: 'pending' | 'approved' | 'rejected',
+    verificationStatus?: "pending" | "approved" | "rejected",
     rejectionReason?: string
   ): UpdateVerificationDocsDTO {
     const updateData: UpdateVerificationDocsDTO = {};
@@ -154,12 +172,27 @@ export class TutorMapper {
     return updateData;
   }
 
-  
-  static mapVerificationDocsArrayToServiceDTO(docsArray: ITutorDocs[]): VerificationDocsServiceDTO[] {
-    return docsArray.map(docs => this.mapVerificationDocsToServiceDTO(docs));
+  static mapVerificationDocsArrayToServiceDTO(
+    docsArray: TutorDocs[]
+  ): VerificationDocsServiceDTO[] {
+    return docsArray.map((docs) => this.mapVerificationDocsToServiceDTO(docs));
   }
 
-  static mapTutorArrayToServiceDTO(tutorArray: ITutor[]): TutorServiceDTO[] {
-    return tutorArray.map(tutor => this.mapTutorToServiceDTO(tutor));
+  static mapTutorArrayToServiceDTO(tutorArray: Tutor[]): TutorServiceDTO[] {
+    return tutorArray.map((tutor) => this.mapTutorToServiceDTO(tutor));
+  }
+
+  static toListedTutorDTO(tutor: any): ListedTutorDTO {
+    return {
+      tutorId: tutor._id?.toString() || "",
+      name: tutor.name || "",
+      email: tutor.email || "",
+      avatar: tutor.avatar || undefined,
+      isVerified: tutor.isVerified || false,
+    };
+  }
+
+  static toListedTutorDTOArray(tutors: any[]): ListedTutorDTO[] {
+    return tutors.map((tutor) => this.toListedTutorDTO(tutor));
   }
 }

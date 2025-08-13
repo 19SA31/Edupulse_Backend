@@ -1,5 +1,3 @@
-// Updated TutorAuthDTO.ts
-
 export interface SendOtpRequestDTO {
   email: string;
   phone?: string;
@@ -68,7 +66,6 @@ export interface LogoutResponseDTO {
   message: string;
 }
 
-// Service layer DTOs
 export interface SignUpServiceDTO {
   email: string;
   phone?: string;

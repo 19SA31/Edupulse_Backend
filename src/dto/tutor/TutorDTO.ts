@@ -90,3 +90,11 @@ export interface UpdateVerificationDocsDTO {
   reviewedAt?: Date;
   rejectionReason?: string;
 }
+
+export interface ListedTutorDTO {
+  tutorId: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  isVerified: boolean;
+}

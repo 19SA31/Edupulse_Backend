@@ -3,7 +3,7 @@ import { CategoryMapper } from "../../mappers/course/categoryMapper";
 import { CourseMapper } from "../../mappers/course/courseMapper";
 import { ICourseService } from "../../interfaces/course/courseServiceInterface";
 import { ICourseRepoInterface } from "../../interfaces/course/courseRepoInterface";
-import { Course, CourseReject } from "../../interfaces/course/courseInterface";
+import { Course } from "../../interfaces/course/courseInterface";
 import {
   CourseForReview,
   CreateCourseDto,
@@ -11,7 +11,9 @@ import {
   PublishedCourseDto,
   CourseRejectDto,
   CourseListingDto,
+  ListedCourseDTO,
 } from "../../dto/course/CourseDTO";
+import { ListedCategoryDTO } from "../../dto/course/CategoryDTO";
 import { S3Service } from "../../utils/s3";
 
 export class CourseService implements ICourseService {
@@ -271,6 +273,45 @@ export class CourseService implements ICourseService {
     } catch (error: any) {
       console.error("Error in AdminService listUnlistUser:", error.message);
       throw error;
+    }
+  }
+
+  async getAllListedCourses(): Promise<ListedCourseDTO[]> {
+    try {
+      const courses = await this._courseRepo.findAllListedCourses();
+
+      await Promise.all(
+        courses.map(async (course) => {
+          try {
+            if (course.thumbnailImage) {
+              course.thumbnailImage = await this._s3Service.getFile(
+                course.thumbnailImage
+              );
+            }
+          } catch (error) {
+            console.error(
+              `Error getting signed URL for course ${course._id}:`,
+              error
+            );
+            course.thumbnailImage = course.thumbnailImage;
+          }
+        })
+      );
+
+      console.log("courses with updated thumbnailImage", courses);
+
+      return CourseMapper.toListedCourseDTOArray(courses);
+    } catch (error) {
+      throw new Error(`Failed to fetch listed courses: ${error}`);
+    }
+  }
+
+  async getAllListedCategories(): Promise<ListedCategoryDTO[]> {
+    try {
+      const categories = await this._courseRepo.findAllListedCategories();
+      return CategoryMapper.toListedCategoryDTOArray(categories);
+    } catch (error) {
+      throw new Error(`Failed to fetch listed categories: ${error}`);
     }
   }
 }

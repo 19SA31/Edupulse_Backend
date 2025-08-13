@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
-import { ITutorDocs } from "../interfaces/tutorInterface/tutorInterface";
+import { TutorDocs } from "../interfaces/tutorInterface/tutorInterface";
 
-const tutorDocsSchema = new Schema<ITutorDocs>({
+const tutorDocsSchema = new Schema<TutorDocs>({
   tutorId: {
     type: Schema.Types.ObjectId,
     ref: "Tutor",
@@ -48,4 +48,4 @@ const tutorDocsSchema = new Schema<ITutorDocs>({
 
 tutorDocsSchema.index({ tutorId: 1, verificationStatus: 1 });
 
-export const TutorDocs = mongoose.model<ITutorDocs>('TutorDocs', tutorDocsSchema);
+export const TutorDocuments = mongoose.model<TutorDocs>('TutorDocs', tutorDocsSchema);

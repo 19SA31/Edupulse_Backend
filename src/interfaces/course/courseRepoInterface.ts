@@ -24,5 +24,7 @@ export interface ICourseRepoInterface {
     totalPages: number;
     totalCount: number;
   }>;
-  listUnlistCourse(id:string): Promise<void>
+  listUnlistCourse(id: string): Promise<void>;
+  findAllListedCourses(): Promise<Course[]>;
+  findAllListedCategories(): Promise<Category[]>;
 }

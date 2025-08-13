@@ -1,4 +1,3 @@
-// Request DTOs
 export interface SignUpRequestDto {
   name?: string;
   email: string;

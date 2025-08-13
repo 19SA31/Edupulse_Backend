@@ -2,7 +2,8 @@ import mongoose, { Document, ObjectId } from "mongoose";
 
 
 
-export interface ITutor extends Document {
+
+export interface Tutor extends Document {
   _id: string | ObjectId;
   name: string;
   email: string;
@@ -124,7 +125,7 @@ export interface OTPDocument {
 
 
 
-export interface ITutorDocs extends Document {
+export interface TutorDocs extends Document {
   _id: string | ObjectId;
   tutorId: string | ObjectId;
   avatar: string;
@@ -201,4 +202,12 @@ export interface VerificationSubmissionData {
   verificationId: string;
   status: 'pending' | 'approved' | 'rejected';
   submittedAt: Date;
+}
+
+export interface ListingTutor{
+  tutorId: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  isVerified: boolean;
 }

@@ -10,3 +10,9 @@ export interface CategoryDTO {
 export interface CategoryDTOArr {
     categories: CategoryDTO[];
 }
+
+export interface ListedCategoryDTO {
+  categoryId: string;
+  name: string;
+  description: string;
+}

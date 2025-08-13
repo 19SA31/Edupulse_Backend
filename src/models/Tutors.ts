@@ -1,7 +1,7 @@
 import { model, Schema } from "mongoose";
-import { ITutor } from "../interfaces/tutorInterface/tutorInterface";
+import { Tutor } from "../interfaces/tutorInterface/tutorInterface";
 
-const tutorSchema = new Schema<ITutor>({
+const tutorSchema = new Schema<Tutor>({
   name: {
     type: String,
     required: true,
@@ -45,5 +45,5 @@ const tutorSchema = new Schema<ITutor>({
   },
 });
 
-const tutorModel = model<ITutor>("Tutor", tutorSchema);
+const tutorModel = model<Tutor>("Tutor", tutorSchema);
 export default tutorModel;

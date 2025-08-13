@@ -1,6 +1,4 @@
-// Updated TutorAuthMapper.ts
-
-import { GetTutorData, GetTutorDataLogin } from "../../interfaces/tutorInterface/tutorInterface";
+import { GetTutorDataLogin } from "../../interfaces/tutorInterface/tutorInterface";
 import {
   SendOtpRequestDTO,
   SendOtpResponseDTO,
@@ -20,7 +18,6 @@ import {
 } from "../../dto/tutor/TutorAuthDTO";
 
 export class TutorAuthMapper {
-  
   static mapSendOtpRequestToService(dto: SendOtpRequestDTO): SignUpServiceDTO {
     return {
       email: dto.email,
@@ -29,7 +26,9 @@ export class TutorAuthMapper {
     };
   }
 
-  static mapVerifyOtpRequestToService(dto: VerifyOtpRequestDTO): OtpCheckServiceDTO {
+  static mapVerifyOtpRequestToService(
+    dto: VerifyOtpRequestDTO
+  ): OtpCheckServiceDTO {
     return {
       name: dto.name,
       email: dto.email,
@@ -47,40 +46,46 @@ export class TutorAuthMapper {
     };
   }
 
-  static mapResetPasswordRequestToService(dto: ResetPasswordRequestDTO): ResetPasswordServiceDTO {
+  static mapResetPasswordRequestToService(
+    dto: ResetPasswordRequestDTO
+  ): ResetPasswordServiceDTO {
     return {
       email: dto.email,
       password: dto.password,
     };
   }
 
-  
-  static mapSendOtpResponse(success: boolean, message: string): SendOtpResponseDTO {
+  static mapSendOtpResponse(
+    success: boolean,
+    message: string
+  ): SendOtpResponseDTO {
     return {
       success,
       message,
     };
   }
 
-  static mapVerifyOtpResponse(success: boolean, message: string): VerifyOtpResponseDTO {
+  static mapVerifyOtpResponse(
+    success: boolean,
+    message: string
+  ): VerifyOtpResponseDTO {
     return {
       success,
       message,
     };
   }
-
 
   static mapTutorDataFromService(tutorData: GetTutorDataLogin): TutorDataDTO {
     return {
       id: tutorData.id,
       name: tutorData.name,
       email: tutorData.email,
-      phone: tutorData.phone, 
-      DOB:tutorData.DOB,
-      gender:tutorData.gender,
+      phone: tutorData.phone,
+      DOB: tutorData.DOB,
+      gender: tutorData.gender,
       avatar: tutorData.avatar,
       isVerified: tutorData.isVerified,
-      verificationStatus: tutorData.verificationStatus
+      verificationStatus: tutorData.verificationStatus,
     };
   }
 
@@ -112,22 +117,30 @@ export class TutorAuthMapper {
     };
   }
 
-  static mapResetPasswordResponse(success: boolean, message: string): ResetPasswordResponseDTO {
+  static mapResetPasswordResponse(
+    success: boolean,
+    message: string
+  ): ResetPasswordResponseDTO {
     return {
       success,
       message,
     };
   }
 
-  static mapLogoutResponse(success: boolean, message: string): LogoutResponseDTO {
+  static mapLogoutResponse(
+    success: boolean,
+    message: string
+  ): LogoutResponseDTO {
     return {
       success,
       message,
     };
   }
 
-  
-  static mapErrorResponse(success: boolean, message: string): {
+  static mapErrorResponse(
+    success: boolean,
+    message: string
+  ): {
     success: boolean;
     message: string;
   } {

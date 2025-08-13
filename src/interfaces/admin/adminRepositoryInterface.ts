@@ -3,7 +3,7 @@ import {
   Tutor,
   Category,
 } from "../../interfaces/adminInterface/adminInterface";
-import { ITutorDocs } from "../../interfaces/tutorInterface/tutorInterface";
+import { TutorDocs } from "../../interfaces/tutorInterface/tutorInterface";
 
 export interface IAdminRepositoryInterface {
   getAllUsers(
@@ -25,7 +25,7 @@ export interface IAdminRepositoryInterface {
     limit: number,
     search: string
   ): Promise<{
-    tutorDocs: (ITutorDocs & { tutor?: { name: string; email: string } })[];
+    tutorDocs: (TutorDocs & { tutor?: { name: string; email: string } })[];
     totalPages: number;
   }>;
   verifyTutor(tutorId: string): Promise<void>;

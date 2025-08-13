@@ -11,57 +11,57 @@ import {
   GetVerificationDocumentsRequestDTO,
   GetVerificationDocumentsResponseDTO,
   VerificationDocsServiceDTO,
+  ListedTutorDTO,
 } from "../../dto/tutor/TutorDTO";
-import { UpdateProfileData, TutorProfileData } from "../../interfaces/tutorInterface/tutorInterface";
-import { cropAndSave } from '../../helper/Sharp';
+import {
+  UpdateProfileData,
+  TutorProfileData,
+} from "../../interfaces/tutorInterface/tutorInterface";
+import { cropAndSave } from "../../helper/Sharp";
 
 export class TutorService implements ITutorService {
-  private tutorRepository: ITutorRepository;
-  private s3Service: S3Service;
+  private _tutorRepository: ITutorRepository;
+  private _s3Service: S3Service;
 
   constructor(tutorRepository: ITutorRepository, s3Service: S3Service) {
-    this.tutorRepository = tutorRepository;
-    this.s3Service = s3Service;
+    this._tutorRepository = tutorRepository;
+    this._s3Service = s3Service;
   }
 
   async updateProfile(
-    tutorId: string, 
+    tutorId: string,
     updateData: UpdateProfileData
   ): Promise<{ tutor: TutorProfileData }> {
     console.log("Updating tutor profile:", tutorId);
 
-
-    const existingTutor = await this.tutorRepository.findById(tutorId);
+    const existingTutor = await this._tutorRepository.findById(tutorId);
     if (!existingTutor) {
-      throw new Error('Tutor not found');
+      throw new Error("Tutor not found");
     }
 
-  
     await this.validateUpdateData(tutorId, updateData);
 
-
     const processedUpdateData = await this.processAvatarUpdate(
-      existingTutor, 
+      existingTutor,
       updateData
     );
 
-  
-    const updatedTutor = await this.tutorRepository.updateProfile(
-      tutorId, 
+    const updatedTutor = await this._tutorRepository.updateProfile(
+      tutorId,
       processedUpdateData
     );
-    
+
     if (!updatedTutor) {
-      throw new Error('Failed to update profile');
+      throw new Error("Failed to update profile");
     }
     return await this.buildTutorProfileResponse(updatedTutor);
   }
 
   async getTutorProfile(tutorId: string): Promise<{ tutor: TutorProfileData }> {
-    const tutor = await this.tutorRepository.findById(tutorId);
-    
+    const tutor = await this._tutorRepository.findById(tutorId);
+
     if (!tutor) {
-      throw new Error('Tutor not found');
+      throw new Error("Tutor not found");
     }
 
     return await this.buildTutorProfileResponse(tutor);
@@ -71,8 +71,7 @@ export class TutorService implements ITutorService {
     requestDTO: SubmitVerificationDocumentsRequestDTO
   ): Promise<ServiceResponse<SubmitVerificationDocumentsResponseDTO>> {
     try {
-
-      const tutorDTO = await this.tutorRepository.findTutorByEmailOrPhone(
+      const tutorDTO = await this._tutorRepository.findTutorByEmailOrPhone(
         requestDTO.email,
         requestDTO.phone
       );
@@ -84,10 +83,8 @@ export class TutorService implements ITutorService {
         };
       }
 
- 
-      const existingDocs = await this.tutorRepository.findVerificationDocsByTutorId(
-        tutorDTO._id
-      );
+      const existingDocs =
+        await this._tutorRepository.findVerificationDocsByTutorId(tutorDTO._id);
 
       if (existingDocs && existingDocs.verificationStatus === "approved") {
         return {
@@ -114,18 +111,19 @@ export class TutorService implements ITutorService {
         };
       }
 
-      const responseData = TutorMapper.mapToSubmitVerificationDocumentsResponse({
-        verificationId: result._id,
-        status: result.verificationStatus,
-        submittedAt: result.submittedAt,
-      });
+      const responseData = TutorMapper.mapToSubmitVerificationDocumentsResponse(
+        {
+          verificationId: result._id,
+          status: result.verificationStatus,
+          submittedAt: result.submittedAt,
+        }
+      );
 
       return {
         success: true,
         message: "Verification documents submitted successfully",
         data: responseData,
       };
-
     } catch (error: any) {
       console.error("Error in submitVerificationDocuments:", error);
       return {
@@ -139,7 +137,7 @@ export class TutorService implements ITutorService {
     requestDTO: GetVerificationStatusRequestDTO
   ): Promise<ServiceResponse<GetVerificationStatusResponseDTO>> {
     try {
-      const tutorDTO = await this.tutorRepository.findTutorByEmailOrPhone(
+      const tutorDTO = await this._tutorRepository.findTutorByEmailOrPhone(
         requestDTO.email,
         requestDTO.phone
       );
@@ -148,9 +146,8 @@ export class TutorService implements ITutorService {
         return { success: false, message: "Tutor not found" };
       }
 
-      const verificationDocs = await this.tutorRepository.findVerificationDocsByTutorId(
-        tutorDTO._id
-      );
+      const verificationDocs =
+        await this._tutorRepository.findVerificationDocsByTutorId(tutorDTO._id);
 
       const responseData = TutorMapper.mapToGetVerificationStatusResponse({
         status: verificationDocs?.verificationStatus || "not_submitted",
@@ -162,7 +159,7 @@ export class TutorService implements ITutorService {
 
       return {
         success: true,
-        message: verificationDocs 
+        message: verificationDocs
           ? "Verification status retrieved successfully"
           : "No verification documents found",
         data: responseData,
@@ -180,9 +177,10 @@ export class TutorService implements ITutorService {
     requestDTO: GetVerificationDocumentsRequestDTO
   ): Promise<ServiceResponse<GetVerificationDocumentsResponseDTO>> {
     try {
-      const verificationDocs = await this.tutorRepository.findVerificationDocsByTutorId(
-        requestDTO.tutorId
-      );
+      const verificationDocs =
+        await this._tutorRepository.findVerificationDocsByTutorId(
+          requestDTO.tutorId
+        );
 
       if (!verificationDocs) {
         return { success: false, message: "No verification documents found" };
@@ -214,63 +212,58 @@ export class TutorService implements ITutorService {
     }
   }
 
- 
-
   private async validateUpdateData(
-    tutorId: string, 
+    tutorId: string,
     updateData: UpdateProfileData
   ): Promise<void> {
-   
     if (updateData.name !== undefined) {
       const trimmedName = updateData.name.trim();
       if (trimmedName.length < 2 || trimmedName.length > 50) {
-        throw new Error('Name must be between 2 and 50 characters');
+        throw new Error("Name must be between 2 and 50 characters");
       }
       updateData.name = trimmedName;
     }
 
-    
     if (updateData.phone !== undefined) {
       if (!updateData.phone) {
-        throw new Error('Phone number is required');
-      }
-      
-      const cleanPhone = updateData.phone.replace(/\D/g, '');
-      if (!/^[0-9]{10,15}$/.test(cleanPhone)) {
-        throw new Error('Please enter a valid phone number (10-15 digits)');
+        throw new Error("Phone number is required");
       }
 
-      const existingPhoneTutor = await this.tutorRepository.findByPhoneExcludingId(
-        cleanPhone, 
-        tutorId
-      );
-      if (existingPhoneTutor) {
-        throw new Error('Phone number is already registered with another account');
+      const cleanPhone = updateData.phone.replace(/\D/g, "");
+      if (!/^[0-9]{10,15}$/.test(cleanPhone)) {
+        throw new Error("Please enter a valid phone number (10-15 digits)");
       }
-      
+
+      const existingPhoneTutor =
+        await this._tutorRepository.findByPhoneExcludingId(cleanPhone, tutorId);
+      if (existingPhoneTutor) {
+        throw new Error(
+          "Phone number is already registered with another account"
+        );
+      }
+
       updateData.phone = cleanPhone;
     }
-
 
     if (updateData.DOB !== undefined && updateData.DOB) {
       const dobDate = new Date(updateData.DOB);
       const today = new Date();
-      
+
       if (dobDate > today) {
-        throw new Error('Date of birth cannot be in the future');
+        throw new Error("Date of birth cannot be in the future");
       }
-     
+
       const minAge = new Date();
       minAge.setFullYear(today.getFullYear() - 18);
-      
+
       if (dobDate > minAge) {
-        throw new Error('Tutor must be at least 18 years old');
+        throw new Error("Tutor must be at least 18 years old");
       }
     }
 
     if (updateData.gender !== undefined && updateData.gender) {
-      if (!['male', 'female', 'other'].includes(updateData.gender)) {
-        throw new Error('Invalid gender selection');
+      if (!["male", "female", "other"].includes(updateData.gender)) {
+        throw new Error("Invalid gender selection");
       }
     }
   }
@@ -284,67 +277,74 @@ export class TutorService implements ITutorService {
     if (this.isAvatarFile(updateData.avatar)) {
       try {
         console.log("Processing tutor avatar upload");
-        
+
         const avatarFile = updateData.avatar as Express.Multer.File;
         let processedBuffer = avatarFile.buffer;
 
         if (updateData.cropData) {
           const { x, y, width, height } = updateData.cropData;
-          processedBuffer = await cropAndSave(x, y, width, height, avatarFile.buffer) as Buffer;
+          processedBuffer = (await cropAndSave(
+            x,
+            y,
+            width,
+            height,
+            avatarFile.buffer
+          )) as Buffer;
         }
 
         const processedFile = { ...avatarFile, buffer: processedBuffer };
 
-      
         if (existingTutor.avatar) {
           await this.safeDeleteFile(existingTutor.avatar);
         }
 
-      
-        const avatarS3Key = await this.s3Service.uploadFile('tutor_avatars', processedFile);
+        const avatarS3Key = await this._s3Service.uploadFile(
+          "tutor_avatars",
+          processedFile
+        );
         processedData.avatar = avatarS3Key;
-        
-        console.log("New tutor avatar uploaded:", avatarS3Key);
 
+        console.log("New tutor avatar uploaded:", avatarS3Key);
       } catch (uploadError) {
-        console.error('Tutor avatar upload error:', uploadError);
-        throw new Error('Failed to upload avatar. Please try again.');
+        console.error("Tutor avatar upload error:", uploadError);
+        throw new Error("Failed to upload avatar. Please try again.");
       }
     } else if (updateData.avatar === null && existingTutor.avatar) {
-      
       console.log("Deleting tutor avatar");
       await this.safeDeleteFile(existingTutor.avatar);
     }
 
-   
     delete processedData.cropData;
     return processedData;
   }
 
   private isAvatarFile(avatar: any): boolean {
-    return avatar && 
-           typeof avatar === 'object' && 
-           'buffer' in avatar && 
-           avatar.buffer instanceof Buffer;
+    return (
+      avatar &&
+      typeof avatar === "object" &&
+      "buffer" in avatar &&
+      avatar.buffer instanceof Buffer
+    );
   }
 
   private async safeDeleteFile(fileKey: string): Promise<void> {
     try {
-      await this.s3Service.deleteFile(fileKey);
+      await this._s3Service.deleteFile(fileKey);
       console.log("File deleted from S3:", fileKey);
     } catch (deleteError) {
-      console.warn('Failed to delete file:', deleteError);
-      
+      console.warn("Failed to delete file:", deleteError);
     }
   }
 
-  private async buildTutorProfileResponse(tutor: any): Promise<{ tutor: TutorProfileData }> {
+  private async buildTutorProfileResponse(
+    tutor: any
+  ): Promise<{ tutor: TutorProfileData }> {
     let avatarUrl = null;
     if (tutor.avatar) {
       try {
-        avatarUrl = await this.s3Service.getFile(tutor.avatar);
+        avatarUrl = await this._s3Service.getFile(tutor.avatar);
       } catch (error) {
-        console.warn('Failed to generate avatar URL:', error);
+        console.warn("Failed to generate avatar URL:", error);
       }
     }
 
@@ -359,7 +359,7 @@ export class TutorService implements ITutorService {
       isBlocked: tutor.isBlocked,
       createdAt: tutor.createdAt,
       updatedAt: tutor.updatedAt,
-      lastLogin: tutor.lastLogin
+      lastLogin: tutor.lastLogin,
     };
 
     return { tutor: responseData };
@@ -375,14 +375,15 @@ export class TutorService implements ITutorService {
     aadharBackS3Key: string;
   }> {
     const folderPath = `tutor-documents/${tutorId}`;
-    const documentFiles = TutorMapper.mapDocumentFilesToDocumentFiles(requestDTO);
+    const documentFiles =
+      TutorMapper.mapDocumentFilesToDocumentFiles(requestDTO);
 
-    const [avatarS3Key, degreeS3Key, aadharFrontS3Key, aadharBackS3Key] = 
+    const [avatarS3Key, degreeS3Key, aadharFrontS3Key, aadharBackS3Key] =
       await Promise.all([
-        this.s3Service.uploadFile(folderPath, documentFiles.avatar),
-        this.s3Service.uploadFile(folderPath, documentFiles.degree),
-        this.s3Service.uploadFile(folderPath, documentFiles.aadharFront),
-        this.s3Service.uploadFile(folderPath, documentFiles.aadharBack),
+        this._s3Service.uploadFile(folderPath, documentFiles.avatar),
+        this._s3Service.uploadFile(folderPath, documentFiles.degree),
+        this._s3Service.uploadFile(folderPath, documentFiles.aadharFront),
+        this._s3Service.uploadFile(folderPath, documentFiles.aadharBack),
       ]);
 
     return { avatarS3Key, degreeS3Key, aadharFrontS3Key, aadharBackS3Key };
@@ -398,12 +399,12 @@ export class TutorService implements ITutorService {
       aadharBackS3Key: string;
     }
   ): Promise<VerificationDocsServiceDTO | null> {
-    const { avatarS3Key, degreeS3Key, aadharFrontS3Key, aadharBackS3Key } = uploadedDocuments;
+    const { avatarS3Key, degreeS3Key, aadharFrontS3Key, aadharBackS3Key } =
+      uploadedDocuments;
 
     if (existingDocs && existingDocs.verificationStatus !== "approved") {
-      
       await this.deleteOldFiles(existingDocs);
-      
+
       const updateDTO = TutorMapper.mapToUpdateVerificationDocsDTO(
         avatarS3Key,
         degreeS3Key,
@@ -411,7 +412,10 @@ export class TutorService implements ITutorService {
         aadharBackS3Key,
         "pending"
       );
-      return await this.tutorRepository.updateVerificationDocs(existingDocs._id, updateDTO);
+      return await this._tutorRepository.updateVerificationDocs(
+        existingDocs._id,
+        updateDTO
+      );
     } else if (!existingDocs) {
       const createDTO = TutorMapper.mapToCreateVerificationDocsDTO(
         tutorId,
@@ -420,7 +424,7 @@ export class TutorService implements ITutorService {
         aadharFrontS3Key,
         aadharBackS3Key
       );
-      return await this.tutorRepository.createVerificationDocs(createDTO);
+      return await this._tutorRepository.createVerificationDocs(createDTO);
     }
 
     return null;
@@ -434,12 +438,12 @@ export class TutorService implements ITutorService {
     aadharFront: string;
     aadharBack: string;
   }> {
-    const [avatarUrl, degreeUrl, aadharFrontUrl, aadharBackUrl] = 
+    const [avatarUrl, degreeUrl, aadharFrontUrl, aadharBackUrl] =
       await Promise.all([
-        this.s3Service.getFile(verificationDocs.avatar),
-        this.s3Service.getFile(verificationDocs.degree),
-        this.s3Service.getFile(verificationDocs.aadharFront),
-        this.s3Service.getFile(verificationDocs.aadharBack),
+        this._s3Service.getFile(verificationDocs.avatar),
+        this._s3Service.getFile(verificationDocs.degree),
+        this._s3Service.getFile(verificationDocs.aadharFront),
+        this._s3Service.getFile(verificationDocs.aadharBack),
       ]);
 
     return {
@@ -450,7 +454,9 @@ export class TutorService implements ITutorService {
     };
   }
 
-  private async deleteOldFiles(existingDocs: VerificationDocsServiceDTO): Promise<void> {
+  private async deleteOldFiles(
+    existingDocs: VerificationDocsServiceDTO
+  ): Promise<void> {
     try {
       await Promise.all([
         this.safeDeleteFile(existingDocs.avatar),
@@ -460,7 +466,30 @@ export class TutorService implements ITutorService {
       ]);
     } catch (error) {
       console.error("Error deleting old files:", error);
-      
+    }
+  }
+
+  async getAllListedTutors(): Promise<ListedTutorDTO[]> {
+    try {
+      const tutors = await this._tutorRepository.findAllListedTutors();
+      await Promise.all(
+        tutors.map(async (tutor) => {
+          try {
+            if (tutor.avatar) {
+              tutor.avatar = await this._s3Service.getFile(tutor.avatar);
+            }
+          } catch (error) {
+            console.error(
+              `Error getting signed URL for course ${tutor._id}:`,
+              error
+            );
+            tutor.avatar = tutor.avatar;
+          }
+        })
+      );
+      return TutorMapper.toListedTutorDTOArray(tutors);
+    } catch (error) {
+      throw new Error(`Failed to fetch listed tutors: ${error}`);
     }
   }
 }

@@ -10,6 +10,7 @@ import {
   CourseRejectDto,
   PublishedCourseDto,
   CourseListingDto,
+  ListedCourseDTO,
 } from "../../dto/course/CourseDTO";
 import { S3Service } from "../../utils/s3";
 
@@ -225,5 +226,26 @@ export class CourseMapper {
 
   static toDTOArray(courses: any[]): CourseListingDto[] {
     return courses.map((course) => this.toDTO(course));
+  }
+
+  static toListedCourseDTO(course: any): ListedCourseDTO {
+    return {
+      courseId: course._id?.toString() || "",
+      title: course.title || "",
+      description: course.description || "",
+      price: course.price?.$numberInt
+        ? parseInt(course.price.$numberInt)
+        : course.price || 0,
+      thumbnailImage: course.thumbnailImage || "",
+      categoryName: course.categoryId?.name || "Unknown Category",
+      tutorName: course.tutorId?.name || "Unknown Tutor",
+      enrollmentCount: course.enrollmentCount?.$numberInt
+        ? parseInt(course.enrollmentCount.$numberInt)
+        : course.enrollmentCount || 0,
+    };
+  }
+
+  static toListedCourseDTOArray(courses: any[]): ListedCourseDTO[] {
+    return courses.map((course) => this.toListedCourseDTO(course));
   }
 }

@@ -32,7 +32,6 @@ export interface LoginRequestDTO {
   password: string;
 }
 
-// Response DTOs - Data going to client
 export interface UserProfileResponseDTO {
   _id: string;
   name: string;
