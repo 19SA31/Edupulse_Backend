@@ -356,6 +356,8 @@ export class TutorService implements ITutorService {
       DOB: tutor.DOB,
       gender: tutor.gender,
       avatar: avatarUrl,
+      designation: tutor.designation,
+      about:tutor.about,
       isBlocked: tutor.isBlocked,
       createdAt: tutor.createdAt,
       updatedAt: tutor.updatedAt,

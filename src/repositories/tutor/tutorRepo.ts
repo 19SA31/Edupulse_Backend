@@ -100,6 +100,10 @@ export class TutorRepository
             updateObject.DOB = new Date(updateData.DOB);
           } else if (key === "name" && updateData.name) {
             updateObject.name = updateData.name.trim();
+          } else if (key === "designation" && updateData.designation) {
+            updateObject.designation = updateData.designation.trim();
+          } else if (key === "about" && updateData.about) {
+            updateObject.about = updateData.about.trim();
           } else if (key !== "cropData") {
             updateObject[key] = updateData[key as keyof UpdateProfileData];
           }
@@ -350,5 +354,4 @@ export class TutorRepository
       throw new Error(`Failed to find listed tutors: ${error}`);
     }
   }
-
 }

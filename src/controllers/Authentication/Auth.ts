@@ -5,8 +5,6 @@ import HTTP_statusCode from "../../enums/HttpStatusCode";
 import { Request, Response, NextFunction } from "express";
 import { ResponseModel } from "../../models/ResponseModel";
 
-
-
 export class AuthenticationController {
   private userAuthService: IAuthService;
   private tutorAuthService: ITutorAuthInterface;
@@ -22,8 +20,6 @@ export class AuthenticationController {
     this.adminAuthService = adminAuthServiceInstance;
   }
 
-
-
   async sendUserOtp(
     req: Request,
     res: Response,
@@ -31,7 +27,7 @@ export class AuthenticationController {
   ): Promise<void> {
     try {
       const { email } = req.body;
-      
+
       if (!email) {
         const response = new ResponseModel(false, "Email is required");
         res.status(HTTP_statusCode.BadRequest).json(response);
@@ -42,7 +38,6 @@ export class AuthenticationController {
 
       const response = new ResponseModel(true, "OTP sent successfully");
       res.status(HTTP_statusCode.OK).json(response);
-      
     } catch (error: any) {
       this.handleUserOtpError(error, res, next);
     }
@@ -55,7 +50,7 @@ export class AuthenticationController {
   ): Promise<void> {
     try {
       const { email, otp, password, isForgot } = req.body;
-      
+
       if (!email || !otp) {
         const response = new ResponseModel(false, "Email and OTP are required");
         res.status(HTTP_statusCode.BadRequest).json(response);
@@ -63,22 +58,24 @@ export class AuthenticationController {
       }
 
       if (!isForgot && !password) {
-        const response = new ResponseModel(false, "Password is required for registration");
+        const response = new ResponseModel(
+          false,
+          "Password is required for registration"
+        );
         res.status(HTTP_statusCode.BadRequest).json(response);
         return;
       }
-      
+
       const isVerified = await this.userAuthService.otpCheck(req.body);
-      
+
       if (!isVerified) {
         const response = new ResponseModel(false, "OTP verification failed");
         res.status(HTTP_statusCode.BadRequest).json(response);
         return;
       }
-      
+
       const response = new ResponseModel(true, "OTP verified successfully");
       res.status(HTTP_statusCode.OK).json(response);
-      
     } catch (error: any) {
       this.handleUserVerifyOtpError(error, res, next);
     }
@@ -91,29 +88,31 @@ export class AuthenticationController {
   ): Promise<void> {
     try {
       const { email, password } = req.body;
-      
+
       if (!email || !password) {
-        const response = new ResponseModel(false, "Email and password are required");
+        const response = new ResponseModel(
+          false,
+          "Email and password are required"
+        );
         res.status(HTTP_statusCode.BadRequest).json(response);
         return;
       }
-      
+
       const loginResult = await this.userAuthService.loginService(req.body);
-      
-      const response = new ResponseModel(
-        true, 
-        "User logged in successfully", 
-        {
-          accessToken: loginResult.accessToken,
-          refreshToken: loginResult.refreshToken,
-          user: loginResult.user
-        }
+
+      const response = new ResponseModel(true, "User logged in successfully", {
+        accessToken: loginResult.accessToken,
+        refreshToken: loginResult.refreshToken,
+        user: loginResult.user,
+      });
+
+      this.setAuthCookies(
+        res,
+        loginResult.accessToken,
+        loginResult.refreshToken
       );
-      
-      this.setAuthCookies(res, loginResult.accessToken, loginResult.refreshToken);
-      
+
       res.status(HTTP_statusCode.OK).json(response);
-      
     } catch (error: any) {
       this.handleUserLoginError(error, res, next);
     }
@@ -126,37 +125,44 @@ export class AuthenticationController {
   ): Promise<void> {
     try {
       const { email, password } = req.body;
-      
+
       if (!email || !password) {
-        const response = new ResponseModel(false, "Email and new password are required");
+        const response = new ResponseModel(
+          false,
+          "Email and new password are required"
+        );
         res.status(HTTP_statusCode.BadRequest).json(response);
         return;
       }
-      
+
       await this.userAuthService.resetPasswordService(req.body);
-      
+
       const response = new ResponseModel(true, "Password reset successfully");
       res.status(HTTP_statusCode.OK).json(response);
-      
     } catch (error: any) {
       this.handleUserResetPasswordError(error, res, next);
     }
   }
 
-  async logoutUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async logoutUser(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       this.clearAuthCookies(res);
-      
-      const response = new ResponseModel(true, "You have been logged out successfully");
+
+      const response = new ResponseModel(
+        true,
+        "You have been logged out successfully"
+      );
       res.status(HTTP_statusCode.OK).json(response);
-      
     } catch (error: any) {
       const response = new ResponseModel(false, "Internal server error");
       res.status(HTTP_statusCode.InternalServerError).json(response);
       next(error);
     }
   }
-
 
   async sendTutorOtp(
     req: Request,
@@ -166,7 +172,7 @@ export class AuthenticationController {
     try {
       console.log("inside create tutor auth");
       console.log(req.body);
-      
+
       await this.tutorAuthService.signUp(req.body);
 
       const response = new ResponseModel(true, "OTP sent successfully");
@@ -184,9 +190,9 @@ export class AuthenticationController {
     try {
       console.log("inside verify otp controller");
       console.log("inside verify otp data:", req.body);
-      
+
       await this.tutorAuthService.otpCheck(req.body);
-      
+
       console.log("OTP Verified Successfully!");
       const response = new ResponseModel(true, "OTP verified successfully");
       res.status(HTTP_statusCode.OK).json(response);
@@ -204,18 +210,18 @@ export class AuthenticationController {
       const loginResult = await this.tutorAuthService.loginService(req.body);
       console.log("tutorLogin responssssssse: ", loginResult);
 
-      const response = new ResponseModel(
-        true,
-        "Tutor logged in successfully",
-        {
-          accessToken: loginResult.accessToken,
-          refreshToken: loginResult.refreshToken,
-          tutor: loginResult.tutor
-        }
+      const response = new ResponseModel(true, "Tutor logged in successfully", {
+        accessToken: loginResult.accessToken,
+        refreshToken: loginResult.refreshToken,
+        tutor: loginResult.tutor,
+      });
+
+      this.setAuthCookies(
+        res,
+        loginResult.accessToken,
+        loginResult.refreshToken
       );
 
-      this.setAuthCookies(res, loginResult.accessToken, loginResult.refreshToken);
-      
       res.status(HTTP_statusCode.OK).json(response);
     } catch (error: any) {
       this.handleTutorLoginError(error, res, next);
@@ -229,7 +235,7 @@ export class AuthenticationController {
   ): Promise<void> {
     try {
       await this.tutorAuthService.resetPasswordService(req.body);
-      
+
       const response = new ResponseModel(true, "Password reset successfully");
       res.status(HTTP_statusCode.OK).json(response);
     } catch (error: any) {
@@ -240,16 +246,20 @@ export class AuthenticationController {
   async logoutTutor(req: Request, res: Response): Promise<void> {
     try {
       this.clearAuthCookies(res);
-      
-      const response = new ResponseModel(true, "You have been logged out successfully");
+
+      const response = new ResponseModel(
+        true,
+        "You have been logged out successfully"
+      );
       res.status(HTTP_statusCode.OK).json(response);
     } catch (error: any) {
-      const response = new ResponseModel(false, `Internal server error: ${error}`);
+      const response = new ResponseModel(
+        false,
+        `Internal server error: ${error}`
+      );
       res.status(HTTP_statusCode.InternalServerError).json(response);
     }
   }
-
-
 
   async adminLogin(
     req: Request,
@@ -260,30 +270,41 @@ export class AuthenticationController {
       const { email, password } = req.body;
 
       if (!email || !password) {
-        const response = new ResponseModel(false, "Email and password are required");
+        const response = new ResponseModel(
+          false,
+          "Email and password are required"
+        );
         res.status(HTTP_statusCode.BadRequest).json(response);
         return;
       }
 
       const serviceResult = await this.adminAuthService.loginService(req.body);
-      
-      if (!serviceResult.isValid || !serviceResult.accessToken || !serviceResult.refreshToken) {
+
+      if (
+        !serviceResult.isValid ||
+        !serviceResult.accessToken ||
+        !serviceResult.refreshToken
+      ) {
         const errorMessage = serviceResult.error || "Invalid credentials";
         const response = new ResponseModel(false, errorMessage);
         res.status(HTTP_statusCode.BadRequest).json(response);
         return;
       }
 
-      this.setAuthCookies(res, serviceResult.accessToken, serviceResult.refreshToken);
+      this.setAuthCookies(
+        res,
+        serviceResult.accessToken,
+        serviceResult.refreshToken
+      );
 
       console.log("admin logged in successfully");
-      
+
       const response = new ResponseModel(true, "Admin logged in successfully", {
         accessToken: serviceResult.accessToken,
         refreshToken: serviceResult.refreshToken,
-        admin: serviceResult.admin
+        admin: serviceResult.admin,
       });
-      
+
       res.status(HTTP_statusCode.OK).json(response);
     } catch (error: any) {
       this.handleAdminLoginError(error, res, next);
@@ -293,30 +314,38 @@ export class AuthenticationController {
   async logoutAdmin(req: Request, res: Response): Promise<void> {
     try {
       this.clearAuthCookies(res);
-      
-      const response = new ResponseModel(true, "You have been logged out successfully");
+
+      const response = new ResponseModel(
+        true,
+        "You have been logged out successfully"
+      );
       res.status(HTTP_statusCode.OK).json(response);
     } catch (error: any) {
-      const response = new ResponseModel(false, `Internal server error: ${error.message}`);
+      const response = new ResponseModel(
+        false,
+        `Internal server error: ${error.message}`
+      );
       res.status(HTTP_statusCode.InternalServerError).json(response);
     }
   }
 
-
-
-  private setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
+  private setAuthCookies(
+    res: Response,
+    accessToken: string,
+    refreshToken: string
+  ): void {
     res.cookie("RefreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "development",
       sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000, 
     });
-    
+
     res.cookie("AccessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "development",
       sameSite: "strict",
-      maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day
+      maxAge: 1 * 24 * 60 * 60 * 1000, 
     });
   }
 
@@ -326,7 +355,7 @@ export class AuthenticationController {
       path: "/",
       sameSite: "strict",
     });
-    
+
     res.clearCookie("AccessToken", {
       httpOnly: true,
       path: "/",
@@ -334,10 +363,13 @@ export class AuthenticationController {
     });
   }
 
-
-  private handleUserOtpError(error: any, res: Response, next: NextFunction): void {
+  private handleUserOtpError(
+    error: any,
+    res: Response,
+    next: NextFunction
+  ): void {
     console.error("Error in sendUserOtp:", error);
-    
+
     let response: ResponseModel;
     switch (error.message) {
       case "Email already in use":
@@ -357,15 +389,22 @@ export class AuthenticationController {
         res.status(HTTP_statusCode.BadRequest).json(response);
         break;
       default:
-        response = new ResponseModel(false, "Something went wrong, please try again later");
+        response = new ResponseModel(
+          false,
+          "Something went wrong, please try again later"
+        );
         res.status(HTTP_statusCode.InternalServerError).json(response);
     }
     next(error);
   }
 
-  private handleUserVerifyOtpError(error: any, res: Response, next: NextFunction): void {
+  private handleUserVerifyOtpError(
+    error: any,
+    res: Response,
+    next: NextFunction
+  ): void {
     console.error("Error in verifyUserOtp:", error);
-    
+
     let response: ResponseModel;
     switch (error.message) {
       case "OTP not found":
@@ -373,7 +412,10 @@ export class AuthenticationController {
         res.status(HTTP_statusCode.BadRequest).json(response);
         break;
       case "Password is required for new user registration":
-        response = new ResponseModel(false, "Password is required for registration");
+        response = new ResponseModel(
+          false,
+          "Password is required for registration"
+        );
         res.status(HTTP_statusCode.BadRequest).json(response);
         break;
       default:
@@ -383,9 +425,13 @@ export class AuthenticationController {
     next(error);
   }
 
-  private handleUserLoginError(error: any, res: Response, next: NextFunction): void {
+  private handleUserLoginError(
+    error: any,
+    res: Response,
+    next: NextFunction
+  ): void {
     console.error("Error in userLogin:", error);
-    
+
     let response: ResponseModel;
     switch (error.message) {
       case "Invalid email":
@@ -407,9 +453,13 @@ export class AuthenticationController {
     next(error);
   }
 
-  private handleUserResetPasswordError(error: any, res: Response, next: NextFunction): void {
+  private handleUserResetPasswordError(
+    error: any,
+    res: Response,
+    next: NextFunction
+  ): void {
     console.error("Error in resetUserPassword:", error);
-    
+
     let response: ResponseModel;
     switch (error.message) {
       case "Invalid email":
@@ -423,9 +473,13 @@ export class AuthenticationController {
     next(error);
   }
 
-  private handleTutorOtpError(error: any, res: Response, next: NextFunction): void {
+  private handleTutorOtpError(
+    error: any,
+    res: Response,
+    next: NextFunction
+  ): void {
     let response: ResponseModel;
-    
+
     if (error.message === "Email already in use") {
       response = new ResponseModel(false, "Email already in use");
       res.status(HTTP_statusCode.Conflict).json(response);
@@ -439,21 +493,30 @@ export class AuthenticationController {
       response = new ResponseModel(false, "OTP not sent");
       res.status(HTTP_statusCode.InternalServerError).json(response);
     } else {
-      response = new ResponseModel(false, "Something went wrong, please try again later");
+      response = new ResponseModel(
+        false,
+        "Something went wrong, please try again later"
+      );
       res.status(HTTP_statusCode.InternalServerError).json(response);
     }
     next(error);
   }
 
-  private handleTutorVerifyOtpError(error: any, res: Response, next: NextFunction): void {
+  private handleTutorVerifyOtpError(
+    error: any,
+    res: Response,
+    next: NextFunction
+  ): void {
     console.error("Error in verifyTutorOtp:", error);
-    
+
     let response: ResponseModel;
-    
+
     if (error.message === "Invalid OTP") {
       response = new ResponseModel(false, "Invalid OTP");
       res.status(HTTP_statusCode.BadRequest).json(response);
-    } else if (error.message === "Password is required for new tutor registration") {
+    } else if (
+      error.message === "Password is required for new tutor registration"
+    ) {
       response = new ResponseModel(false, "Password is required");
       res.status(HTTP_statusCode.BadRequest).json(response);
     } else {
@@ -462,11 +525,15 @@ export class AuthenticationController {
     }
   }
 
-  private handleTutorLoginError(error: any, res: Response, next: NextFunction): void {
+  private handleTutorLoginError(
+    error: any,
+    res: Response,
+    next: NextFunction
+  ): void {
     console.error("Error in tutorLogin: ", error);
-    
+
     let response: ResponseModel;
-    
+
     if (error.message === "Invalid email or password") {
       response = new ResponseModel(false, "Invalid email or password");
       res.status(HTTP_statusCode.BadRequest).json(response);
@@ -479,11 +546,15 @@ export class AuthenticationController {
     }
   }
 
-  private handleTutorResetPasswordError(error: any, res: Response, next: NextFunction): void {
+  private handleTutorResetPasswordError(
+    error: any,
+    res: Response,
+    next: NextFunction
+  ): void {
     console.error("Error in resetTutorPassword: ", error);
-    
+
     let response: ResponseModel;
-    
+
     if (error.message === "Email not found") {
       response = new ResponseModel(false, "Email not found");
       res.status(HTTP_statusCode.NotFound).json(response);
@@ -493,11 +564,15 @@ export class AuthenticationController {
     }
   }
 
-  private handleAdminLoginError(error: any, res: Response, next: NextFunction): void {
+  private handleAdminLoginError(
+    error: any,
+    res: Response,
+    next: NextFunction
+  ): void {
     console.error("Error in adminLogin: ", error);
-    
+
     let response: ResponseModel;
-    
+
     if (error.message === "Invalid email or password") {
       response = new ResponseModel(false, "Invalid email or password");
       res.status(HTTP_statusCode.BadRequest).json(response);

@@ -188,6 +188,8 @@ export class TutorMapper {
       name: tutor.name || "",
       email: tutor.email || "",
       avatar: tutor.avatar || undefined,
+      designation: tutor.designation || "",
+      about: tutor.about || "",
       isVerified: tutor.isVerified || false,
     };
   }

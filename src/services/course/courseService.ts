@@ -298,8 +298,6 @@ export class CourseService implements ICourseService {
         })
       );
 
-      console.log("courses with updated thumbnailImage", courses);
-
       return CourseMapper.toListedCourseDTOArray(courses);
     } catch (error) {
       throw new Error(`Failed to fetch listed courses: ${error}`);
@@ -312,6 +310,15 @@ export class CourseService implements ICourseService {
       return CategoryMapper.toListedCategoryDTOArray(categories);
     } catch (error) {
       throw new Error(`Failed to fetch listed categories: ${error}`);
+    }
+  }
+
+  async getCourseDetails(id: string): Promise<Course> {
+    try {
+      const courseDetails = await this._courseRepo.getCourseDetails(id)
+      return courseDetails
+    } catch (error) {
+      throw new Error(`Failed to fetch listed courses: ${error}`)
     }
   }
 }

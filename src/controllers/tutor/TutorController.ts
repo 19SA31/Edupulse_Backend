@@ -39,16 +39,8 @@ export class TutorController {
           );
         return;
       }
-
-      console.log("Fetching profile for tutor ID:", userId);
-
       const result = await this._tutorService.getTutorProfile(userId);
-      console.log("inside tutorCNTRL: ", result);
-      console.log("Profile fetch result:", {
-        success: !!result.tutor,
-        hasData: !!result.tutor,
-      });
-
+      console.log("getTutorProfile",result)
       res
         .status(HTTP_statusCode.OK)
         .json(
@@ -199,6 +191,14 @@ export class TutorController {
         updateData.gender = req.body.gender;
       }
 
+      if (req.body.designation && req.body.designation.trim()) {
+        updateData.designation = req.body.designation.trim();
+      }
+
+      if (req.body.about && req.body.about.trim()) {
+        updateData.about = req.body.about.trim();
+      }
+
       if (avatarFile) {
         updateData.avatar = avatarFile;
       }
@@ -228,12 +228,6 @@ export class TutorController {
       }
 
       const result = await this._tutorService.updateProfile(userId, updateData);
-
-      console.log("*********", result);
-      console.log("Service result:", {
-        success: !!result.tutor,
-        hasData: !!result.tutor,
-      });
 
       res
         .status(HTTP_statusCode.OK)
@@ -466,7 +460,7 @@ export class TutorController {
   async getAllListedTutors(req: Request, res: Response): Promise<void> {
     try {
       const listedTutors = await this._tutorService.getAllListedTutors();
-
+      console.log("getAllListedTutors",listedTutors)
       res
         .status(HTTP_statusCode.OK)
         .json(

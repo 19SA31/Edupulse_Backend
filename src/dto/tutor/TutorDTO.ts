@@ -96,5 +96,7 @@ export interface ListedTutorDTO {
   name: string;
   email: string;
   avatar?: string;
+  designation?: string;
+  about?: string;
   isVerified: boolean;
 }

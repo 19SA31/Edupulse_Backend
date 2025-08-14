@@ -33,6 +33,14 @@ const tutorSchema = new Schema<Tutor>({
     type: Boolean,
     default: false,
   },
+  designation: {
+    type: String,
+    default: null
+  },
+  about: {
+    type: String,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now,

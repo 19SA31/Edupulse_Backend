@@ -27,4 +27,5 @@ export interface ICourseRepoInterface {
   listUnlistCourse(id: string): Promise<void>;
   findAllListedCourses(): Promise<Course[]>;
   findAllListedCategories(): Promise<Category[]>;
+  getCourseDetails(id:string): Promise<Course>
 }

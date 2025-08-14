@@ -143,9 +143,25 @@ export class CourseRepository
 
   async findAllListedCategories(): Promise<Category[]> {
     try {
-      return await this._categoryRepository.findWithCondition({ isListed: true });
+      return await this._categoryRepository.findWithCondition({
+        isListed: true,
+      });
     } catch (error) {
       throw new Error(`Failed to find listed categories: ${error}`);
+    }
+  }
+  async getCourseDetails(id: string): Promise<Course> {
+    try {
+      let course = this.findOne({ _id: id });
+      const populatedCourse = [
+        { path: "categoryId", select: "name" },
+        { path: "tutorId", select: "name" },
+      ];
+
+      
+      return course
+    } catch (error) {
+      throw new Error(`failed to find course details`);
     }
   }
 }

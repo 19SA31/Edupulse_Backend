@@ -352,7 +352,7 @@ export class CourseController {
         .json(
           new ResponseModel(
             true,
-            "Successfully fetched all listed categories",
+            "Successfully fetched listed courses",
             listedCategories
           )
         );
@@ -365,6 +365,28 @@ export class CourseController {
         const response = new ResponseModel(
           false,
           "Error fetching listed courses",
+          null
+        );
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
+    }
+  }
+  async getCourseDetails(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      res
+        .status(HTTP_statusCode.OK)
+        .json(new ResponseModel(true, "Successfully fetched course details"));
+    } catch (error: unknown) {
+      if (error instanceof ValidationError) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(new ResponseModel(false, error.message, null));
+      } else {
+        const response = new ResponseModel(
+          false,
+          "Error fetching course details",
           null
         );
         res.status(HTTP_statusCode.InternalServerError).json(response);

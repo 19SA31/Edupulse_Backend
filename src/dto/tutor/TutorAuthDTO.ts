@@ -37,6 +37,8 @@ export interface TutorDataDTO {
   DOB: Date;
   gender?: 'male' | 'female' | 'other';
   avatar?: string | null; 
+  designation?: string;
+  about?: string;
   isVerified: boolean;
   verificationStatus: 'not_submitted'|'pending' | 'approved' | 'rejected';
 }
