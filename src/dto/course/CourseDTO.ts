@@ -1,3 +1,66 @@
+export interface TutorDetailsDto {
+  _id: string;
+  name: string;
+  email: string;
+  designation: string;
+  about: string;
+  avatar?: string;
+}
+
+export interface CategoryDetailsDto {
+  _id: string;
+  name: string;
+  description: string;
+}
+
+export interface DocumentFileDto {
+  _id: string;
+  fileName: string;
+  signedUrl: string;
+  originalName: string;
+}
+
+export interface VideoFileDto {
+  _id: string;
+  fileName: string;
+  signedUrl: string;
+  originalName: string;
+}
+
+export interface LessonDetailsDto {
+  _id: string;
+  title: string;
+  description: string;
+  documents: DocumentFileDto[];
+  videos: VideoFileDto[];
+  order: number;
+}
+
+export interface ChapterDetailsDto {
+  _id: string;
+  title: string;
+  description: string;
+  lessons: LessonDetailsDto[];
+  order: number;
+}
+
+export interface CourseDetailsDto {
+  _id: string;
+  title: string;
+  description: string;
+  benefits: string;
+  requirements: string;
+  category: CategoryDetailsDto;
+  tutor: TutorDetailsDto;
+  price: number;
+  thumbnailImage: string;
+  chapters: ChapterDetailsDto[];
+  isPublished: boolean;
+  isListed: boolean;
+  enrollmentCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export interface FileDto {
   id: number;

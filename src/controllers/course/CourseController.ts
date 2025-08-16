@@ -374,10 +374,17 @@ export class CourseController {
   async getCourseDetails(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-
+      console.log("getCourseDetails", id);
+      const courseDetails = await this._CourseService.getCourseDetails(id);
       res
         .status(HTTP_statusCode.OK)
-        .json(new ResponseModel(true, "Successfully fetched course details"));
+        .json(
+          new ResponseModel(
+            true,
+            "Successfully fetched course details",
+            courseDetails
+          )
+        );
     } catch (error: unknown) {
       if (error instanceof ValidationError) {
         res

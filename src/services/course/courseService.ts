@@ -12,6 +12,7 @@ import {
   CourseRejectDto,
   CourseListingDto,
   ListedCourseDTO,
+  CourseDetailsDto
 } from "../../dto/course/CourseDTO";
 import { ListedCategoryDTO } from "../../dto/course/CategoryDTO";
 import { S3Service } from "../../utils/s3";
@@ -313,12 +314,17 @@ export class CourseService implements ICourseService {
     }
   }
 
-  async getCourseDetails(id: string): Promise<Course> {
-    try {
-      const courseDetails = await this._courseRepo.getCourseDetails(id)
-      return courseDetails
-    } catch (error) {
-      throw new Error(`Failed to fetch listed courses: ${error}`)
-    }
+  async getCourseDetails(id: string): Promise<CourseDetailsDto> {
+  try {
+    const course = await this._courseRepo.getCourseDetails(id);
+    
+    return await CourseMapper.toCourseDetailsDto(
+      course,
+      this._s3Service
+    );
+  } catch (error) {
+    console.error('Error in CourseService getCourseDetails:', error);
+    throw new Error(`Failed to fetch course details: ${error}`);
   }
+}
 }

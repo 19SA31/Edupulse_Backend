@@ -67,7 +67,6 @@ const courseRepository = new CourseRepository();
 const courseService = new CourseService(courseRepository, s3Service);
 const courseController = new CourseController(courseService);
 
-
 const tutorRepository = new TutorRepository();
 const tutorService = new TutorService(tutorRepository, s3Service);
 const tutorController = new TutorController(tutorService);
@@ -107,7 +106,6 @@ userRoute.patch(
   )
 );
 
-
 userRoute.put(
   "/profile/update-profile",
   verifyToken("user"),
@@ -120,7 +118,6 @@ userRoute.get(
   verifyToken("user"),
   userController.getUserProfile.bind(userController)
 );
-
 
 userRoute.get(
   "/listed-tutors",
@@ -137,4 +134,8 @@ userRoute.get(
   courseController.getAllListedCategories.bind(courseController)
 );
 
+userRoute.get(
+  "/course-details/:id",
+  courseController.getCourseDetails.bind(courseController)
+);
 export default userRoute;

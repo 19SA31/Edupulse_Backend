@@ -8,6 +8,7 @@ import {
   CourseReject,
 } from "../../interfaces/course/courseInterface";
 import { Course } from "../../interfaces/course/courseInterface";
+import { Tutor } from "../../interfaces/adminInterface/adminInterface";
 
 export class CourseRepository
   extends BaseRepository<any>
@@ -151,17 +152,31 @@ export class CourseRepository
     }
   }
   async getCourseDetails(id: string): Promise<Course> {
-    try {
-      let course = this.findOne({ _id: id });
-      const populatedCourse = [
-        { path: "categoryId", select: "name" },
-        { path: "tutorId", select: "name" },
-      ];
+  try {
+    const populateOptions = [
+      {
+        path: "categoryId",
+        select: "name description",
+      },
+      {
+        path: "tutorId",
+        select: "name email designation about avatar",
+      },
+    ];
 
-      
-      return course
-    } catch (error) {
-      throw new Error(`failed to find course details`);
+    const course = await this.findOneAndPopulate(
+      { _id: id },
+      populateOptions
+    );
+
+    if (!course) {
+      throw new Error(`Course with id ${id} not found`);
     }
+
+    return course;
+  } catch (error) {
+    console.error("Error in CourseRepository getCourseDetails:", error);
+    throw new Error(`Failed to find course details: ${error}`);
   }
+}
 }
