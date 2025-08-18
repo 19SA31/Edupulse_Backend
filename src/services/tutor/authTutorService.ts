@@ -119,12 +119,9 @@ export class AuthTutorService implements ITutorAuthInterface {
     return true;
   }
 
-  
   async loginService(
     tutorData: LoginServiceDTO
   ): Promise<LoginServiceResponseDTO> {
-    console.log("Reached login service");
-
     const loggedTutor = await this._AuthRepository.verifyTutor(
       tutorData.email,
       tutorData.password
@@ -134,9 +131,9 @@ export class AuthTutorService implements ITutorAuthInterface {
       throw new Error("Invalid email or password");
     }
 
-    const { _id, email, name, isVerified, avatar, phone, DOB, gender } = loggedTutor;
-    console.log("inside service,", loggedTutor)
-    
+    const { _id, email, name, isVerified, avatar, phone, DOB, designation, about, gender } =
+      loggedTutor;
+
     const doc = await this._AuthRepository.checkVerificationStatus(_id);
 
     let verificationStatus:
@@ -183,7 +180,9 @@ export class AuthTutorService implements ITutorAuthInterface {
       phone,
       DOB,
       gender,
-      avatar: avatarUrl|| null, 
+      designation,
+      about,
+      avatar: avatarUrl || null,
       isVerified,
       verificationStatus: verificationStatus,
     };

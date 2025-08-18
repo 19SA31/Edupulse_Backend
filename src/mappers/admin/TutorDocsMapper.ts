@@ -1,10 +1,10 @@
 // src/mappers/admin/TutorDocsMapper.ts
-import { ITutorDocs } from "../../interfaces/tutorInterface/tutorInterface";
+import { TutorDocs } from "../../interfaces/tutorInterface/tutorInterface";
 import { TutorDocsDto, PaginatedTutorDocsDto } from "../../dto/admin/TutorDocsDTO";
 
 
 export class TutorDocsMapper {
-  static toDto(tutorDocs: ITutorDocs & { tutor?: { name: string; email: string } }): TutorDocsDto {
+  static toDto(tutorDocs: TutorDocs & { tutor?: { name: string; email: string } }): TutorDocsDto {
     return {
       id: tutorDocs._id.toString(),
       tutorId: tutorDocs.tutorId.toString(),
@@ -21,7 +21,7 @@ export class TutorDocsMapper {
     };
   }
 
-  static toDtoArray(tutorDocsArray: (ITutorDocs & { tutor?: { name: string; email: string } })[]): TutorDocsDto[] {
+  static toDtoArray(tutorDocsArray: (TutorDocs & { tutor?: { name: string; email: string } })[]): TutorDocsDto[] {
     return tutorDocsArray.map((tutorDocs) => this.toDto(tutorDocs));
   }
 
@@ -40,7 +40,7 @@ export class TutorDocsMapper {
   }
 
   static toPaginatedDtoFromEntities(
-    tutorDocsArray: (ITutorDocs & { tutor?: { name: string; email: string } })[],
+    tutorDocsArray: (TutorDocs & { tutor?: { name: string; email: string } })[],
     totalPages: number,
     currentPage: number,
     totalCount: number

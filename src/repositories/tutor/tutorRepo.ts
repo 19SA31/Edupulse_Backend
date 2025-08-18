@@ -1,10 +1,11 @@
 import BaseRepository from "../BaseRepository";
 import {
-  ITutor,
+  Tutor,
+  ListingTutor,
   UpdateProfileData,
 } from "../../interfaces/tutorInterface/tutorInterface";
 import { ITutorRepository } from "../../interfaces/tutor/tutorRepoInterface";
-import { TutorDocs } from "../../models/TutorDocs";
+import { TutorDocuments } from "../../models/TutorDocs";
 import TutorModel from "../../models/Tutors";
 import { TutorMapper } from "../../mappers/tutor/TutorMapper";
 import {
@@ -12,21 +13,21 @@ import {
   VerificationDocsServiceDTO,
   CreateVerificationDocsDTO,
   UpdateVerificationDocsDTO,
+  ListedTutorDTO,
 } from "../../dto/tutor/TutorDTO";
 
 export class TutorRepository
-  extends BaseRepository<ITutor>
+  extends BaseRepository<Tutor>
   implements ITutorRepository
 {
-  private tutorDocsModel: typeof TutorDocs;
+  private tutorDocsModel: typeof TutorDocuments;
 
   constructor() {
     super(TutorModel);
-    this.tutorDocsModel = TutorDocs;
+    this.tutorDocsModel = TutorDocuments;
   }
 
-  
-  async findById(id: string): Promise<ITutor | null> {
+  async findById(id: string): Promise<Tutor | null> {
     try {
       return await this.findOne({ _id: id });
     } catch (error) {
@@ -89,18 +90,21 @@ export class TutorRepository
   async updateProfile(
     tutorId: string,
     updateData: UpdateProfileData
-  ): Promise<ITutor | null> {
+  ): Promise<Tutor | null> {
     try {
       const updateObject: any = {};
 
-      
-      Object.keys(updateData).forEach(key => {
+      Object.keys(updateData).forEach((key) => {
         if (updateData[key as keyof UpdateProfileData] !== undefined) {
-          if (key === 'DOB' && updateData.DOB) {
+          if (key === "DOB" && updateData.DOB) {
             updateObject.DOB = new Date(updateData.DOB);
-          } else if (key === 'name' && updateData.name) {
+          } else if (key === "name" && updateData.name) {
             updateObject.name = updateData.name.trim();
-          } else if (key !== 'cropData') { 
+          } else if (key === "designation" && updateData.designation) {
+            updateObject.designation = updateData.designation.trim();
+          } else if (key === "about" && updateData.about) {
+            updateObject.about = updateData.about.trim();
+          } else if (key !== "cropData") {
             updateObject[key] = updateData[key as keyof UpdateProfileData];
           }
         }
@@ -113,7 +117,6 @@ export class TutorRepository
     }
   }
 
-  
   async findVerificationDocsByTutorId(
     tutorId: string
   ): Promise<VerificationDocsServiceDTO | null> {
@@ -150,8 +153,10 @@ export class TutorRepository
           runValidators: true,
         })
         .exec();
-      
-      return updatedDocs ? TutorMapper.mapVerificationDocsToServiceDTO(updatedDocs) : null;
+
+      return updatedDocs
+        ? TutorMapper.mapVerificationDocsToServiceDTO(updatedDocs)
+        : null;
     } catch (error) {
       console.error("Error updating verification documents:", error);
       throw error;
@@ -165,7 +170,9 @@ export class TutorRepository
       const docs = await this.tutorDocsModel
         .find({ verificationStatus: status })
         .exec();
-      return docs.map(doc => TutorMapper.mapVerificationDocsToServiceDTO(doc));
+      return docs.map((doc) =>
+        TutorMapper.mapVerificationDocsToServiceDTO(doc)
+      );
     } catch (error) {
       console.error("Error finding verification docs by status:", error);
       throw error;
@@ -184,7 +191,9 @@ export class TutorRepository
         .limit(limit)
         .sort({ submittedAt: -1 })
         .exec();
-      return docs.map(doc => TutorMapper.mapVerificationDocsToServiceDTO(doc));
+      return docs.map((doc) =>
+        TutorMapper.mapVerificationDocsToServiceDTO(doc)
+      );
     } catch (error) {
       console.error("Error finding verification docs with pagination:", error);
       throw error;
@@ -226,14 +235,15 @@ export class TutorRepository
         })
         .exec();
 
-      return updatedDocs ? TutorMapper.mapVerificationDocsToServiceDTO(updatedDocs) : null;
+      return updatedDocs
+        ? TutorMapper.mapVerificationDocsToServiceDTO(updatedDocs)
+        : null;
     } catch (error) {
       console.error("Error updating verification status:", error);
       throw error;
     }
   }
 
- 
   async findVerificationDocsWithTutorInfo(tutorId: string): Promise<any> {
     try {
       return await this.tutorDocsModel
@@ -254,7 +264,10 @@ export class TutorRepository
         .sort({ submittedAt: -1 })
         .exec();
     } catch (error) {
-      console.error("Error finding all verification docs with tutor info:", error);
+      console.error(
+        "Error finding all verification docs with tutor info:",
+        error
+      );
       throw error;
     }
   }
@@ -329,6 +342,16 @@ export class TutorRepository
     } catch (error) {
       console.error("Error getting tutor verification summary:", error);
       throw error;
+    }
+  }
+  async findAllListedTutors(): Promise<Tutor[]> {
+    try {
+      return await this.findWithCondition({
+        isVerified: true,
+        isBlocked: false,
+      });
+    } catch (error) {
+      throw new Error(`Failed to find listed tutors: ${error}`);
     }
   }
 }

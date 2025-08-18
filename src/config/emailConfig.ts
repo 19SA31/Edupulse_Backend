@@ -1,10 +1,18 @@
-import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
-import { otpTemplate, rejectionEmailTemplate } from '../utils/emailTemplate';
+import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+import {
+  otpTemplate,
+  rejectionEmailTemplate,
+  courseRejectionEmailTemplate,
+} from "../utils/emailTemplate";
 
 dotenv.config();
 
-const sendMail = async (email: string, subject: string, otp: string): Promise<boolean> => {
+const sendMail = async (
+  email: string,
+  subject: string,
+  otp: string
+): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -18,23 +26,27 @@ const sendMail = async (email: string, subject: string, otp: string): Promise<bo
       from: process.env.EMAIL as string,
       to: email,
       subject: subject,
-      
-      html:otpTemplate(otp)
+
+      html: otpTemplate(otp),
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.error(error);
-        resolve(false);  
+        resolve(false);
       } else {
         console.log("Email sent: " + info.response);
-        resolve(true); 
+        resolve(true);
       }
     });
   });
 };
 
-export const sendRejectionEmail = async (email: string, tutorName: string, reason: string): Promise<boolean> => {
+export const sendRejectionEmail = async (
+  email: string,
+  tutorName: string,
+  reason: string
+): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -48,15 +60,49 @@ export const sendRejectionEmail = async (email: string, tutorName: string, reaso
       from: process.env.EMAIL as string,
       to: email,
       subject: "Tutor Application Rejected - Edupulse",
-      html: rejectionEmailTemplate(tutorName, reason)
+      html: rejectionEmailTemplate(tutorName, reason),
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
-        console.error('Error sending rejection email:', error);
+        console.error("Error sending rejection email:", error);
         resolve(false);
       } else {
         console.log("Rejection email sent: " + info.response);
+        resolve(true);
+      }
+    });
+  });
+};
+
+export const sendCourseRejectionEmail = async (
+  email: string,
+  tutorName: string,
+  courseTitle: string,
+  reason: string
+): Promise<boolean> => {
+  return new Promise((resolve, reject) => {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER as string,
+        pass: process.env.EMAIL_PASS as string,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL as string,
+      to: email,
+      subject: "Course Submission Rejected - Edupulse",
+      html: courseRejectionEmailTemplate(tutorName, courseTitle, reason),
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending course rejection email:", error);
+        resolve(false);
+      } else {
+        console.log("Course rejection email sent: " + info.response);
         resolve(true);
       }
     });

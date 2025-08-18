@@ -3,6 +3,7 @@ import { IAdminService } from "../../interfaces/admin/adminServiceInterface";
 import { IAdminRepositoryInterface } from "../../interfaces/admin/adminRepositoryInterface";
 import { UserDto } from "../../dto/admin/UserDTO";
 import { TutorDto } from "../../dto/admin/TutorDTO";
+import { ValidationError } from "../../errors/ValidationError";
 import {
   CategoryDto,
   CreateCategoryDto,
@@ -30,24 +31,20 @@ export class AdminService implements IAdminService {
     search: any
   ): Promise<{ users: UserDto[]; totalPages: number; totalCount: number }> {
     try {
-      
       const result = await this._adminRepository.getAllUsers(
         skip,
         limit,
         search
       );
 
-      
       const userDtos = UserMapper.toDtoArray(result.users);
 
-      
       const usersWithAvatars = await Promise.all(
         userDtos.map(async (userDto) => {
           let avatarUrl = "";
 
           if (userDto.avatar) {
             try {
-              
               avatarUrl = await this.s3Service.getFile(userDto.avatar);
             } catch (error) {
               console.warn(
@@ -61,7 +58,6 @@ export class AdminService implements IAdminService {
         })
       );
 
-      
       const totalCount =
         result.users.length > 0
           ? Math.ceil(
@@ -79,7 +75,7 @@ export class AdminService implements IAdminService {
       };
     } catch (error: any) {
       console.error("Error in AdminService getAllUsers:", error.message);
-      throw error; 
+      throw error;
     }
   }
 
@@ -89,24 +85,20 @@ export class AdminService implements IAdminService {
     search: any
   ): Promise<{ tutors: TutorDto[]; totalPages: number; totalCount: number }> {
     try {
-      
       const result = await this._adminRepository.getAllTutors(
         skip,
         limit,
         search
       );
 
-     
       const tutorDtos = TutorMapper.toDtoArray(result.tutors);
 
-      
       const tutorsWithAvatars = await Promise.all(
         tutorDtos.map(async (tutorDto) => {
           let avatarUrl = "";
 
           if (tutorDto.avatar) {
             try {
-              
               avatarUrl = await this.s3Service.getFile(tutorDto.avatar);
             } catch (error) {
               console.warn(
@@ -120,7 +112,6 @@ export class AdminService implements IAdminService {
         })
       );
 
-      
       const totalCount =
         result.tutors.length > 0
           ? Math.ceil(
@@ -138,57 +129,60 @@ export class AdminService implements IAdminService {
       };
     } catch (error: any) {
       console.error("Error in AdminService getAllTutors:", error.message);
-      throw error; 
+      throw error;
     }
   }
 
   async listUnlistUser(id: string): Promise<UserDto> {
     try {
-      
       const user = await this._adminRepository.changeUserStatus(id);
 
-     
       const userDto = UserMapper.toDto(user);
 
       return userDto;
     } catch (error: any) {
       console.error("Error in AdminService listUnlistUser:", error.message);
-      throw error; 
+      throw error;
     }
   }
 
   async listUnlistTutor(id: string): Promise<TutorDto> {
     try {
-      
       const tutor = await this._adminRepository.changeTutorStatus(id);
 
-     
       const tutorDto = TutorMapper.toDto(tutor);
 
       return tutorDto;
     } catch (error: any) {
       console.error("Error in AdminService listUnlistTutor:", error.message);
-      throw error; 
+      throw error;
     }
   }
 
   async addCourseCategory(data: CreateCategoryDto): Promise<CategoryDto> {
     try {
-     
       const categoryEntity = CategoryMapper.fromCreateDto(data);
 
-      
+      const existingCategory = await this._adminRepository.findCategoryByName(
+        categoryEntity.name
+      );
+
+      if (existingCategory) {
+        throw new ValidationError(
+          `Category with name '${data.name}' already exists`
+        );
+      }
+
       const createdCategory = await this._adminRepository.addCategory(
         categoryEntity
       );
 
-      
       const categoryDto = CategoryMapper.toDto(createdCategory);
 
       return categoryDto;
     } catch (error: any) {
       console.error("Error in AdminService addCourseCategory:", error.message);
-      throw error; 
+      throw error;
     }
   }
 
@@ -202,17 +196,14 @@ export class AdminService implements IAdminService {
     totalCount: number;
   }> {
     try {
-      
       const result = await this._adminRepository.getAllCategories(
         skip,
         limit,
         search
       );
 
-      
       const categoryDtos = CategoryMapper.toDtoArray(result.category);
 
-      
       const totalCount =
         result.category.length > 0
           ? Math.ceil(
@@ -238,16 +229,13 @@ export class AdminService implements IAdminService {
     updateData: UpdateCategoryDto
   ): Promise<CategoryDto> {
     try {
-      
       const updateEntity = CategoryMapper.fromUpdateDto(updateData);
 
-      
       const updatedCategory = await this._adminRepository.updateCategory(
         categoryId,
         updateEntity
       );
 
-      
       const categoryDto = CategoryMapper.toDto(updatedCategory);
 
       return categoryDto;
@@ -256,18 +244,16 @@ export class AdminService implements IAdminService {
         "Error in AdminService updateCourseCategory:",
         error.message
       );
-      throw error; 
+      throw error;
     }
   }
 
   async toggleCategoryListStatus(categoryId: string): Promise<CategoryDto> {
     try {
-      
       const category = await this._adminRepository.toggleCategoryStatus(
         categoryId
       );
 
-      
       const categoryDto = CategoryMapper.toDto(category);
 
       return categoryDto;
@@ -276,7 +262,7 @@ export class AdminService implements IAdminService {
         "Error in AdminService toggleCategoryListStatus:",
         error.message
       );
-      throw error; 
+      throw error;
     }
   }
 
@@ -290,17 +276,14 @@ export class AdminService implements IAdminService {
     totalCount: number;
   }> {
     try {
-      
       const result = await this._adminRepository.getAllTutorDocs(
         skip,
         limit,
         search
       );
 
-      
       const tutorDocsDtos = TutorDocsMapper.toDtoArray(result.tutorDocs);
 
-      
       const tutorDocsWithUrls = await Promise.all(
         tutorDocsDtos.map(async (tutorDocsDto) => {
           let avatarUrl = "";
@@ -309,7 +292,6 @@ export class AdminService implements IAdminService {
           let aadharBackUrl = "";
 
           try {
-            
             if (tutorDocsDto.avatar) {
               avatarUrl = await this.s3Service.getFile(tutorDocsDto.avatar);
             }
@@ -343,7 +325,6 @@ export class AdminService implements IAdminService {
         })
       );
 
-      
       const totalCount =
         result.tutorDocs.length > 0
           ? Math.ceil(
@@ -362,7 +343,7 @@ export class AdminService implements IAdminService {
       };
     } catch (error: any) {
       console.error("Error in AdminService getAllTutorDocs:", error.message);
-      throw error; 
+      throw error;
     }
   }
 
@@ -370,7 +351,6 @@ export class AdminService implements IAdminService {
     tutorId: string
   ): Promise<{ success: boolean; message?: string }> {
     try {
-      
       await this._adminRepository.verifyTutor(tutorId);
 
       return {
@@ -386,7 +366,7 @@ export class AdminService implements IAdminService {
         };
       }
 
-      throw error; 
+      throw error;
     }
   }
 
@@ -401,7 +381,6 @@ export class AdminService implements IAdminService {
     rejectionReason?: string;
   }> {
     try {
-      
       const result = await this._adminRepository.rejectTutor(tutorId, reason);
 
       if (!result) {
@@ -415,7 +394,7 @@ export class AdminService implements IAdminService {
         success: true,
         tutorEmail: result.tutorEmail,
         tutorName: result.tutorName,
-        rejectionReason: reason, 
+        rejectionReason: reason,
       };
     } catch (error: any) {
       console.error("Error in AdminService rejectTutor:", error.message);
@@ -427,7 +406,7 @@ export class AdminService implements IAdminService {
         };
       }
 
-      throw error; 
+      throw error;
     }
   }
 }

@@ -1,16 +1,16 @@
 import mongoose, { Document, ObjectId } from "mongoose";
 
-
-
-export interface ITutor extends Document {
+export interface Tutor extends Document {
   _id: string | ObjectId;
   name: string;
   email: string;
   phone: string;
   password: string;
   DOB?: Date;
-  gender?: 'male' | 'female' | 'other';
+  gender?: "male" | "female" | "other";
   avatar?: string;
+  designation?: string;
+  about?: string;
   isBlocked: boolean;
   isVerified: boolean;
   createdAt: Date;
@@ -18,11 +18,10 @@ export interface ITutor extends Document {
   lastLogin?: Date;
 }
 
-
 export interface tutorType {
-  name?: string;  
+  name?: string;
   email: string;
-  phone?: string; 
+  phone?: string;
   password: string;
   createdAt: Date;
 }
@@ -41,9 +40,11 @@ export interface TutorProfile {
   email: string;
   phone: string;
   password: string;
-  DOB:Date;
-  gender?: 'male' | 'female' | 'other';
-  avatar?: string | null; 
+  DOB: Date;
+  gender?: "male" | "female" | "other";
+  avatar?: string | null;
+  designation?: string;
+  about?: string;
   isBlocked: boolean;
   isVerified: boolean;
   createdAt: Date;
@@ -69,18 +70,20 @@ export interface GetTutorData {
   name: string;
   email: string;
   isVerified: boolean;
-  verificationStatus: 'not_submitted'|'pending' | 'approved' | 'rejected';
+  verificationStatus: "not_submitted" | "pending" | "approved" | "rejected";
 }
 export interface GetTutorDataLogin {
   id: string;
   name: string;
   email: string;
-  phone:string;
-  DOB:Date;
-  gender?: 'male' | 'female' | 'other';
-  avatar?:string|null;
+  phone: string;
+  DOB: Date;
+  gender?: "male" | "female" | "other";
+  avatar?: string | null;
+  designation?: string;
+  about?: string;
   isVerified: boolean;
-  verificationStatus: 'not_submitted'|'pending' | 'approved' | 'rejected';
+  verificationStatus: "not_submitted" | "pending" | "approved" | "rejected";
 }
 
 export interface CropData {
@@ -90,11 +93,13 @@ export interface CropData {
   height: number;
 }
 
- export interface UpdateProfileData {
+export interface UpdateProfileData {
   name?: string;
   phone?: string;
   DOB?: string;
-  gender?: 'male' | 'female' | 'other';
+  designation?: string;
+  about?: string;
+  gender?: "male" | "female" | "other";
   avatar?: Express.Multer.File | string | null;
   cropData?: CropData | null;
 }
@@ -105,16 +110,15 @@ export interface TutorProfileData {
   email: string;
   phone?: string;
   DOB?: Date;
-  gender?: 'male' | 'female' | 'other';
-  avatar?: string | null; 
+  designation?: string;
+  about?: string;
+  gender?: "male" | "female" | "other";
+  avatar?: string | null;
   isBlocked?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
   lastLogin?: Date;
 }
-
-
-
 
 export interface OTPDocument {
   email: string;
@@ -122,16 +126,14 @@ export interface OTPDocument {
   createdTime: Date;
 }
 
-
-
-export interface ITutorDocs extends Document {
+export interface TutorDocs extends Document {
   _id: string | ObjectId;
   tutorId: string | ObjectId;
   avatar: string;
   degree: string;
   aadharFront: string;
   aadharBack: string;
-  verificationStatus: 'not_submitted'|'pending' | 'approved' | 'rejected';
+  verificationStatus: "not_submitted" | "pending" | "approved" | "rejected";
   rejectionReason?: string;
   submittedAt: Date;
   reviewedAt?: Date;
@@ -162,11 +164,9 @@ export interface TutorVerificationData {
 }
 
 export interface UpdateVerificationStatus {
-  verificationStatus: 'approved' | 'rejected';
+  verificationStatus: "approved" | "rejected";
   rejectionReason?: string;
 }
-
-
 
 export interface ServiceResponse<T = any> {
   success: boolean;
@@ -175,7 +175,7 @@ export interface ServiceResponse<T = any> {
 }
 
 export interface VerificationStatusData {
-  status: 'pending' | 'approved' | 'rejected' | 'not_submitted';
+  status: "pending" | "approved" | "rejected" | "not_submitted";
   tutorId: string;
   submittedAt?: Date;
   reviewedAt?: Date;
@@ -191,7 +191,7 @@ export interface VerificationDocumentsData {
     aadharFront: string;
     aadharBack: string;
   };
-  verificationStatus: 'pending' | 'approved' | 'rejected';
+  verificationStatus: "pending" | "approved" | "rejected";
   submittedAt: Date;
   reviewedAt?: Date;
   rejectionReason?: string;
@@ -199,6 +199,14 @@ export interface VerificationDocumentsData {
 
 export interface VerificationSubmissionData {
   verificationId: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: "pending" | "approved" | "rejected";
   submittedAt: Date;
+}
+
+export interface ListingTutor {
+  tutorId: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  isVerified: boolean;
 }

@@ -3,12 +3,13 @@ import HTTP_statusCode from "../../enums/HttpStatusCode";
 import { IAdminService } from "../../interfaces/admin/adminServiceInterface";
 import { ResponseModel } from "../../models/ResponseModel";
 import { sendRejectionEmail } from "../../config/emailConfig";
+import { ValidationError } from "../../errors/ValidationError";
 
 export class AdminController {
-  private AdminService: IAdminService;
+  private _AdminService: IAdminService;
 
   constructor(AdminServiceInstance: IAdminService) {
-    this.AdminService = AdminServiceInstance;
+    this._AdminService = AdminServiceInstance;
   }
 
   async getUsers(req: Request, res: Response): Promise<void> {
@@ -19,7 +20,7 @@ export class AdminController {
       const pageLimit = parseInt(limit as string, 10);
       const skip = (pageNumber - 1) * pageLimit;
 
-      const { users, totalPages } = await this.AdminService.getAllUsers(
+      const { users, totalPages } = await this._AdminService.getAllUsers(
         skip,
         pageLimit,
         search
@@ -52,7 +53,7 @@ export class AdminController {
       const pageLimit = parseInt(limit as string, 10);
       const skip = (pageNumber - 1) * pageLimit;
 
-      const result = await this.AdminService.getAllTutors(
+      const result = await this._AdminService.getAllTutors(
         skip,
         pageLimit,
         search
@@ -82,7 +83,7 @@ export class AdminController {
     try {
       const id = req.params.userId;
 
-      const user = await this.AdminService.listUnlistUser(id);
+      const user = await this._AdminService.listUnlistUser(id);
 
       const response = new ResponseModel(
         true,
@@ -112,7 +113,7 @@ export class AdminController {
     try {
       const id = req.params.tutorId;
 
-      const tutor = await this.AdminService.listUnlistTutor(id);
+      const tutor = await this._AdminService.listUnlistTutor(id);
 
       const response = new ResponseModel(
         true,
@@ -141,7 +142,7 @@ export class AdminController {
   async addCategory(req: Request, res: Response): Promise<void> {
     try {
       console.log("inside admin controller of add category");
-      const category = await this.AdminService.addCourseCategory(req.body);
+      const category = await this._AdminService.addCourseCategory(req.body);
 
       const response = new ResponseModel(
         true,
@@ -153,9 +154,10 @@ export class AdminController {
     } catch (error: any) {
       console.error("Error in addCategory controller:", error.message);
 
-      if (error.message.includes("already exists")) {
-        const response = new ResponseModel(false, error.message, null);
-        res.status(HTTP_statusCode.BadRequest).json(response);
+      if (error instanceof ValidationError) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(new ResponseModel(false, error.message, null));
       } else {
         const response = new ResponseModel(
           false,
@@ -176,7 +178,7 @@ export class AdminController {
       const skip = (pageNumber - 1) * pageLimit;
 
       const { categories, totalPages } =
-        await this.AdminService.getAllCategories(skip, pageLimit, search);
+        await this._AdminService.getAllCategories(skip, pageLimit, search);
 
       const response = new ResponseModel(
         true,
@@ -204,7 +206,7 @@ export class AdminController {
       const categoryId = req.params.id;
       const updateData = req.body;
 
-      const updatedCategory = await this.AdminService.updateCourseCategory(
+      const updatedCategory = await this._AdminService.updateCourseCategory(
         categoryId,
         updateData
       );
@@ -241,7 +243,7 @@ export class AdminController {
       console.log("inside toggle category status");
       const categoryId = req.params.id;
 
-      const updatedCategory = await this.AdminService.toggleCategoryListStatus(
+      const updatedCategory = await this._AdminService.toggleCategoryListStatus(
         categoryId
       );
 
@@ -277,7 +279,7 @@ export class AdminController {
       const pageLimit = parseInt(limit as string, 10);
       const skip = (pageNumber - 1) * pageLimit;
 
-      const result = await this.AdminService.getAllTutorDocs(
+      const result = await this._AdminService.getAllTutorDocs(
         skip,
         pageLimit,
         search
@@ -319,8 +321,7 @@ export class AdminController {
         return;
       }
 
-      // Call service to reject tutor
-      const result = await this.AdminService.rejectTutor(tutorId, reason);
+      const result = await this._AdminService.rejectTutor(tutorId, reason);
 
       if (!result) {
         const response = new ResponseModel(
@@ -333,11 +334,10 @@ export class AdminController {
       }
 
       if (result.success) {
-        // Send rejection email using the original reason parameter
         const emailSent = await sendRejectionEmail(
           result.tutorEmail!,
           result.tutorName!,
-          reason // Use the original reason parameter
+          reason
         );
 
         if (!emailSent) {
@@ -351,7 +351,7 @@ export class AdminController {
           "Tutor rejected successfully",
           {
             tutorId,
-            reason: reason, // Use the original reason parameter
+            reason: reason,
             emailSent,
           }
         );
@@ -386,7 +386,7 @@ export class AdminController {
     try {
       const { tutorId } = req.params;
 
-      const result = await this.AdminService.verifyTutor(tutorId);
+      const result = await this._AdminService.verifyTutor(tutorId);
 
       if (result.success) {
         const response = new ResponseModel(

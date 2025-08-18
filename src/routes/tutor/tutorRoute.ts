@@ -1,70 +1,48 @@
-import express from "express";
-import multer from "multer";
-import { AuthTutorController } from "../../controllers/tutor/Auth";
-import { AuthTutorService } from "../../services/tutor/authTutorService";
-import { AuthTutorRepository } from "../../repositories/tutor/authTutorRepo";
+import express from "express"; 
+import { AuthenticationController } from "../../controllers/Authentication/Auth";
 import { TutorController } from "../../controllers/tutor/TutorController";
 import { TutorService } from "../../services/tutor/tutorService";
 import { TutorRepository } from "../../repositories/tutor/tutorRepo";
 import { S3Service } from "../../utils/s3";
 import { verifyToken } from "../../utils/jwt";
+import { 
+  uploadDocuments, 
+  uploadAvatar, 
+  uploadCourseFiles 
+} from "../../utils/multer";
+
+import { AuthService } from "../../services/user/authUserService";
+import { AuthUserRepository } from "../../repositories/user/authUserRepo";
+import { AuthTutorService } from "../../services/tutor/authTutorService";
+import { AuthTutorRepository } from "../../repositories/tutor/authTutorRepo";
+import { AuthAdminService } from "../../services/admin/authAdminService";
+import { AuthAdminRepository } from "../../repositories/admin/authAdminRepo";
+
+import { CourseRepository } from "../../repositories/course/courseRepo";
+import { CourseService } from "../../services/course/courseService";
+import { CourseController } from "../../controllers/course/CourseController";
 
 const tutorRoute = express.Router();
 
-const storage = multer.memoryStorage();
+
+const AuthRepositoryInstance = new AuthUserRepository();
+const TutorAuthRepositoryInstance = new AuthTutorRepository();
+const AuthAdminRepositoryInstance = new AuthAdminRepository();
 
 
-const uploadDocumentsConfig = multer({
-  storage: storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024,
-  },
-  fileFilter: (req, file, cb) => {
-    if (
-      file.mimetype.startsWith("image/") ||
-      file.mimetype === "application/pdf"
-    ) {
-      cb(null, true);
-    } else {
-      const error = new Error("Only image and PDF files are allowed") as any;
-      error.code = "LIMIT_FILE_TYPE";
-      cb(error, false);
-    }
-  },
-});
-
-
-const uploadAvatarConfig = multer({
-  storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, 
-  },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
-      cb(null, true);
-    } else {
-      const error = new Error("Only image files are allowed") as any;
-      error.code = "LIMIT_FILE_TYPE";
-      cb(error, false);
-    }
-  },
-});
-
-const uploadDocuments = uploadDocumentsConfig.fields([
-  { name: "avatar", maxCount: 1 },
-  { name: "degree", maxCount: 1 },
-  { name: "aadharFront", maxCount: 1 },
-  { name: "aadharBack", maxCount: 1 },
-]);
-
-const uploadAvatar = uploadAvatarConfig.single("avatar");
-
-const AuthTutorRepositoryInstance = new AuthTutorRepository();
-const AuthTutorServiceInstance = new AuthTutorService(
-  AuthTutorRepositoryInstance
+const AuthServiceInstance = new AuthService(AuthRepositoryInstance);
+const TutorAuthServiceInstance = new AuthTutorService(
+  TutorAuthRepositoryInstance
 );
-const AuthTutorControllerInstance = new AuthTutorController(
-  AuthTutorServiceInstance
+const AuthAdminServiceInstance = new AuthAdminService(
+  AuthAdminRepositoryInstance
+);
+
+
+const AuthenticationControllerInstance = new AuthenticationController(
+  AuthServiceInstance,
+  TutorAuthServiceInstance,
+  AuthAdminServiceInstance
 );
 
 const s3Service = new S3Service();
@@ -72,44 +50,64 @@ const tutorRepository = new TutorRepository();
 const tutorService = new TutorService(tutorRepository, s3Service);
 const tutorController = new TutorController(tutorService);
 
+const courseRepository = new CourseRepository();
+const courseService = new CourseService(courseRepository, s3Service);
+const courseController = new CourseController(courseService);
+
+
 tutorRoute.post(
   "/send-otp",
-  AuthTutorControllerInstance.sendOtp.bind(AuthTutorControllerInstance)
+  AuthenticationControllerInstance.sendTutorOtp.bind(
+    AuthenticationControllerInstance
+  )
 );
+
 tutorRoute.post(
   "/verify-otp",
-  AuthTutorControllerInstance.verifyOtp.bind(AuthTutorControllerInstance)
+  AuthenticationControllerInstance.verifyTutorOtp.bind(
+    AuthenticationControllerInstance
+  )
 );
+
 tutorRoute.post(
   "/login",
-  AuthTutorControllerInstance.tutorLogin.bind(AuthTutorControllerInstance)
+  AuthenticationControllerInstance.tutorLogin.bind(
+    AuthenticationControllerInstance
+  )
 );
+
 tutorRoute.post(
   "/logout",
-  AuthTutorControllerInstance.logoutTutor.bind(AuthTutorControllerInstance)
+  AuthenticationControllerInstance.logoutTutor.bind(
+    AuthenticationControllerInstance
+  )
 );
 
 tutorRoute.patch(
   "/reset-password",
-  AuthTutorControllerInstance.resetPassword.bind(AuthTutorControllerInstance)
+  AuthenticationControllerInstance.resetTutorPassword.bind(
+    AuthenticationControllerInstance
+  )
 );
+
 
 tutorRoute.post(
   "/verify-documents",
-  verifyToken('tutor'),
+  verifyToken("tutor"),
   uploadDocuments,
   tutorController.submitVerificationDocuments.bind(tutorController)
 );
 
 tutorRoute.get(
   "/verification/status",
-  verifyToken('tutor'),
+  verifyToken("tutor"),
   tutorController.getVerificationStatus.bind(tutorController)
 );
 
+
 tutorRoute.get(
   "/profile",
-  verifyToken('tutor'),
+  verifyToken("tutor"),
   tutorController.getTutorProfile.bind(tutorController)
 );
 
@@ -118,6 +116,20 @@ tutorRoute.put(
   verifyToken("tutor"),
   uploadAvatar,
   tutorController.updateTutorProfile.bind(tutorController)
+);
+
+
+tutorRoute.get(
+  "/course/get-category",
+  verifyToken("tutor"),
+  courseController.getCategoryNames.bind(courseController)
+);
+
+tutorRoute.post(
+  "/course/create",
+  verifyToken("tutor"),
+  uploadCourseFiles,
+  courseController.createCourse.bind(courseController)
 );
 
 export default tutorRoute;

@@ -1,5 +1,3 @@
-// Updated TutorAuthDTO.ts
-
 export interface SendOtpRequestDTO {
   email: string;
   phone?: string;
@@ -39,6 +37,8 @@ export interface TutorDataDTO {
   DOB: Date;
   gender?: 'male' | 'female' | 'other';
   avatar?: string | null; 
+  designation?: string;
+  about?: string;
   isVerified: boolean;
   verificationStatus: 'not_submitted'|'pending' | 'approved' | 'rejected';
 }
@@ -68,7 +68,6 @@ export interface LogoutResponseDTO {
   message: string;
 }
 
-// Service layer DTOs
 export interface SignUpServiceDTO {
   email: string;
   phone?: string;

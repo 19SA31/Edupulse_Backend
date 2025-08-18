@@ -1,12 +1,12 @@
 import { Document } from "mongoose";
 import tutorModel from "../../models/Tutors";
 import OtpModel from "../../models/OtpSchema";
-import { TutorDocs } from "../../models/TutorDocs";
+import { TutorDocuments } from "../../models/TutorDocs";
 import {
   tutorType,
   TutorProfile,
   CreateTutorType,
-  ITutorDocs,
+  TutorDocs,
 } from "../../interfaces/tutorInterface/tutorInterface";
 import bcrypt from "bcrypt";
 import BaseRepository from "../BaseRepository";
@@ -17,7 +17,7 @@ export class AuthTutorRepository
   implements ITutorAuthRepository
 {
   private _otpRepository = new BaseRepository<any>(OtpModel);
-  private _tutorDocRepo = new BaseRepository<any>(TutorDocs);
+  private _tutorDocRepo = new BaseRepository<any>(TutorDocuments);
 
   constructor() {
     super(tutorModel);
@@ -132,7 +132,7 @@ export class AuthTutorRepository
   }
 
   
-  async checkVerificationStatus(id: string): Promise<ITutorDocs | null> {
+  async checkVerificationStatus(id: string): Promise<TutorDocs | null> {
     try {
       console.log("Checking verification status for tutor ID:", id);
       const status = await this._tutorDocRepo.findOne({ tutorId: id });

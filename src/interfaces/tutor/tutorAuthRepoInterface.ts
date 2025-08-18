@@ -3,7 +3,7 @@ import {
   tutorType,
   TutorProfile,
   CreateTutorType,
-  ITutorDocs
+  TutorDocs
 } from "../tutorInterface/tutorInterface";
 
 export interface ITutorAuthRepository {
@@ -24,5 +24,5 @@ export interface ITutorAuthRepository {
 
   resetPassword(email: string, password: string): Promise<void>;
 
-  checkVerificationStatus(id:string):Promise<ITutorDocs | null>
+  checkVerificationStatus(id:string):Promise<TutorDocs | null>
 }
