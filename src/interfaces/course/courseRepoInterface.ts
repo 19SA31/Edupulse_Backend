@@ -25,7 +25,10 @@ export interface ICourseRepoInterface {
     totalCount: number;
   }>;
   listUnlistCourse(id: string): Promise<void>;
-  findAllListedCourses(): Promise<Course[]>;
+  findAllListedCoursesWithFilters(
+    filterConditions: any,
+    sortOptions: any
+  ): Promise<Course[]>;
   findAllListedCategories(): Promise<Category[]>;
-  getCourseDetails(id:string): Promise<Course>
+  getCourseDetails(id: string): Promise<Course>;
 }

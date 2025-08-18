@@ -6,7 +6,7 @@ import {
   CourseRejectDto,
   CourseListingDto,
   ListedCourseDTO,
-  CourseDetailsDto
+  CourseDetailsDto,
 } from "../../dto/course/CourseDTO";
 import { ListedTutorDTO } from "../../dto/tutor/TutorDTO";
 import { ListedCategoryDTO } from "../../dto/course/CategoryDTO";
@@ -40,7 +40,15 @@ export interface ICourseService {
     totalCount: number;
   }>;
   listUnlistCourseService(id: string): Promise<void>;
-  getAllListedCourses(): Promise<ListedCourseDTO[]>;
+  getAllListedCourses(filters: {
+    search?: string;
+    category?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    sortBy?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ListedCourseDTO[]>;
   getAllListedCategories(): Promise<ListedCategoryDTO[]>;
   getCourseDetails(id: string): Promise<CourseDetailsDto>;
 }

@@ -68,19 +68,41 @@ class BaseRepository<T extends Document> {
   }
 
   async findOneAndPopulate(
-  condition: object, 
-  populateOptions?: PopulateOptions[]
-): Promise<T | null> {
-  let query = this._model.findOne(condition);
+    condition: object,
+    populateOptions?: PopulateOptions[]
+  ): Promise<T | null> {
+    let query = this._model.findOne(condition);
 
-  if (populateOptions) {
-    for (const pop of populateOptions) {
-      query = query.populate(pop);
+    if (populateOptions) {
+      for (const pop of populateOptions) {
+        query = query.populate(pop);
+      }
     }
+
+    return query.exec();
   }
 
-  return query.exec();
-}
+  async findWithFiltersAndSort(
+    filter: object,
+    skip: number,
+    limit: number,
+    sortOptions?: any,
+    populateOptions?: PopulateOptions[]
+  ): Promise<T[]> {
+    let query = this._model.find(filter).skip(skip).limit(limit);
+
+    if (sortOptions) {
+      query = query.sort(sortOptions);
+    }
+
+    if (populateOptions) {
+      for (const pop of populateOptions) {
+        query = query.populate(pop);
+      }
+    }
+
+    return query.exec();
+  }
 }
 
 export default BaseRepository;

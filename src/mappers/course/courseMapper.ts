@@ -261,7 +261,7 @@ export class CourseMapper {
   }
 
   static async toCourseDetailsDto(
-    course: any, // The populated course object
+    course: any, 
     s3Service: S3Service
   ): Promise<CourseDetailsDto> {
     return {

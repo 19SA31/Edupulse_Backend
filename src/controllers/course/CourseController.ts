@@ -316,18 +316,78 @@ export class CourseController {
 
   async getAllListedCourses(req: Request, res: Response): Promise<void> {
     try {
-      const listedCourses = await this._CourseService.getAllListedCourses();
+      const {
+        search,
+        category,
+        minPrice,
+        maxPrice,
+        sortBy,
+        page = 1,
+        limit = 50,
+      } = req.query;
 
+      console.log("getAllListedCourses",search,
+        category,
+        minPrice,
+        maxPrice,
+        sortBy,)
+      const filters = {
+        search: search as string,
+        category: category as string,
+        minPrice: minPrice ? Number(minPrice) : undefined,
+        maxPrice: maxPrice ? Number(maxPrice) : undefined,
+        sortBy: sortBy as string,
+      };
+
+      if (
+        filters.minPrice !== undefined &&
+        filters.maxPrice !== undefined &&
+        filters.minPrice > filters.maxPrice
+      ) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(
+            new ResponseModel(
+              false,
+              "Minimum price cannot be greater than maximum price",
+              null
+            )
+          );
+        return;
+      }
+
+      if (filters.minPrice !== undefined && filters.minPrice < 0) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(
+            new ResponseModel(false, "Minimum price cannot be negative", null)
+          );
+        return;
+      }
+
+      if (filters.maxPrice !== undefined && filters.maxPrice < 0) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(
+            new ResponseModel(false, "Maximum price cannot be negative", null)
+          );
+        return;
+      }
+
+      const courses = await this._CourseService.getAllListedCourses(filters);
+      console.log("result  getAllListedCourses",courses)
       res
         .status(HTTP_statusCode.OK)
         .json(
           new ResponseModel(
             true,
             "Successfully fetched all listed courses",
-            listedCourses
+            courses
           )
         );
     } catch (error: unknown) {
+      console.error("Error in getAllListedCourses:", error);
+
       if (error instanceof ValidationError) {
         res
           .status(HTTP_statusCode.BadRequest)
@@ -352,7 +412,7 @@ export class CourseController {
         .json(
           new ResponseModel(
             true,
-            "Successfully fetched listed courses",
+            "Successfully fetched listed categories",
             listedCategories
           )
         );
@@ -364,13 +424,14 @@ export class CourseController {
       } else {
         const response = new ResponseModel(
           false,
-          "Error fetching listed courses",
+          "Error fetching listed categories",
           null
         );
         res.status(HTTP_statusCode.InternalServerError).json(response);
       }
     }
   }
+
   async getCourseDetails(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;

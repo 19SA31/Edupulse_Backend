@@ -12,7 +12,7 @@ import {
   CourseRejectDto,
   CourseListingDto,
   ListedCourseDTO,
-  CourseDetailsDto
+  CourseDetailsDto,
 } from "../../dto/course/CourseDTO";
 import { ListedCategoryDTO } from "../../dto/course/CategoryDTO";
 import { S3Service } from "../../utils/s3";
@@ -277,9 +277,73 @@ export class CourseService implements ICourseService {
     }
   }
 
-  async getAllListedCourses(): Promise<ListedCourseDTO[]> {
+  async getAllListedCourses(filters: {
+    search?: string;
+    category?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    sortBy?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ListedCourseDTO[]> {
     try {
-      const courses = await this._courseRepo.findAllListedCourses();
+      const filterConditions: any = { isListed: true };
+
+      if (filters.category && filters.category !== "All classes") {
+        filterConditions.categoryName = filters.category;
+      }
+
+      if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+        filterConditions.price = {};
+        if (filters.minPrice !== undefined) {
+          filterConditions.price.$gte = filters.minPrice;
+        }
+        if (filters.maxPrice !== undefined) {
+          filterConditions.price.$lte = filters.maxPrice;
+        }
+      }
+
+      if (filters.search) {
+        filterConditions.$or = [
+          { title: { $regex: filters.search, $options: "i" } },
+          { description: { $regex: filters.search, $options: "i" } },
+        ];
+      }
+
+      let sortOptions: any = {};
+      switch (filters.sortBy) {
+        case "price_asc":
+          sortOptions = { price: 1 };
+          break;
+        case "price_desc":
+          sortOptions = { price: -1 };
+          break;
+        case "title_asc":
+          sortOptions = { title: 1 };
+          break;
+        case "title_desc":
+          sortOptions = { title: -1 };
+          break;
+        case "category_asc":
+          sortOptions = { "categoryId.name": 1 };
+          break;
+        case "category_desc":
+          sortOptions = { "categoryId.name": -1 };
+          break;
+        case "newest":
+          sortOptions = { createdAt: -1 };
+          break;
+        case "oldest":
+          sortOptions = { createdAt: 1 };
+          break;
+        default:
+          sortOptions = { createdAt: -1 };
+      }
+
+      const courses = await this._courseRepo.findAllListedCoursesWithFilters(
+        filterConditions,
+        sortOptions
+      );
 
       await Promise.all(
         courses.map(async (course) => {
@@ -294,7 +358,6 @@ export class CourseService implements ICourseService {
               `Error getting signed URL for course ${course._id}:`,
               error
             );
-            course.thumbnailImage = course.thumbnailImage;
           }
         })
       );
@@ -315,16 +378,13 @@ export class CourseService implements ICourseService {
   }
 
   async getCourseDetails(id: string): Promise<CourseDetailsDto> {
-  try {
-    const course = await this._courseRepo.getCourseDetails(id);
-    
-    return await CourseMapper.toCourseDetailsDto(
-      course,
-      this._s3Service
-    );
-  } catch (error) {
-    console.error('Error in CourseService getCourseDetails:', error);
-    throw new Error(`Failed to fetch course details: ${error}`);
+    try {
+      const course = await this._courseRepo.getCourseDetails(id);
+
+      return await CourseMapper.toCourseDetailsDto(course, this._s3Service);
+    } catch (error) {
+      console.error("Error in CourseService getCourseDetails:", error);
+      throw new Error(`Failed to fetch course details: ${error}`);
+    }
   }
-}
 }

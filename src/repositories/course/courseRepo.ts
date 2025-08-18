@@ -126,19 +126,45 @@ export class CourseRepository
     course.isListed = !course.isListed;
     await course.save();
   }
-  async findAllListedCourses(): Promise<Course[]> {
+
+  async findAllListedCoursesWithFilters(
+    filterConditions: any,
+    sortOptions: any,
+    page = 1,
+    limit = 50
+  ): Promise<Course[]> {
     try {
       const populateOptions = [
         { path: "categoryId", select: "name" },
         { path: "tutorId", select: "name" },
       ];
 
-      return await this.findWithConditionAndPopulate(
-        { isListed: true },
+      if (filterConditions.categoryName) {
+        const categoryName = filterConditions.categoryName;
+        delete filterConditions.categoryName;
+
+        const category = await this._categoryRepository.findOne({
+          name: categoryName,
+        });
+
+        if (!category) {
+          return [];
+        }
+
+        filterConditions.categoryId = category._id;
+      }
+
+      const skip = (page - 1) * limit;
+
+      return this.findWithFiltersAndSort(
+        filterConditions,
+        skip,
+        limit,
+        sortOptions,
         populateOptions
       );
     } catch (error) {
-      throw new Error(`Failed to find listed courses: ${error}`);
+      throw new Error(`Failed to find listed courses with filters: ${error}`);
     }
   }
 
@@ -151,32 +177,33 @@ export class CourseRepository
       throw new Error(`Failed to find listed categories: ${error}`);
     }
   }
+
   async getCourseDetails(id: string): Promise<Course> {
-  try {
-    const populateOptions = [
-      {
-        path: "categoryId",
-        select: "name description",
-      },
-      {
-        path: "tutorId",
-        select: "name email designation about avatar",
-      },
-    ];
+    try {
+      const populateOptions = [
+        {
+          path: "categoryId",
+          select: "name description",
+        },
+        {
+          path: "tutorId",
+          select: "name email designation about avatar",
+        },
+      ];
 
-    const course = await this.findOneAndPopulate(
-      { _id: id },
-      populateOptions
-    );
+      const course = await this.findOneAndPopulate(
+        { _id: id },
+        populateOptions
+      );
 
-    if (!course) {
-      throw new Error(`Course with id ${id} not found`);
+      if (!course) {
+        throw new Error(`Course with id ${id} not found`);
+      }
+
+      return course;
+    } catch (error) {
+      console.error("Error in CourseRepository getCourseDetails:", error);
+      throw new Error(`Failed to find course details: ${error}`);
     }
-
-    return course;
-  } catch (error) {
-    console.error("Error in CourseRepository getCourseDetails:", error);
-    throw new Error(`Failed to find course details: ${error}`);
   }
-}
 }
