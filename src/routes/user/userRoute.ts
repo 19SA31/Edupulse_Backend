@@ -21,6 +21,10 @@ import { AuthTutorRepository } from "../../repositories/tutor/authTutorRepo";
 import { AuthAdminService } from "../../services/admin/authAdminService";
 import { AuthAdminRepository } from "../../repositories/admin/authAdminRepo";
 
+import EnrollmentController from "../../controllers/enrollment/enrollemntController";
+import EnrollmentService from "../../services/enrollment/enrollmentService";
+import EnrollmentRepository from "../../repositories/enrollment/enrollmentRepo";
+
 const userRoute = express.Router();
 const s3Service = new S3Service();
 const storage = multer.memoryStorage();
@@ -70,6 +74,10 @@ const courseController = new CourseController(courseService);
 const tutorRepository = new TutorRepository();
 const tutorService = new TutorService(tutorRepository, s3Service);
 const tutorController = new TutorController(tutorService);
+
+const enrollmentRepository = new EnrollmentRepository();
+const enrollmentService = new EnrollmentService(enrollmentRepository);
+const enrollmentController = new EnrollmentController(enrollmentService);
 
 userRoute.post(
   "/send-otp",
@@ -125,7 +133,13 @@ userRoute.get(
 );
 
 userRoute.get(
+  "/all-courses",
+  courseController.getAllCourses.bind(courseController)
+);
+
+userRoute.get(
   "/listed-courses",
+  verifyToken("user"),
   courseController.getAllListedCourses.bind(courseController)
 );
 
@@ -136,6 +150,33 @@ userRoute.get(
 
 userRoute.get(
   "/course-details/:id",
+  verifyToken("user"),
   courseController.getCourseDetails.bind(courseController)
 );
+
+userRoute.post(
+  "/create-payment",
+  verifyToken("user"),
+  enrollmentController.createPayment.bind(enrollmentController)
+);
+
+userRoute.post(
+  "/verify-payment",
+  verifyToken("user"),
+  enrollmentController.verifyPayment.bind(enrollmentController)
+);
+
+userRoute.get(
+  "/verify-enrollment/:courseId",
+  verifyToken("user"),
+  enrollmentController.verifyEnrollment.bind(enrollmentController)
+);
+
+userRoute.get(
+  "/user-payments",
+  verifyToken("user"),
+  enrollmentController.getUserEnrollments.bind(enrollmentController)
+);
+
+
 export default userRoute;

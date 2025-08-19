@@ -127,6 +127,22 @@ export class CourseRepository
     await course.save();
   }
 
+  async findAllListedCourses(): Promise<Course[]> {
+    try {
+      const populateOptions = [
+        { path: "categoryId", select: "name" },
+        { path: "tutorId", select: "name" },
+      ];
+
+      return await this.findWithConditionAndPopulate(
+        { isListed: true },
+        populateOptions
+      );
+    } catch (error) {
+      throw new Error(`Failed to find listed courses: ${error}`);
+    }
+  }
+
   async findAllListedCoursesWithFilters(
     filterConditions: any,
     sortOptions: any,

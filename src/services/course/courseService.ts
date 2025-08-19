@@ -277,6 +277,36 @@ export class CourseService implements ICourseService {
     }
   }
 
+  async getAllCourses(): Promise<ListedCourseDTO[]> {
+    try {
+      const courses = await this._courseRepo.findAllListedCourses();
+
+      await Promise.all(
+        courses.map(async (course) => {
+          try {
+            if (course.thumbnailImage) {
+              course.thumbnailImage = await this._s3Service.getFile(
+                course.thumbnailImage
+              );
+            }
+          } catch (error) {
+            console.error(
+              `Error getting signed URL for course ${course._id}:`,
+              error
+            );
+            course.thumbnailImage = course.thumbnailImage;
+          }
+        })
+      );
+
+      console.log("courses with updated thumbnailImage", courses);
+
+      return CourseMapper.toListedCourseDTOArray(courses);
+    } catch (error) {
+      throw new Error(`Failed to fetch listed courses: ${error}`);
+    }
+  }
+
   async getAllListedCourses(filters: {
     search?: string;
     category?: string;

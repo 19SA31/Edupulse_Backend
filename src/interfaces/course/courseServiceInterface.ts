@@ -40,6 +40,7 @@ export interface ICourseService {
     totalCount: number;
   }>;
   listUnlistCourseService(id: string): Promise<void>;
+  getAllCourses(): Promise<ListedCourseDTO[]>;
   getAllListedCourses(filters: {
     search?: string;
     category?: string;
