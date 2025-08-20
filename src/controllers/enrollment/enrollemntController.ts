@@ -1,8 +1,14 @@
 import { Request, Response } from "express";
-import { IEnrollmentService } from "../../interfaces/enrollment/enrollmentServiceInterface";
+import EnrollmentService from "../../services/enrollment/enrollmentService";
 import { ResponseModel } from "../../models/ResponseModel";
 import HTTP_statusCode from "../../enums/HttpStatusCode";
 import { ValidationError } from "../../errors/ValidationError";
+import {
+  CreateEnrollmentDTO,
+  VerifyPaymentDTO,
+  GetUserEnrollmentsDTO,
+  VerifyUserEnrollmentDTO,
+} from "../../dto/enrollment/enrollmentDTO";
 
 interface AuthRequest extends Request {
   user?: {
@@ -13,12 +19,13 @@ interface AuthRequest extends Request {
 }
 
 class EnrollmentController {
-  constructor(private enrollmentService: IEnrollmentService) {}
+  constructor(private enrollmentService: EnrollmentService) {}
 
   createPayment = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { courseId, tutorId, categoryId, price } = req.body;
       const userId = req.user?.id;
+
       if (!userId) {
         res
           .status(HTTP_statusCode.Unauthorized)
@@ -33,19 +40,21 @@ class EnrollmentController {
         return;
       }
 
-      const result = await this.enrollmentService.createEnrollment({
+      const createEnrollmentDTO: CreateEnrollmentDTO = {
         userId,
         tutorId,
         courseId,
         categoryId,
         price: Number(price),
-      });
+      };
 
-      res.status(200).json({
+      const result = await this.enrollmentService.createEnrollment(createEnrollmentDTO);
+
+      res.status(HTTP_statusCode.OK).json({
         success: true,
         data: {
           sessionId: result.sessionId,
-          enrollmentId: result.enrollment._id,
+          enrollmentId: result.enrollment.id,
           checkoutUrl: `https://checkout.stripe.com/pay/${result.sessionId}`,
         },
         message: "Payment session created successfully",
@@ -59,7 +68,7 @@ class EnrollmentController {
           .json(new ResponseModel(false, (error as Error).message, null));
       } else {
         res
-          .status(500)
+          .status(HTTP_statusCode.InternalServerError)
           .json(
             new ResponseModel(false, "Failed to create payment session", null)
           );
@@ -86,20 +95,26 @@ class EnrollmentController {
         return;
       }
 
-      const enrollment =
-        await this.enrollmentService.verifyPaymentAndUpdateStatus(sessionId);
+      const verifyPaymentDTO: VerifyPaymentDTO = {
+        sessionId,
+      };
 
-      if (!enrollment) {
+      const result = await this.enrollmentService.verifyPaymentAndUpdateStatus(verifyPaymentDTO);
+
+      if (!result.enrollment) {
         res
           .status(HTTP_statusCode.NotFound)
-          .json(new ResponseModel(false, "Enrollment not found", null));
+          .json(new ResponseModel(false, result.message || "Enrollment not found", null));
         return;
       }
 
       res
         .status(HTTP_statusCode.OK)
         .json(
-          new ResponseModel(true, "Payment verification completed", enrollment)
+          new ResponseModel(true, result.message || "Payment verification completed", {
+            enrollment: result.enrollment,
+            paymentStatus: result.paymentStatus,
+          })
         );
     } catch (error: unknown) {
       console.error("Verify payment error:", error);
@@ -110,18 +125,16 @@ class EnrollmentController {
           .json(new ResponseModel(false, (error as Error).message, null));
       } else {
         res
-          .status(500)
-          .json(new ResponseModel(false, "Failed to verify paymentn", null));
+          .status(HTTP_statusCode.InternalServerError)
+          .json(new ResponseModel(false, "Failed to verify payment", null));
       }
     }
   };
 
-  getUserEnrollments = async (
-    req: AuthRequest,
-    res: Response
-  ): Promise<void> => {
+  getUserEnrollments = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const userId = req.user?.id;
+      const { page = "1", limit = "10", search } = req.query;
 
       if (!userId) {
         res
@@ -130,19 +143,23 @@ class EnrollmentController {
         return;
       }
 
-      const enrollments = await this.enrollmentService.getUserEnrollments(
-        userId
+      const getUserEnrollmentsDTO: GetUserEnrollmentsDTO = {
+        userId,
+        page: parseInt(page as string, 10) || 1,
+        limit: parseInt(limit as string, 10) || 10,
+        search: search as string,
+      };
+
+      const result = await this.enrollmentService.getUserEnrollments(getUserEnrollmentsDTO);
+
+      console.log(result);
+      const response = new ResponseModel(
+        true,
+        "User enrollments fetched successfully",
+        result
       );
 
-      res
-        .status(HTTP_statusCode.OK)
-        .json(
-          new ResponseModel(
-            true,
-            "User enrollments fetched successfully",
-            enrollments
-          )
-        );
+      res.status(HTTP_statusCode.OK).json(response);
     } catch (error: unknown) {
       console.error("Get user enrollments error", error);
 
@@ -152,9 +169,9 @@ class EnrollmentController {
           .json(new ResponseModel(false, (error as Error).message, null));
       } else {
         res
-          .status(500)
+          .status(HTTP_statusCode.InternalServerError)
           .json(
-            new ResponseModel(false, "Failed to fetch user enrollment", null)
+            new ResponseModel(false, "Failed to fetch user enrollments", null)
           );
       }
     }
@@ -172,68 +189,37 @@ class EnrollmentController {
         return;
       }
 
-      const isEnrolled = await this.enrollmentService.verifyUserEnrollment(
-        userId,
-        courseId
-      );
-
-      if(!isEnrolled){
+      if (!courseId) {
         res
-        .status(HTTP_statusCode.NotFound)
-        .json(new ResponseModel(false, "Enrollment not verified", null));
-        return
+          .status(HTTP_statusCode.BadRequest)
+          .json(new ResponseModel(false, "Course ID is required", null));
+        return;
+      }
+
+      const verifyUserEnrollmentDTO: VerifyUserEnrollmentDTO = {
+        userId,
+        courseId,
+      };
+
+      const result = await this.enrollmentService.verifyUserEnrollment(verifyUserEnrollmentDTO);
+
+      if (!result.isEnrolled) {
+        res
+          .status(HTTP_statusCode.NotFound)
+          .json(new ResponseModel(false, "User is not enrolled in this course", null));
+        return;
       }
 
       res
         .status(HTTP_statusCode.OK)
-        .json(new ResponseModel(true, "Verified enrollment", isEnrolled));
+        .json(
+          new ResponseModel(true, "User enrollment verified", {
+            isEnrolled: result.isEnrolled,
+            enrollmentId: result.enrollmentId,
+          })
+        );
     } catch (error: unknown) {
       console.error("Verify enrollment error:", error);
-
-      if (error instanceof ValidationError || error instanceof Error) {
-        res.status(HTTP_statusCode.BadRequest);
-      } else {
-        res
-          .status(500)
-          .json(new ResponseModel(false, "Failed to verify enrollment", null));
-      }
-    }
-  };
-
-  getEnrollmentStatus = async (
-    req: AuthRequest,
-    res: Response
-  ): Promise<void> => {
-    try {
-      const { sessionId } = req.params;
-      const userId = req.user?.id;
-
-      if (!userId) {
-        res.status(401).json({
-          success: false,
-          message: "User authentication required",
-        });
-        return;
-      }
-
-      const enrollment =
-        await this.enrollmentService.verifyPaymentAndUpdateStatus(sessionId);
-
-      if (!enrollment) {
-        res.status(404).json({
-          success: false,
-          message: "Enrollment not found",
-        });
-        return;
-      }
-
-      res.status(200).json({
-        success: true,
-        data: enrollment,
-        message: "Enrollment status fetched successfully",
-      });
-    } catch (error: unknown) {
-      console.error("Get enrollment status error:", error);
 
       if (error instanceof ValidationError || error instanceof Error) {
         res
@@ -241,10 +227,56 @@ class EnrollmentController {
           .json(new ResponseModel(false, (error as Error).message, null));
       } else {
         res
-          .status(500)
-          .json(
-            new ResponseModel(false, "Failed to fetch enrollment status", null)
-          );
+          .status(HTTP_statusCode.InternalServerError)
+          .json(new ResponseModel(false, "Failed to verify enrollment", null));
+      }
+    }
+  };
+
+  getEnrollmentByPayment = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { paymentId } = req.params;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        res
+          .status(HTTP_statusCode.Unauthorized)
+          .json(new ResponseModel(false, "User authentication required", null));
+        return;
+      }
+
+      if (!paymentId) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(new ResponseModel(false, "Payment ID is required", null));
+        return;
+      }
+
+      const result = await this.enrollmentService.getEnrollmentByPaymentId({
+        paymentId,
+      });
+
+      if (!result) {
+        res
+          .status(HTTP_statusCode.NotFound)
+          .json(new ResponseModel(false, "Enrollment not found", null));
+        return;
+      }
+
+      res
+        .status(HTTP_statusCode.OK)
+        .json(new ResponseModel(true, "Enrollment found", result));
+    } catch (error: unknown) {
+      console.error("Get enrollment by payment error:", error);
+
+      if (error instanceof ValidationError || error instanceof Error) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(new ResponseModel(false, (error as Error).message, null));
+      } else {
+        res
+          .status(HTTP_statusCode.InternalServerError)
+          .json(new ResponseModel(false, "Failed to get enrollment", null));
       }
     }
   };

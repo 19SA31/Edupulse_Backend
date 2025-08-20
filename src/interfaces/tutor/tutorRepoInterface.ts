@@ -8,7 +8,6 @@ import {
 import { UpdateProfileData } from "../tutorInterface/tutorInterface";
 
 export interface ITutorRepository {
-  
   findTutorByEmailOrPhone(
     email?: string,
     phone?: string

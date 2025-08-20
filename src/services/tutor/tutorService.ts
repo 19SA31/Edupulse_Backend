@@ -28,6 +28,16 @@ export class TutorService implements ITutorService {
     this._s3Service = s3Service;
   }
 
+  async ensureTutorActive(tutorId: string): Promise<void> {
+    const tutor = await this._tutorRepository.findById(tutorId);
+    if (!tutor) {
+      throw new Error("Tutor not found");
+    }
+    if (tutor.isBlocked) {
+      throw new Error("Tutor is blocked");
+    }
+  }
+
   async updateProfile(
     tutorId: string,
     updateData: UpdateProfileData
@@ -357,7 +367,7 @@ export class TutorService implements ITutorService {
       gender: tutor.gender,
       avatar: avatarUrl,
       designation: tutor.designation,
-      about:tutor.about,
+      about: tutor.about,
       isBlocked: tutor.isBlocked,
       createdAt: tutor.createdAt,
       updatedAt: tutor.updatedAt,

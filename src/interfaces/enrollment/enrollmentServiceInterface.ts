@@ -1,20 +1,30 @@
-import { IEnrollment } from "../../models/EnrollmentModel";
-
-export interface CreateEnrollmentData {
-  userId: string;
-  tutorId: string;
-  courseId: string;
-  categoryId: string;
-  price: number;
-}
+import {
+  CreateEnrollmentDTO,
+  CreateEnrollmentResponseDTO,
+  VerifyPaymentDTO,
+  PaymentVerificationResponseDTO,
+  GetUserEnrollmentsDTO,
+  UserEnrollmentsResponseDTO,
+  VerifyUserEnrollmentDTO,
+  EnrollmentVerificationResponseDTO,
+  GetEnrollmentByPaymentDTO,
+  EnrollmentResponseDTO,
+} from "../../dto/enrollment/enrollmentDTO";
 
 export interface IEnrollmentService {
-  createEnrollment(data: CreateEnrollmentData): Promise<{
-    enrollment: IEnrollment;
-    sessionId: string;
-  }>;
-  verifyPaymentAndUpdateStatus(sessionId: string): Promise<IEnrollment | null>;
-  getUserEnrollments(userId: string): Promise<IEnrollment[]>;
-  verifyUserEnrollment(userId: string, courseId: string): Promise<boolean>;
-  getEnrollmentByPaymentId(paymentId: string): Promise<IEnrollment | null>;
+  createEnrollment(
+    dto: CreateEnrollmentDTO
+  ): Promise<CreateEnrollmentResponseDTO>;
+  verifyPaymentAndUpdateStatus(
+    dto: VerifyPaymentDTO
+  ): Promise<PaymentVerificationResponseDTO>;
+  getUserEnrollments(
+    dto: GetUserEnrollmentsDTO
+  ): Promise<UserEnrollmentsResponseDTO>;
+  verifyUserEnrollment(
+    dto: VerifyUserEnrollmentDTO
+  ): Promise<EnrollmentVerificationResponseDTO>;
+  getEnrollmentByPaymentId(
+    dto: GetEnrollmentByPaymentDTO
+  ): Promise<EnrollmentResponseDTO | null>;
 }

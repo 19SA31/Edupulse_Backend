@@ -5,12 +5,15 @@ import {
   GetVerificationStatusResponseDTO,
   GetVerificationDocumentsRequestDTO,
   GetVerificationDocumentsResponseDTO,
-  ListedTutorDTO
+  ListedTutorDTO,
+  TutorServiceDTO
 } from "../../dto/tutor/TutorDTO";
 import { UpdateProfileData, TutorProfileData } from "../tutorInterface/tutorInterface"; 
 import { ServiceResponse } from "../tutorInterface/tutorInterface";
 
 export interface ITutorService {
+
+  ensureTutorActive(tutorId: string): Promise<void>
   updateProfile(
     tutorId: string,
     updateData: UpdateProfileData

@@ -3,17 +3,22 @@ import { PopulateOptions } from "mongoose";
 
 export interface IEnrollmentRepository {
   create(data: Partial<IEnrollment>): Promise<IEnrollment>;
-  findById(id: string): Promise<IEnrollment | null>;
   findByPaymentId(paymentId: string): Promise<IEnrollment | null>;
-  findByUserId(userId: string): Promise<IEnrollment[]>;
   updateStatus(
     id: string,
     status: "pending" | "paid" | "failed"
   ): Promise<IEnrollment | null>;
-  findUserEnrollments(
+  findUserEnrollmentsWithPagination(
     userId: string,
+    skip: number,
+    limit: number,
+    search?: string,
     populateOptions?: PopulateOptions[]
-  ): Promise<IEnrollment[]>;
+  ): Promise<{
+    enrollments: IEnrollment[];
+    totalPages: number;
+    totalCount: number;
+  }>;
   checkUserEnrollment(
     userId: string,
     courseId: string

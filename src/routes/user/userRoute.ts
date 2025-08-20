@@ -6,6 +6,7 @@ import UserService from "../../services/user/userService";
 import UserRepository from "../../repositories/user/userRepo";
 import { verifyToken } from "../../utils/jwt";
 import { S3Service } from "../../utils/s3";
+import { createAuthMiddleware } from "../../middlewares/authMiddleware";
 
 import { CourseController } from "../../controllers/course/CourseController";
 import { TutorController } from "../../controllers/tutor/TutorController";
@@ -67,6 +68,8 @@ const userRepository = new UserRepository();
 const userService = new UserService(userRepository);
 const userController = new UserController(userService);
 
+const authMiddleware = createAuthMiddleware("user", userService);
+
 const courseRepository = new CourseRepository();
 const courseService = new CourseService(courseRepository, s3Service);
 const courseController = new CourseController(courseService);
@@ -117,6 +120,7 @@ userRoute.patch(
 userRoute.put(
   "/profile/update-profile",
   verifyToken("user"),
+  authMiddleware,
   uploadAvatar,
   userController.updateProfile.bind(userController)
 );
@@ -124,6 +128,7 @@ userRoute.put(
 userRoute.get(
   "/profile",
   verifyToken("user"),
+  authMiddleware,
   userController.getUserProfile.bind(userController)
 );
 
@@ -140,6 +145,7 @@ userRoute.get(
 userRoute.get(
   "/listed-courses",
   verifyToken("user"),
+  authMiddleware,
   courseController.getAllListedCourses.bind(courseController)
 );
 
@@ -151,32 +157,36 @@ userRoute.get(
 userRoute.get(
   "/course-details/:id",
   verifyToken("user"),
+  authMiddleware,
   courseController.getCourseDetails.bind(courseController)
 );
 
 userRoute.post(
   "/create-payment",
   verifyToken("user"),
+  authMiddleware,
   enrollmentController.createPayment.bind(enrollmentController)
 );
 
 userRoute.post(
   "/verify-payment",
   verifyToken("user"),
+  authMiddleware,
   enrollmentController.verifyPayment.bind(enrollmentController)
 );
 
 userRoute.get(
   "/verify-enrollment/:courseId",
   verifyToken("user"),
+  authMiddleware,
   enrollmentController.verifyEnrollment.bind(enrollmentController)
 );
 
 userRoute.get(
   "/user-payments",
   verifyToken("user"),
+  authMiddleware,
   enrollmentController.getUserEnrollments.bind(enrollmentController)
 );
-
 
 export default userRoute;
