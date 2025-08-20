@@ -8,7 +8,7 @@ import {
   PaymentVerificationResponseDTO,
   EnrollmentVerificationResponseDTO,
   GetUserEnrollmentsDTO,
-  PopulatedEnrollmentResponseDTO, 
+  PopulatedEnrollmentResponseDTO,
 } from "../../dto/enrollment/enrollmentDTO";
 
 export class EnrollmentMapper {
@@ -24,52 +24,56 @@ export class EnrollmentMapper {
 
   static toResponseDTO(enrollment: IEnrollment): EnrollmentResponseDTO {
     return {
-      id: enrollment._id?.toString() || '',
+      id: enrollment._id?.toString() || "",
       userId: enrollment.userId.toString(),
       tutorId: enrollment.tutorId.toString(),
       courseId: enrollment.courseId.toString(),
       categoryId: enrollment.categoryId.toString(),
       price: enrollment.price,
       paymentId: enrollment.paymentId,
-      paymentMethod: enrollment.paymentMethod || 'stripe',
+      paymentMethod: enrollment.paymentMethod || "stripe",
       status: enrollment.status,
       dateOfEnrollment: enrollment.dateOfEnrollment.toISOString(),
     };
   }
 
-  // New method to handle populated enrollments
-  static toPopulatedResponseDTO(enrollment: any): PopulatedEnrollmentResponseDTO {
+  static toPopulatedResponseDTO(
+    enrollment: any
+  ): PopulatedEnrollmentResponseDTO {
     return {
-      _id: enrollment._id?.toString() || '',
+      _id: enrollment._id?.toString() || "",
       courseId: {
-        _id: enrollment.courseId?._id?.toString() || '',
-        title: enrollment.courseId?.title || 'Unknown Course',
+        _id: enrollment.courseId?._id?.toString() || "",
+        title: enrollment.courseId?.title || "Unknown Course",
         price: enrollment.courseId?.price || 0,
-        thumbnailImage: enrollment.courseId?.thumbnailImage || '',
+        thumbnailImage: enrollment.courseId?.thumbnailImage || "",
       },
       tutorId: {
-        _id: enrollment.tutorId?._id?.toString() || '',
-        name: enrollment.tutorId?.name || 'Unknown Tutor',
+        _id: enrollment.tutorId?._id?.toString() || "",
+        name: enrollment.tutorId?.name || "Unknown Tutor",
       },
       categoryId: {
-        _id: enrollment.categoryId?._id?.toString() || '',
-        name: enrollment.categoryId?.name || 'Unknown Category',
+        _id: enrollment.categoryId?._id?.toString() || "",
+        name: enrollment.categoryId?.name || "Unknown Category",
       },
       price: enrollment.price,
       paymentId: enrollment.paymentId,
-      paymentMethod: enrollment.paymentMethod || 'stripe',
+      paymentMethod: enrollment.paymentMethod || "stripe",
       status: enrollment.status,
       dateOfEnrollment: enrollment.dateOfEnrollment,
     };
   }
 
   static toResponseDTOs(enrollments: IEnrollment[]): EnrollmentResponseDTO[] {
-    return enrollments.map(enrollment => this.toResponseDTO(enrollment));
+    return enrollments.map((enrollment) => this.toResponseDTO(enrollment));
   }
 
-  // New method for populated enrollments
-  static toPopulatedResponseDTOs(enrollments: any[]): PopulatedEnrollmentResponseDTO[] {
-    return enrollments.map(enrollment => this.toPopulatedResponseDTO(enrollment));
+  static toPopulatedResponseDTOs(
+    enrollments: any[]
+  ): PopulatedEnrollmentResponseDTO[] {
+    return enrollments.map((enrollment) =>
+      this.toPopulatedResponseDTO(enrollment)
+    );
   }
 
   static toCreateEnrollmentResponse(
@@ -82,9 +86,8 @@ export class EnrollmentMapper {
     };
   }
 
-  // Updated method to use populated data
   static toUserEnrollmentsResponse(
-    enrollments: any[], // Changed from IEnrollment[] to any[] to handle populated data
+    enrollments: any[],
     totalPages: number,
     totalCount: number,
     currentPage: number,
@@ -115,10 +118,11 @@ export class EnrollmentMapper {
       };
     }
 
-    const paymentStatus = enrollment.status === "paid" 
-      ? "verified" 
-      : enrollment.status === "failed" 
-        ? "failed" 
+    const paymentStatus =
+      enrollment.status === "paid"
+        ? "verified"
+        : enrollment.status === "failed"
+        ? "failed"
         : "pending";
 
     return {
@@ -143,9 +147,18 @@ export class EnrollmentMapper {
     limit: number;
     page: number;
   } {
-    const limit = Math.min(dto.limit || 10, 100); 
-    const page = Math.max(dto.page || 1, 1); 
+    let limit = dto.limit || 10;
+    let page = dto.page || 1;
+
+    if (isNaN(limit) || limit <= 0) limit = 10;
+    if (isNaN(page) || page <= 0) page = 1;
+
+    limit = Math.min(limit, 100);
+    page = Math.max(page, 1);
+
     const skip = (page - 1) * limit;
+
+    console.log("Pagination params:", { skip, limit, page });
 
     return { skip, limit, page };
   }
@@ -172,7 +185,7 @@ export class EnrollmentMapper {
       errors.push("Category ID is required");
     }
 
-    if (typeof dto.price !== 'number' || dto.price <= 0) {
+    if (typeof dto.price !== "number" || dto.price <= 0) {
       errors.push("Price must be a positive number");
     }
 
@@ -192,11 +205,14 @@ export class EnrollmentMapper {
       errors.push("User ID is required");
     }
 
-    if (dto.page && (typeof dto.page !== 'number' || dto.page < 1)) {
+    if (dto.page !== undefined && (isNaN(dto.page) || dto.page < 1)) {
       errors.push("Page must be a positive number");
     }
 
-    if (dto.limit && (typeof dto.limit !== 'number' || dto.limit < 1 || dto.limit > 100)) {
+    if (
+      dto.limit !== undefined &&
+      (isNaN(dto.limit) || dto.limit < 1 || dto.limit > 100)
+    ) {
       errors.push("Limit must be between 1 and 100");
     }
 

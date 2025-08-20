@@ -28,7 +28,6 @@ export class CourseService implements ICourseService {
 
   async getAllCategories(): Promise<CategoryDTOArr> {
     const rawCategories = await this._courseRepo.getCategories();
-    console.log("servvv", rawCategories);
     return CategoryMapper.toDTOArr(rawCategories);
   }
 
@@ -51,7 +50,6 @@ export class CourseService implements ICourseService {
         courseDto.chapters,
         files
       );
-      console.log("processed chapters", processedChapters);
 
       const courseData: Partial<Course> = {
         title: courseDto.title,
@@ -70,7 +68,6 @@ export class CourseService implements ICourseService {
       };
 
       const createdCourse = await this._courseRepo.createCourse(courseData);
-      console.log("createdCourse service:", createdCourse);
       return CourseMapper.toEntity(createdCourse);
     } catch (error: any) {
       console.error("Error in CourseService.createCourse:", error);
@@ -178,7 +175,6 @@ export class CourseService implements ICourseService {
   private async safeDeleteFile(fileKey: string): Promise<void> {
     try {
       await this._s3Service.deleteFile(fileKey);
-      console.log("File deleted from S3:", fileKey);
     } catch (deleteError) {
       console.warn("Failed to delete file:", deleteError);
     }
@@ -198,8 +194,6 @@ export class CourseService implements ICourseService {
       limit,
       search
     );
-
-    console.log("unpublished courses", courses);
 
     const mappedCourses = await CourseMapper.toCourseDtoForReview(
       courses,
@@ -228,7 +222,6 @@ export class CourseService implements ICourseService {
   async rejectCourse(courseId: string): Promise<CourseRejectDto> {
     try {
       const { course, tutor } = await this._courseRepo.rejectCourse(courseId);
-      console.log("reject service", course, tutor);
       return CourseMapper.toCourseRejectDto(course, tutor);
     } catch (error: unknown) {
       console.error("Error in Course reject service:", error);
@@ -251,7 +244,7 @@ export class CourseService implements ICourseService {
         limit,
         search
       );
-      console.log("...", result);
+
       const courseDtos = CourseMapper.toDTOArray(result.courses);
 
       return {
@@ -298,8 +291,6 @@ export class CourseService implements ICourseService {
           }
         })
       );
-
-      console.log("courses with updated thumbnailImage", courses);
 
       return CourseMapper.toListedCourseDTOArray(courses);
     } catch (error) {

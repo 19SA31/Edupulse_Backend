@@ -141,7 +141,7 @@ export class AdminController {
 
   async addCategory(req: Request, res: Response): Promise<void> {
     try {
-      console.log("inside admin controller of add category");
+
       const category = await this._AdminService.addCourseCategory(req.body);
 
       const response = new ResponseModel(
@@ -202,7 +202,7 @@ export class AdminController {
 
   async editCategory(req: Request, res: Response): Promise<void> {
     try {
-      console.log("inside admin controller of edit category");
+
       const categoryId = req.params.id;
       const updateData = req.body;
 
@@ -240,7 +240,7 @@ export class AdminController {
 
   async toggleCategoryStatus(req: Request, res: Response): Promise<void> {
     try {
-      console.log("inside toggle category status");
+
       const categoryId = req.params.id;
 
       const updatedCategory = await this._AdminService.toggleCategoryListStatus(
@@ -309,7 +309,7 @@ export class AdminController {
     try {
       const { tutorId } = req.params;
       const { reason } = req.body;
-      console.log("rejecting tutor contr ", tutorId);
+
 
       if (!reason || reason.trim() === "") {
         const response = new ResponseModel(

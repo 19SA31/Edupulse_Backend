@@ -36,7 +36,6 @@ export class AuthTutorService implements ITutorAuthInterface {
       1000 + Math.random() * 9000
     ).toString();
     const hashedOTP: string = await bcrypt.hash(GeneratedOTP, this._saltRounds);
-    console.log("inside sendOTP:", GeneratedOTP);
 
     const subject = "OTP Verification";
     const sendMailStatus: boolean = await sendMail(
@@ -53,15 +52,12 @@ export class AuthTutorService implements ITutorAuthInterface {
   }
 
   async signUp(tutorData: SignUpServiceDTO): Promise<boolean> {
-    console.log("Reached tutor signup");
-
     const response = await this._AuthRepository.existTutor(
       tutorData.email,
       tutorData.phone
     );
 
     if (tutorData.isForgot) {
-      console.log("forgot password");
       if (!response.existEmail) {
         throw new Error("Email not found");
       }
@@ -81,14 +77,10 @@ export class AuthTutorService implements ITutorAuthInterface {
   }
 
   async otpCheck(tutorData: OtpCheckServiceDTO): Promise<boolean> {
-    console.log("Reached otpCheck service");
-
     const isOtpValid = await this._AuthRepository.verifyOtp(
       tutorData.email,
       tutorData.otp
     );
-
-    console.log("verifyotp response in auth service: ", isOtpValid);
 
     if (!isOtpValid) {
       throw new Error("Invalid OTP");
@@ -131,8 +123,18 @@ export class AuthTutorService implements ITutorAuthInterface {
       throw new Error("Invalid email or password");
     }
 
-    const { _id, email, name, isVerified, avatar, phone, DOB, designation, about, gender } =
-      loggedTutor;
+    const {
+      _id,
+      email,
+      name,
+      isVerified,
+      avatar,
+      phone,
+      DOB,
+      designation,
+      about,
+      gender,
+    } = loggedTutor;
 
     const doc = await this._AuthRepository.checkVerificationStatus(_id);
 

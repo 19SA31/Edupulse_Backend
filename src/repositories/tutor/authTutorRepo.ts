@@ -51,7 +51,8 @@ export class AuthTutorRepository
         unknown,
         any,
         any
-      > & tutorType;
+      > &
+        tutorType;
 
       return user;
     } catch (error) {
@@ -62,7 +63,6 @@ export class AuthTutorRepository
 
   async saveOTP(email: string, OTP: string): Promise<void> {
     try {
-      console.log("INSIDE SAVEOTP, otp:", OTP);
       await this._otpRepository.create({ email, otp: OTP });
     } catch (error: any) {
       console.error("Error saving OTP:", error);
@@ -76,7 +76,7 @@ export class AuthTutorRepository
       if (!otpRecord) {
         return false;
       }
-      
+
       const isMatch = await bcrypt.compare(otp, otpRecord.otp);
       return isMatch;
     } catch (error: any) {
@@ -112,7 +112,7 @@ export class AuthTutorRepository
       return formattedUserData;
     } catch (error: any) {
       console.error("Error in tutor verification:", error);
-      throw error; 
+      throw error;
     }
   }
 
@@ -131,13 +131,10 @@ export class AuthTutorRepository
     }
   }
 
-  
   async checkVerificationStatus(id: string): Promise<TutorDocs | null> {
     try {
-      console.log("Checking verification status for tutor ID:", id);
       const status = await this._tutorDocRepo.findOne({ tutorId: id });
-      
-      
+
       return status;
     } catch (error) {
       console.error("Error in check verification status:", error);

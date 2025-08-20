@@ -21,24 +21,16 @@ class UserController {
 
   updateProfile = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      console.log("Inside controller for update profile");
-      console.log("Request body:", req.body);
-      console.log("Request file:", req.file ? 'File present' : 'No file');
 
-      
       const userId = req.body?.id;
       
       if (!userId) {
-        console.log("No user ID found in token");
         res.status(HTTP_statusCode.Unauthorized).json(
           new ResponseModel(false, 'Unauthorized: User not authenticated')
         );
         return;
       }
 
-      console.log("Authenticated user ID:", userId);
-
-      
       const avatarFile = req.file;
       
       
@@ -46,14 +38,10 @@ class UserController {
       if (req.body.cropData) {
         try {
           cropData = JSON.parse(req.body.cropData);
-          console.log("Crop data received:", cropData);
-          
-          
           if (cropData && typeof cropData === 'object') {
             const { x, y, width, height } = cropData;
             if (typeof x !== 'number' || typeof y !== 'number' || 
                 typeof width !== 'number' || typeof height !== 'number') {
-              console.log("Invalid crop data structure");
               res.status(HTTP_statusCode.BadRequest).json(
                 new ResponseModel(false, 'Invalid crop data structure')
               );
@@ -62,7 +50,6 @@ class UserController {
 
             
             if (x < 0 || y < 0 || width <= 0 || height <= 0) {
-              console.log("Invalid crop data values");
               res.status(HTTP_statusCode.BadRequest).json(
                 new ResponseModel(false, 'Invalid crop data values')
               );
@@ -70,7 +57,6 @@ class UserController {
             }
           }
         } catch (error) {
-          console.log("Invalid crop data format");
           res.status(HTTP_statusCode.BadRequest).json(
             new ResponseModel(false, 'Invalid crop data format')
           );
@@ -83,7 +69,6 @@ class UserController {
         
         const maxSize = 5 * 1024 * 1024;
         if (avatarFile.size > maxSize) {
-          console.log("File size exceeds limit");
           res.status(HTTP_statusCode.BadRequest).json(
             new ResponseModel(false, 'File size exceeds 5MB limit')
           );
@@ -93,7 +78,6 @@ class UserController {
         
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
         if (!allowedTypes.includes(avatarFile.mimetype)) {
-          console.log("Invalid file type");
           res.status(HTTP_statusCode.BadRequest).json(
             new ResponseModel(false, 'Only JPEG, PNG, GIF, and WebP images are allowed')
           );
@@ -107,7 +91,6 @@ class UserController {
           
           
           if (width > 5000 || height > 5000) {
-            console.log("Crop area too large");
             res.status(HTTP_statusCode.BadRequest).json(
               new ResponseModel(false, 'Crop area is too large')
             );
@@ -142,41 +125,22 @@ class UserController {
       if (cropData) {
         updateData.cropData = cropData;
       }
-
-      console.log("Update data:", updateData);
-      console.log("Avatar file:", avatarFile ? {
-        originalname: avatarFile.originalname,
-        mimetype: avatarFile.mimetype,
-        size: avatarFile.size
-      } : 'No avatar file');
-
-      
+    
       if (Object.keys(updateData).length === 0) {
-        console.log("No data provided for update");
         res.status(HTTP_statusCode.BadRequest).json(
           new ResponseModel(false, 'No data provided for update')
         );
         return;
       }
-
       
       const result = await this.userService.updateProfile(userId, updateData);
 
-      console.log("*********",result)
-      console.log("Service result:", {
-        success: !!result.user,
-        hasData: !!result.user
-      });
-
-      
       res.status(HTTP_statusCode.OK).json(
         new ResponseModel(true, 'Profile updated successfully', result)
       );
 
     } catch (error) {
-      console.error('Update profile controller error:', error);
-      
-      
+
       if (error instanceof Error) {
         const errorMessage = error.message;
         
@@ -238,26 +202,16 @@ class UserController {
 
   getUserProfile = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      console.log("Getting user profile");
-      
       const userId = req.user?.id;
       
       if (!userId) {
-        console.log("No user ID found in token");
         res.status(HTTP_statusCode.Unauthorized).json(
           new ResponseModel(false, 'Unauthorized: User not authenticated')
         );
         return;
       }
 
-      console.log("Fetching profile for user ID:", userId);
-
       const result = await this.userService.getUserProfile(userId);
-      console.log("inside userCNTRL: ",result)
-      console.log("Profile fetch result:", {
-        success: !!result.user,
-        hasData: !!result.user
-      });
 
       res.status(HTTP_statusCode.OK).json(
         new ResponseModel(true, 'Profile retrieved successfully', result.user)

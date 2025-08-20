@@ -39,7 +39,6 @@ export interface EnrollmentResponseDTO {
   dateOfEnrollment: string;
 }
 
-// New type for populated enrollment data that matches frontend expectations
 export interface PopulatedEnrollmentResponseDTO {
   _id: string;
   courseId: {
@@ -68,7 +67,6 @@ export interface CreateEnrollmentResponseDTO {
   sessionId: string;
 }
 
-// Updated to use PopulatedEnrollmentResponseDTO
 export interface UserEnrollmentsResponseDTO {
   enrollments: PopulatedEnrollmentResponseDTO[];
   pagination: {

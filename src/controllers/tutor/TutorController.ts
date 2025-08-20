@@ -26,12 +26,12 @@ export class TutorController {
 
   getTutorProfile = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      console.log("Getting tutor profile");
+
 
       const userId = req.user?.id;
 
       if (!userId) {
-        console.log("No user ID found in token");
+
         res
           .status(HTTP_statusCode.Unauthorized)
           .json(
@@ -40,7 +40,7 @@ export class TutorController {
         return;
       }
       const result = await this._tutorService.getTutorProfile(userId);
-      console.log("getTutorProfile",result)
+
       res
         .status(HTTP_statusCode.OK)
         .json(
@@ -75,14 +75,10 @@ export class TutorController {
     res: Response
   ): Promise<void> => {
     try {
-      console.log("Inside controller for update tutor profile");
-      console.log("Request body:", req.body);
-      console.log("Request file:", req.file ? "File present" : "No file");
 
       const userId = req.user?.id;
 
       if (!userId) {
-        console.log("No user ID found - middleware issue");
         res
           .status(HTTP_statusCode.Unauthorized)
           .json(
@@ -91,7 +87,6 @@ export class TutorController {
         return;
       }
 
-      console.log("Authenticated tutor ID:", userId);
 
       const avatarFile = req.file;
 
@@ -99,7 +94,7 @@ export class TutorController {
       if (req.body.cropData) {
         try {
           cropData = JSON.parse(req.body.cropData);
-          console.log("Crop data received:", cropData);
+
 
           if (cropData && typeof cropData === "object") {
             const { x, y, width, height } = cropData;
@@ -109,7 +104,7 @@ export class TutorController {
               typeof width !== "number" ||
               typeof height !== "number"
             ) {
-              console.log("Invalid crop data structure");
+
               res
                 .status(HTTP_statusCode.BadRequest)
                 .json(new ResponseModel(false, "Invalid crop data structure"));
@@ -117,7 +112,7 @@ export class TutorController {
             }
 
             if (x < 0 || y < 0 || width <= 0 || height <= 0) {
-              console.log("Invalid crop data values");
+
               res
                 .status(HTTP_statusCode.BadRequest)
                 .json(new ResponseModel(false, "Invalid crop data values"));
@@ -125,7 +120,7 @@ export class TutorController {
             }
           }
         } catch (error) {
-          console.log("Invalid crop data format");
+
           res
             .status(HTTP_statusCode.BadRequest)
             .json(new ResponseModel(false, "Invalid crop data format"));
@@ -136,7 +131,7 @@ export class TutorController {
       if (avatarFile) {
         const maxSize = 5 * 1024 * 1024;
         if (avatarFile.size > maxSize) {
-          console.log("File size exceeds limit");
+
           res
             .status(HTTP_statusCode.BadRequest)
             .json(new ResponseModel(false, "File size exceeds 5MB limit"));
@@ -151,7 +146,7 @@ export class TutorController {
           "image/webp",
         ];
         if (!allowedTypes.includes(avatarFile.mimetype)) {
-          console.log("Invalid file type");
+
           res
             .status(HTTP_statusCode.BadRequest)
             .json(
@@ -167,7 +162,7 @@ export class TutorController {
           const { x, y, width, height } = cropData;
 
           if (width > 5000 || height > 5000) {
-            console.log("Crop area too large");
+
             res
               .status(HTTP_statusCode.BadRequest)
               .json(new ResponseModel(false, "Crop area is too large"));
@@ -207,20 +202,8 @@ export class TutorController {
         updateData.cropData = cropData;
       }
 
-      console.log("Update data:", updateData);
-      console.log(
-        "Avatar file:",
-        avatarFile
-          ? {
-              originalname: avatarFile.originalname,
-              mimetype: avatarFile.mimetype,
-              size: avatarFile.size,
-            }
-          : "No avatar file"
-      );
 
       if (Object.keys(updateData).length === 0) {
-        console.log("No data provided for update");
         res
           .status(HTTP_statusCode.BadRequest)
           .json(new ResponseModel(false, "No data provided for update"));
@@ -306,11 +289,8 @@ export class TutorController {
     res: Response
   ): Promise<void> {
     try {
-      console.log("inside submitverificationdocs tutor");
-
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       const { email, phone } = req.body;
-      console.log(files, email, phone);
 
       if (
         !files?.avatar ||
@@ -460,7 +440,6 @@ export class TutorController {
   async getAllListedTutors(req: Request, res: Response): Promise<void> {
     try {
       const listedTutors = await this._tutorService.getAllListedTutors();
-      console.log("getAllListedTutors",listedTutors)
       res
         .status(HTTP_statusCode.OK)
         .json(

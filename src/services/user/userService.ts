@@ -32,9 +32,6 @@ class UserService implements IUserService {
     userId: string,
     updateData: UpdateProfileData
   ): Promise<{ user: UserProfileData }> {
-    console.log("inside service for update profile", userId);
-    console.log("updateData received:", updateData);
-
     const existingUser = await this.userRepository.findById(userId);
     if (!existingUser) {
       throw new Error("User not found");
@@ -102,14 +99,11 @@ class UserService implements IUserService {
       "buffer" in updateData.avatar
     ) {
       try {
-        console.log("Processing avatar upload");
-
         const avatarFile = updateData.avatar as Express.Multer.File;
         let processedBuffer = avatarFile.buffer;
 
         if (updateData.cropData) {
           const { x, y, width, height } = updateData.cropData;
-          console.log("Applying crop data:", updateData.cropData);
 
           processedBuffer = (await cropAndSave(
             x,
@@ -128,7 +122,6 @@ class UserService implements IUserService {
         if (existingUser.avatar) {
           try {
             await this.s3Service.deleteFile(existingUser.avatar);
-            console.log("Old avatar deleted from S3");
           } catch (deleteError) {
             console.warn("Failed to delete old avatar:", deleteError);
           }
@@ -140,18 +133,14 @@ class UserService implements IUserService {
         );
 
         updateData.avatar = avatarS3Key;
-        console.log("New avatar uploaded:", avatarS3Key);
       } catch (uploadError) {
         console.error("Avatar upload error:", uploadError);
         throw new Error("Failed to upload avatar. Please try again.");
       }
     } else if (updateData.avatar === null) {
-      console.log("Deleting avatar");
-
       if (existingUser.avatar) {
         try {
           await this.s3Service.deleteFile(existingUser.avatar);
-          console.log("Avatar deleted from S3");
         } catch (deleteError) {
           console.warn("Failed to delete avatar:", deleteError);
         }

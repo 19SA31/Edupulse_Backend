@@ -49,8 +49,6 @@ export class CourseController {
         searchTerm
       );
 
-      console.log("fetched Courses", result);
-
       res.status(HTTP_statusCode.OK).json(
         new ResponseModel(true, "Courses fetched successfully", {
           courses: result.courses,
@@ -164,7 +162,6 @@ export class CourseController {
   async publishCourse(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      console.log("inside publishcourse", id);
       if (!id) {
         res
           .status(HTTP_statusCode.BadRequest)
@@ -200,7 +197,6 @@ export class CourseController {
     try {
       const { id } = req.params;
       const { reason } = req.body;
-      console.log("inside rejectCourse", id, reason);
 
       if (!id) {
         res
@@ -266,7 +262,6 @@ export class CourseController {
         pageLimit,
         search
       );
-      console.log(result);
       const response = new ResponseModel(
         true,
         "Courses fetched successfully",
@@ -293,7 +288,6 @@ export class CourseController {
   async listUnlistCourse(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      console.log("listUnlistCourse", id);
       await this._CourseService.listUnlistCourseService(id);
       res
         .status(HTTP_statusCode.OK)
@@ -355,11 +349,6 @@ export class CourseController {
         limit = 50,
       } = req.query;
 
-      console.log("getAllListedCourses",search,
-        category,
-        minPrice,
-        maxPrice,
-        sortBy,)
       const filters = {
         search: search as string,
         category: category as string,
@@ -404,7 +393,6 @@ export class CourseController {
       }
 
       const courses = await this._CourseService.getAllListedCourses(filters);
-      console.log("result  getAllListedCourses",courses)
       res
         .status(HTTP_statusCode.OK)
         .json(
@@ -464,7 +452,6 @@ export class CourseController {
   async getCourseDetails(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      console.log("getCourseDetails", id);
       const courseDetails = await this._CourseService.getCourseDetails(id);
       res
         .status(HTTP_statusCode.OK)

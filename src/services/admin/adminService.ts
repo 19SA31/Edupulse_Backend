@@ -66,8 +66,6 @@ export class AdminService implements IAdminService {
             ) * limit
           : 0;
 
-      console.log("result", usersWithAvatars);
-
       return {
         users: usersWithAvatars,
         totalPages: result.totalPages,
@@ -119,8 +117,6 @@ export class AdminService implements IAdminService {
                 (result.tutors.length / Math.min(result.tutors.length, limit))
             ) * limit
           : 0;
-
-      console.log("result", tutorsWithAvatars);
 
       return {
         tutors: tutorsWithAvatars,
@@ -333,8 +329,6 @@ export class AdminService implements IAdminService {
                   Math.min(result.tutorDocs.length, limit))
             ) * limit
           : 0;
-
-      console.log("tutor docs result", tutorDocsWithUrls);
 
       return {
         tutorDocs: tutorDocsWithUrls,

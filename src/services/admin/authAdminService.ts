@@ -16,14 +16,11 @@ export class AuthAdminService implements IAdminAuthServiceInterface {
 
   async loginService(adminData: AdminLoginRequestDTO): Promise<AdminLoginServiceResultDTO> {
     try {
-      console.log("Reached login service");
       
       const verificationResult = await this.AuthRepository.verifyAdmin(
         adminData.email, 
         adminData.password
       );
-      
-      console.log("verification result in service", verificationResult);
       
       if (!verificationResult.isValid) {
         return {

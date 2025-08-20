@@ -72,7 +72,7 @@ export class CourseRepository
   }
   async rejectCourse(courseId: string): Promise<CourseReject> {
     const course = await this.findOne({ _id: courseId });
-    console.log("rejectCourse", course);
+
     if (!course) {
       throw new Error("Course not found");
     }
@@ -80,7 +80,7 @@ export class CourseRepository
     const tutor = await this._tutorRepository.findOne({
       _id: course.tutorId,
     });
-    console.log("inside cour reject repo", tutor);
+
     if (!tutor) {
       throw new Error("Tutor not found");
     }

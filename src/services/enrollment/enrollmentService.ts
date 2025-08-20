@@ -129,7 +129,6 @@ class EnrollmentService {
           updatedEnrollment = updated;
         }
         message = "Payment verified successfully";
-        console.log(`Enrollment ${enrollment._id} marked as paid`);
       } else if (session.status === "expired") {
         const updated = await this.enrollmentRepository.updateStatus(
           (enrollment._id as mongoose.Types.ObjectId).toString(),
@@ -139,7 +138,6 @@ class EnrollmentService {
           updatedEnrollment = updated;
         }
         message = "Payment session expired";
-        console.log(`Enrollment ${enrollment._id} marked as failed`);
       } else {
         message = "Payment still pending";
       }

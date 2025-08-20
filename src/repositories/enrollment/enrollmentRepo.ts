@@ -5,7 +5,8 @@ import { PopulateOptions } from "mongoose";
 
 class EnrollmentRepository
   extends BaseRepository<IEnrollment>
-  implements IEnrollmentRepository {
+  implements IEnrollmentRepository
+{
   constructor() {
     super(Enrollment);
   }
@@ -20,7 +21,6 @@ class EnrollmentRepository
   ): Promise<IEnrollment | null> {
     return await this.update(id, { status });
   }
-
 
   async findUserEnrollmentsWithPagination(
     userId: string,
@@ -40,71 +40,50 @@ class EnrollmentRepository
         path: "courseId",
         select: "title thumbnailImage price",
       },
-      { 
-        path: "tutorId", 
-        select: "name" 
+      {
+        path: "tutorId",
+        select: "name",
       },
-      { 
-        path: "categoryId", 
-        select: "name" 
+      {
+        path: "categoryId",
+        select: "name",
       },
     ];
 
     let enrollments: IEnrollment[] = [];
     let totalCount: number = 0;
 
-    if (search) {
-      const searchRegex = new RegExp(search, "i");
-      
-      const pipeline = [
-        { $match: filter },
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), "i");
+
+      const populateOptionsWithSearch: PopulateOptions[] = [
         {
-          $lookup: {
-            from: "courses",
-            localField: "courseId",
-            foreignField: "_id",
-            as: "courseData"
-          }
+          path: "courseId",
+          select: "title thumbnailImage price",
+          match: { title: { $regex: searchRegex } },
         },
         {
-          $lookup: {
-            from: "users",
-            localField: "tutorId", 
-            foreignField: "_id",
-            as: "tutorData"
-          }
+          path: "tutorId",
+          select: "name",
+          match: { name: { $regex: searchRegex } },
         },
         {
-          $match: {
-            $or: [
-              { "courseData.title": { $regex: searchRegex } },
-              { "tutorData.name": { $regex: searchRegex } }
-            ]
-          }
+          path: "categoryId",
+          select: "name",
         },
-        {
-          $facet: {
-            data: [
-              { $skip: skip },
-              { $limit: limit }
-            ],
-            count: [
-              { $count: "total" }
-            ]
-          }
-        }
       ];
 
-      const result = await this.aggregate(pipeline);
-      const enrollmentIds = result[0]?.data?.map((item: any) => item._id) || [];
-      totalCount = result[0]?.count[0]?.total || 0;
+      const allEnrollments = await this.findWithConditionAndPopulate(
+        filter,
+        populateOptionsWithSearch
+      );
 
-      if (enrollmentIds.length > 0) {
-        enrollments = await this.findWithConditionAndPopulate(
-          { _id: { $in: enrollmentIds } },
-          defaultPopulateOptions
-        );
-      }
+      const filteredEnrollments = allEnrollments.filter(
+        (enrollment: any) => enrollment.courseId || enrollment.tutorId
+      );
+
+      totalCount = filteredEnrollments.length;
+      enrollments = filteredEnrollments.slice(skip, skip + limit);
     } else {
       enrollments = await this.findWithPagination(
         filter,
@@ -116,6 +95,13 @@ class EnrollmentRepository
     }
 
     const totalPages = Math.ceil(totalCount / limit);
+
+    console.log("Final result:", {
+      enrollmentsCount: enrollments.length,
+      totalPages,
+      totalCount,
+      search: search || "none",
+    });
 
     return {
       enrollments,

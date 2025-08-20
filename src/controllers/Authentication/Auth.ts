@@ -170,8 +170,7 @@ export class AuthenticationController {
     next: NextFunction
   ): Promise<void> {
     try {
-      console.log("inside create tutor auth");
-      console.log(req.body);
+
 
       await this.tutorAuthService.signUp(req.body);
 
@@ -188,12 +187,11 @@ export class AuthenticationController {
     next: NextFunction
   ): Promise<void> {
     try {
-      console.log("inside verify otp controller");
-      console.log("inside verify otp data:", req.body);
+
 
       await this.tutorAuthService.otpCheck(req.body);
 
-      console.log("OTP Verified Successfully!");
+ 
       const response = new ResponseModel(true, "OTP verified successfully");
       res.status(HTTP_statusCode.OK).json(response);
     } catch (error: any) {
@@ -208,7 +206,6 @@ export class AuthenticationController {
   ): Promise<void> {
     try {
       const loginResult = await this.tutorAuthService.loginService(req.body);
-      console.log("tutorLogin responssssssse: ", loginResult);
 
       const response = new ResponseModel(true, "Tutor logged in successfully", {
         accessToken: loginResult.accessToken,
@@ -297,7 +294,6 @@ export class AuthenticationController {
         serviceResult.refreshToken
       );
 
-      console.log("admin logged in successfully");
 
       const response = new ResponseModel(true, "Admin logged in successfully", {
         accessToken: serviceResult.accessToken,

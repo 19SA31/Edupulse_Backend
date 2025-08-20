@@ -42,8 +42,6 @@ export class TutorService implements ITutorService {
     tutorId: string,
     updateData: UpdateProfileData
   ): Promise<{ tutor: TutorProfileData }> {
-    console.log("Updating tutor profile:", tutorId);
-
     const existingTutor = await this._tutorRepository.findById(tutorId);
     if (!existingTutor) {
       throw new Error("Tutor not found");
@@ -286,8 +284,6 @@ export class TutorService implements ITutorService {
 
     if (this.isAvatarFile(updateData.avatar)) {
       try {
-        console.log("Processing tutor avatar upload");
-
         const avatarFile = updateData.avatar as Express.Multer.File;
         let processedBuffer = avatarFile.buffer;
 
@@ -313,14 +309,11 @@ export class TutorService implements ITutorService {
           processedFile
         );
         processedData.avatar = avatarS3Key;
-
-        console.log("New tutor avatar uploaded:", avatarS3Key);
       } catch (uploadError) {
         console.error("Tutor avatar upload error:", uploadError);
         throw new Error("Failed to upload avatar. Please try again.");
       }
     } else if (updateData.avatar === null && existingTutor.avatar) {
-      console.log("Deleting tutor avatar");
       await this.safeDeleteFile(existingTutor.avatar);
     }
 
@@ -340,7 +333,6 @@ export class TutorService implements ITutorService {
   private async safeDeleteFile(fileKey: string): Promise<void> {
     try {
       await this._s3Service.deleteFile(fileKey);
-      console.log("File deleted from S3:", fileKey);
     } catch (deleteError) {
       console.warn("Failed to delete file:", deleteError);
     }
