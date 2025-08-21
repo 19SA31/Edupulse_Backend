@@ -189,4 +189,17 @@ userRoute.get(
   enrollmentController.getUserEnrollments.bind(enrollmentController)
 );
 
+userRoute.get(
+  "/enrollment-counts",
+  verifyToken("user"),
+  authMiddleware,
+  enrollmentController.getEnrollmentCounts.bind(enrollmentController)
+);
+
+userRoute.get(
+  "/courses-enrolled",
+  verifyToken("user"),
+  enrollmentController.getEnrolledCourses.bind(enrollmentController)
+);
+
 export default userRoute;

@@ -29,4 +29,6 @@ export interface IEnrollmentRepository {
     limit: number,
     populateOptions?: PopulateOptions[]
   ): Promise<IEnrollment[]>;
+  findAllEnrollments():Promise<IEnrollment[]>
+  findAllEnrolledCourses(userId:string):Promise<IEnrollment[]>
 }

@@ -13,6 +13,8 @@ import {
   EnrollmentVerificationResponseDTO,
   EnrollmentResponseDTO,
   EnrollmentErrorDTO,
+  EnrollmentCountsDTO,
+  EnrolledCoursesDTO,
 } from "../../dto/enrollment/enrollmentDTO";
 import { EnrollmentMapper } from "../../mappers/enrollment/enrollmentMapper";
 
@@ -222,6 +224,33 @@ class EnrollmentService {
     } catch (error) {
       console.error("Error getting enrollment by payment ID:", error);
       throw error;
+    }
+  }
+
+  async getEnrollmentCounts(): Promise<EnrollmentCountsDTO | null> {
+    try {
+      const enrollments =
+        await this.enrollmentRepository.findAllEnrollments();
+      if (!enrollments) {
+        return null;
+      }
+      return EnrollmentMapper.toEnrollmentCounts(enrollments)
+    } catch (error) {
+      console.error("Error in getting enrollment counts");
+      return null
+    }
+  }
+
+  async getEnrolledCourses(userId:string): Promise<EnrolledCoursesDTO[]|null>{
+    try {
+      const enrollments = await this.enrollmentRepository.findAllEnrolledCourses(userId);
+      if(!enrollments){
+        return null
+      }
+      return EnrollmentMapper.toEnrolledCourses(enrollments)
+    } catch (error) {
+      console.error("Error in fetching enrolled courses")
+      return null
     }
   }
 }

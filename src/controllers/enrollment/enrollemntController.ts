@@ -319,6 +319,83 @@ class EnrollmentController {
       }
     }
   };
+
+  getEnrollmentCounts = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const enrollmentsWithCounts =
+        await this.enrollmentService.getEnrollmentCounts();
+      if (!enrollmentsWithCounts) {
+        res
+          .status(HTTP_statusCode.NotFound)
+          .json(new ResponseModel(false, "No data found", null));
+      }
+      res
+        .status(HTTP_statusCode.OK)
+        .json(
+          new ResponseModel(
+            true,
+            "enrollment counts fetched successfully",
+            enrollmentsWithCounts
+          )
+        );
+    } catch (error: unknown) {
+      console.error("Get enrollment counts error:", error);
+
+      if (error instanceof ValidationError || error instanceof Error) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(new ResponseModel(false, (error as Error).message, null));
+      } else {
+        res
+          .status(HTTP_statusCode.InternalServerError)
+          .json(
+            new ResponseModel(false, "Failed to get enrollment counts", null)
+          );
+      }
+    }
+  };
+  getEnrolledCourses = async (
+    req: AuthRequest,
+    res: Response
+  ): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        res
+          .status(HTTP_statusCode.Unauthorized)
+          .json(new ResponseModel(false, "User authentication required", null));
+        return;
+      }
+      const enrolledCourses = await this.enrollmentService.getEnrolledCourses(
+        userId
+      );
+      if (!enrolledCourses) {
+        res
+          .status(HTTP_statusCode.NotFound)
+          .json(new ResponseModel(false, "No enrolled courses", null));
+      }
+      res
+        .status(HTTP_statusCode.OK)
+        .json(
+          new ResponseModel(true, "fetched enrolled courses", enrolledCourses)
+        );
+    } catch (error: unknown) {
+      console.error("Get enrolled courses error:", error);
+
+      if (error instanceof ValidationError || error instanceof Error) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(new ResponseModel(false, (error as Error).message, null));
+      } else {
+        res
+          .status(HTTP_statusCode.InternalServerError)
+          .json(
+            new ResponseModel(false, "Failed to get enrolled courses", null)
+          );
+      }
+    }
+  };
 }
 
 export default EnrollmentController;

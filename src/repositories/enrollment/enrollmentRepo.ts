@@ -120,6 +120,16 @@ class EnrollmentRepository
       status: "paid",
     });
   }
+
+  async findAllEnrollments():Promise<IEnrollment[]>{
+    return await this.findAll()
+  }
+
+  async findAllEnrolledCourses(userId:string):Promise<IEnrollment[]>{
+    return await this.findWithCondition({userId:userId})
+  }
+
+
 }
 
 export default EnrollmentRepository;
