@@ -9,6 +9,10 @@ import {
   GetUserEnrollmentsDTO,
   VerifyUserEnrollmentDTO,
 } from "../../dto/enrollment/enrollmentDTO";
+import {
+  sendCoursePurchaseEmail,
+  tutorNotificationEmail,
+} from "../../config/emailConfig";
 
 interface AuthRequest extends Request {
   user?: {
@@ -51,6 +55,12 @@ class EnrollmentController {
       const result = await this.enrollmentService.createEnrollment(
         createEnrollmentDTO
       );
+
+      if (!result) {
+        res
+          .status(HTTP_statusCode.TaskFailed)
+          .json(new ResponseModel(false, "payment session failed", null));
+      }
 
       res.status(HTTP_statusCode.OK).json({
         success: true,
@@ -104,6 +114,66 @@ class EnrollmentController {
       const result = await this.enrollmentService.verifyPaymentAndUpdateStatus(
         verifyPaymentDTO
       );
+
+
+
+      if (!result.enrollment?.paymentId) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(new ResponseModel(false, "Payment ID is missing", null));
+        return;
+      }
+
+      const purchaseData = await this.enrollmentService.getPaymentData(
+        result.enrollment?.paymentId
+      );
+
+      if (!purchaseData) {
+        res
+          .status(HTTP_statusCode.NotFound)
+          .json(
+            new ResponseModel(
+              false,
+              result.message || "Enrollment not found",
+              null
+            )
+          );
+        return;
+      }
+
+      const emailSend = await sendCoursePurchaseEmail(
+        purchaseData.userEmail,
+        purchaseData.userName,
+        purchaseData.courseTitle,
+        purchaseData.tutorName,
+        purchaseData.price.toString()
+      );
+
+      if (!emailSend) {
+        res
+          .status(HTTP_statusCode.TaskFailed)
+          .json(new ResponseModel(false, "Purchase mail sending failed", null));
+      }
+
+      const tutorMail = await tutorNotificationEmail(
+        purchaseData.userEmail,
+        purchaseData.userName,
+        purchaseData.courseTitle,
+        purchaseData.tutorName,
+        purchaseData.tutorEmail
+      );
+
+      if (!tutorMail) {
+        res
+          .status(HTTP_statusCode.TaskFailed)
+          .json(
+            new ResponseModel(
+              false,
+              "Failed Tutor notification mail ",
+              null
+            )
+          );
+      }
 
       if (!result.enrollment) {
         res

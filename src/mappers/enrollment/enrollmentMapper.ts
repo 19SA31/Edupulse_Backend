@@ -11,8 +11,10 @@ import {
   PopulatedEnrollmentResponseDTO,
   EnrollmentCountsDTO,
   EnrollmentCount,
-  EnrolledCoursesDTO
+  EnrolledCoursesDTO,
+  PurchaseEmailDTO,
 } from "../../dto/enrollment/enrollmentDTO";
+import { PopulatedEnrollment } from "../../interfaces/enrollment/enrollmentInterface";
 
 export class EnrollmentMapper {
   static toDomainModel(dto: CreateEnrollmentDTO): CreateEnrollmentData {
@@ -225,28 +227,38 @@ export class EnrollmentMapper {
     };
   }
 
-  static toEnrollmentCounts(enrollments:IEnrollment[]):EnrollmentCountsDTO{
-    const counts: Record<string,number>={}
+  static toEnrollmentCounts(enrollments: IEnrollment[]): EnrollmentCountsDTO {
+    const counts: Record<string, number> = {};
 
-    for(const enrollment of enrollments){
-      const courseId = enrollment.courseId.toString()
-      counts[courseId] =(counts[courseId] || 0)+1 
+    for (const enrollment of enrollments) {
+      const courseId = enrollment.courseId.toString();
+      counts[courseId] = (counts[courseId] || 0) + 1;
     }
 
     const result: EnrollmentCount[] = Object.entries(counts).map(
       ([courseId, count]) => ({
         courseId,
-        count
+        count,
       })
-    )
+    );
 
-    return {enrollments: result}
+    return { enrollments: result };
   }
 
-static toEnrolledCourses(enrollments: IEnrollment[]): EnrolledCoursesDTO[] {
-  return enrollments.map(e => ({
-    courseId: e.courseId.toString()
-  }));
-}
+  static toEnrolledCourses(enrollments: IEnrollment[]): EnrolledCoursesDTO[] {
+    return enrollments.map((e) => ({
+      courseId: e.courseId.toString(),
+    }));
+  }
 
+  static toEmailData(data: PopulatedEnrollment): PurchaseEmailDTO {
+    return {
+      userEmail: data.userId.email,
+      userName: data.userId.name,
+      courseTitle: data.courseId.title,
+      tutorEmail: data.tutorId.email,
+      tutorName: data.tutorId.name,
+      price: data.price,
+    };
+  }
 }

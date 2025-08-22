@@ -39,3 +39,23 @@ export interface ExportParams {
   endDate?: string;
   status?: string;
 }
+
+interface PopulatedUser {
+  name: string;
+  email: string;
+}
+
+interface PopulatedTutor {
+  name: string;
+  email: string;
+}
+
+interface PopulatedCourse {
+  title: string;
+}
+
+ export type PopulatedEnrollment = Omit<Enrollment, "userId" | "tutorId" | "courseId"> & {
+  userId: PopulatedUser;
+  tutorId: PopulatedTutor;
+  courseId: PopulatedCourse;
+};

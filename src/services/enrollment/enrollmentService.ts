@@ -12,9 +12,9 @@ import {
   PaymentVerificationResponseDTO,
   EnrollmentVerificationResponseDTO,
   EnrollmentResponseDTO,
-  EnrollmentErrorDTO,
   EnrollmentCountsDTO,
   EnrolledCoursesDTO,
+  PurchaseEmailDTO,
 } from "../../dto/enrollment/enrollmentDTO";
 import { EnrollmentMapper } from "../../mappers/enrollment/enrollmentMapper";
 
@@ -229,28 +229,46 @@ class EnrollmentService {
 
   async getEnrollmentCounts(): Promise<EnrollmentCountsDTO | null> {
     try {
-      const enrollments =
-        await this.enrollmentRepository.findAllEnrollments();
+      const enrollments = await this.enrollmentRepository.findAllEnrollments();
       if (!enrollments) {
         return null;
       }
-      return EnrollmentMapper.toEnrollmentCounts(enrollments)
+      return EnrollmentMapper.toEnrollmentCounts(enrollments);
     } catch (error) {
       console.error("Error in getting enrollment counts");
-      return null
+      return null;
     }
   }
 
-  async getEnrolledCourses(userId:string): Promise<EnrolledCoursesDTO[]|null>{
+  async getEnrolledCourses(
+    userId: string
+  ): Promise<EnrolledCoursesDTO[] | null> {
     try {
-      const enrollments = await this.enrollmentRepository.findAllEnrolledCourses(userId);
-      if(!enrollments){
-        return null
+      const enrollments =
+        await this.enrollmentRepository.findAllEnrolledCourses(userId);
+      if (!enrollments) {
+        return null;
       }
-      return EnrollmentMapper.toEnrolledCourses(enrollments)
+      return EnrollmentMapper.toEnrolledCourses(enrollments);
     } catch (error) {
-      console.error("Error in fetching enrolled courses")
-      return null
+      console.error("Error in fetching enrolled courses");
+      return null;
+    }
+  }
+
+  async getPaymentData(paymentId: string): Promise<PurchaseEmailDTO | null> {
+    try {
+      const data = await this.enrollmentRepository.getPurchaseMailData(
+        paymentId
+      );
+      if (!data) {
+        return null;
+      }
+
+      return EnrollmentMapper.toEmailData(data);
+    } catch (error) {
+      console.error("error in fetching payment data:", error);
+      throw new Error(`Failed to fetch payment data: ${error}`);
     }
   }
 }

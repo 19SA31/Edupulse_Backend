@@ -62,6 +62,15 @@ export interface PopulatedEnrollmentResponseDTO {
   dateOfEnrollment: string;
 }
 
+export interface PurchaseEmailDTO {
+  userEmail:string;
+  userName: string;
+  courseTitle: string;
+  tutorEmail: string;
+  tutorName: string;
+  price: number;
+}
+
 export interface CreateEnrollmentResponseDTO {
   enrollment: EnrollmentResponseDTO;
   sessionId: string;
@@ -101,13 +110,13 @@ export interface EnrollmentValidationDTO {
   errors: string[];
 }
 
-export interface EnrollmentCount{
-  courseId:string;
-  count:number;
+export interface EnrollmentCount {
+  courseId: string;
+  count: number;
 }
 
-export interface EnrollmentCountsDTO{
-  enrollments: EnrollmentCount[]
+export interface EnrollmentCountsDTO {
+  enrollments: EnrollmentCount[];
 }
 
 export interface EnrolledCoursesDTO {

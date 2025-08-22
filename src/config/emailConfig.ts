@@ -4,6 +4,8 @@ import {
   otpTemplate,
   rejectionEmailTemplate,
   courseRejectionEmailTemplate,
+  coursePurchaseEmailTemplate,
+  tutorNotificationEmailTemplate
 } from "../utils/emailTemplate";
 
 dotenv.config();
@@ -108,5 +110,76 @@ export const sendCourseRejectionEmail = async (
     });
   });
 };
+
+export const sendCoursePurchaseEmail = async (
+  email: string,
+  userName: string,
+  courseTitle: string,
+  tutorName: string,
+  price: string
+): Promise<boolean> => {
+  return new Promise((resolve, reject) => {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER as string,
+        pass: process.env.EMAIL_PASS as string,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL as string,
+      to: email,
+      subject: "Course Purchase Confirmation - Edupulse",
+      html: coursePurchaseEmailTemplate(userName, courseTitle, tutorName, price),
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending purchase confirmation email:", error);
+        resolve(false);
+      } else {
+        console.log("Purchase confirmation email sent: " + info.response);
+        resolve(true);
+      }
+    });
+  });
+};
+
+export const tutorNotificationEmail = async (
+  userEmail: string,
+  userName: string,
+  courseTitle: string,
+  tutorName: string,
+  tutorEmail: string,
+): Promise<boolean> => {
+  return new Promise((resolve, reject) => {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER as string,
+        pass: process.env.EMAIL_PASS as string,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL as string,
+      to: tutorEmail,
+      subject: "New Enrollment - Edupulse",
+      html: tutorNotificationEmailTemplate(tutorName, courseTitle, userName, userEmail),
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending tutor notification email:", error);
+        resolve(false);
+      } else {
+        console.log("Tutor notification email sent: " + info.response);
+        resolve(true);
+      }
+    });
+  });
+};
+
 
 export default sendMail;

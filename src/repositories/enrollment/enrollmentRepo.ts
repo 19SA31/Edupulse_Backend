@@ -2,6 +2,7 @@ import BaseRepository from "../BaseRepository";
 import Enrollment, { IEnrollment } from "../../models/EnrollmentModel";
 import { IEnrollmentRepository } from "../../interfaces/enrollment/enrollmentRepoInterface";
 import { PopulateOptions } from "mongoose";
+import { PopulatedEnrollment } from "../../interfaces/enrollment/enrollmentInterface"
 
 class EnrollmentRepository
   extends BaseRepository<IEnrollment>
@@ -13,6 +14,14 @@ class EnrollmentRepository
 
   async findByPaymentId(paymentId: string): Promise<IEnrollment | null> {
     return await this.findOne({ paymentId });
+  }
+
+  async getPurchaseMailData(paymentId: string): Promise<PopulatedEnrollment | null> {
+    return await Enrollment.findOne({ paymentId })
+      .populate("userId", "name email") 
+      .populate("tutorId", "name email") 
+      .populate("courseId", "title") 
+      .exec() as unknown as PopulatedEnrollment | null;
   }
 
   async updateStatus(
@@ -121,15 +130,13 @@ class EnrollmentRepository
     });
   }
 
-  async findAllEnrollments():Promise<IEnrollment[]>{
-    return await this.findAll()
+  async findAllEnrollments(): Promise<IEnrollment[]> {
+    return await this.findAll();
   }
 
-  async findAllEnrolledCourses(userId:string):Promise<IEnrollment[]>{
-    return await this.findWithCondition({userId:userId})
+  async findAllEnrolledCourses(userId: string): Promise<IEnrollment[]> {
+    return await this.findWithCondition({ userId: userId });
   }
-
-
 }
 
 export default EnrollmentRepository;

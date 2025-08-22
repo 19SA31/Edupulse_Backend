@@ -61,7 +61,7 @@ export class CourseService implements ICourseService {
         thumbnailImage: thumbnailUrl,
         chapters: processedChapters,
         tutorId: courseDto.tutorId as any,
-        isListed: true,
+        isListed: false,
         enrollmentCount: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -273,7 +273,6 @@ export class CourseService implements ICourseService {
   async getAllCourses(): Promise<ListedCourseDTO[]> {
     try {
       const courses = await this._courseRepo.findAllListedCourses();
-
       await Promise.all(
         courses.map(async (course) => {
           try {
@@ -408,4 +407,6 @@ export class CourseService implements ICourseService {
       throw new Error(`Failed to fetch course details: ${error}`);
     }
   }
+
+
 }

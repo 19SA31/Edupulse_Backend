@@ -1,5 +1,6 @@
 import { IEnrollment } from "../../models/EnrollmentModel";
 import { PopulateOptions } from "mongoose";
+import { PopulatedEnrollment } from "./enrollmentInterface";
 
 export interface IEnrollmentRepository {
   create(data: Partial<IEnrollment>): Promise<IEnrollment>;
@@ -31,4 +32,5 @@ export interface IEnrollmentRepository {
   ): Promise<IEnrollment[]>;
   findAllEnrollments():Promise<IEnrollment[]>
   findAllEnrolledCourses(userId:string):Promise<IEnrollment[]>
+  getPurchaseMailData(paymentId: string): Promise<PopulatedEnrollment | null>
 }
