@@ -26,12 +26,9 @@ export class TutorController {
 
   getTutorProfile = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-
-
       const userId = req.user?.id;
 
       if (!userId) {
-
         res
           .status(HTTP_statusCode.Unauthorized)
           .json(
@@ -75,7 +72,6 @@ export class TutorController {
     res: Response
   ): Promise<void> => {
     try {
-
       const userId = req.user?.id;
 
       if (!userId) {
@@ -87,14 +83,12 @@ export class TutorController {
         return;
       }
 
-
       const avatarFile = req.file;
 
       let cropData: CropData | undefined;
       if (req.body.cropData) {
         try {
           cropData = JSON.parse(req.body.cropData);
-
 
           if (cropData && typeof cropData === "object") {
             const { x, y, width, height } = cropData;
@@ -104,7 +98,6 @@ export class TutorController {
               typeof width !== "number" ||
               typeof height !== "number"
             ) {
-
               res
                 .status(HTTP_statusCode.BadRequest)
                 .json(new ResponseModel(false, "Invalid crop data structure"));
@@ -112,7 +105,6 @@ export class TutorController {
             }
 
             if (x < 0 || y < 0 || width <= 0 || height <= 0) {
-
               res
                 .status(HTTP_statusCode.BadRequest)
                 .json(new ResponseModel(false, "Invalid crop data values"));
@@ -120,7 +112,6 @@ export class TutorController {
             }
           }
         } catch (error) {
-
           res
             .status(HTTP_statusCode.BadRequest)
             .json(new ResponseModel(false, "Invalid crop data format"));
@@ -131,7 +122,6 @@ export class TutorController {
       if (avatarFile) {
         const maxSize = 5 * 1024 * 1024;
         if (avatarFile.size > maxSize) {
-
           res
             .status(HTTP_statusCode.BadRequest)
             .json(new ResponseModel(false, "File size exceeds 5MB limit"));
@@ -146,7 +136,6 @@ export class TutorController {
           "image/webp",
         ];
         if (!allowedTypes.includes(avatarFile.mimetype)) {
-
           res
             .status(HTTP_statusCode.BadRequest)
             .json(
@@ -162,7 +151,6 @@ export class TutorController {
           const { x, y, width, height } = cropData;
 
           if (width > 5000 || height > 5000) {
-
             res
               .status(HTTP_statusCode.BadRequest)
               .json(new ResponseModel(false, "Crop area is too large"));
@@ -201,7 +189,6 @@ export class TutorController {
       if (cropData) {
         updateData.cropData = cropData;
       }
-
 
       if (Object.keys(updateData).length === 0) {
         res
@@ -350,49 +337,6 @@ export class TutorController {
     }
   }
 
-  async getVerificationStatus(req: Request, res: Response): Promise<void> {
-    try {
-      const { email, phone } = req.query;
-
-      if (!email && !phone) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, "Email or phone number is required"));
-        return;
-      }
-
-      const requestDTO = TutorMapper.mapGetVerificationStatusRequest(req);
-
-      const result = await this._tutorService.getVerificationStatus(requestDTO);
-
-      if (result.success) {
-        res
-          .status(HTTP_statusCode.OK)
-          .json(
-            new ResponseModel(
-              true,
-              "Verification status retrieved successfully",
-              result.data
-            )
-          );
-      } else {
-        res
-          .status(HTTP_statusCode.NotFound)
-          .json(new ResponseModel(false, result.message));
-      }
-    } catch (error: any) {
-      console.error("Error getting verification status:", error);
-      res
-        .status(HTTP_statusCode.InternalServerError)
-        .json(
-          new ResponseModel(
-            false,
-            "Internal server error while getting verification status"
-          )
-        );
-    }
-  }
-
   async getVerificationDocuments(req: Request, res: Response): Promise<void> {
     try {
       const { tutorId } = req.params;
@@ -458,6 +402,37 @@ export class TutorController {
         const response = new ResponseModel(
           false,
           "Error fetching listed courses",
+          null
+        );
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
+    }
+  }
+
+  async getTutorCourses(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        res
+          .status(HTTP_statusCode.Unauthorized)
+          .json(
+            new ResponseModel(false, "Unauthorized: User not authenticated")
+          );
+        return;
+      }
+
+      const { page, limit, search } = req.params
+      
+    } catch (error: unknown) {
+      if (error instanceof ValidationError) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(new ResponseModel(false, error.message, null));
+      } else {
+        const response = new ResponseModel(
+          false,
+          "Error fetching tutor courses",
           null
         );
         res.status(HTTP_statusCode.InternalServerError).json(response);

@@ -12,14 +12,17 @@ import {
   PaymentVerificationResponseDTO,
   EnrollmentVerificationResponseDTO,
   EnrollmentResponseDTO,
-  EnrollmentCountsDTO,
   EnrolledCoursesDTO,
   PurchaseEmailDTO,
 } from "../../dto/enrollment/enrollmentDTO";
 import { EnrollmentMapper } from "../../mappers/enrollment/enrollmentMapper";
+import { ICourseRepoInterface } from "../../interfaces/course/courseRepoInterface";
 
 class EnrollmentService {
-  constructor(private enrollmentRepository: IEnrollmentRepository) {}
+  constructor(
+    private enrollmentRepository: IEnrollmentRepository,
+    private courseRepository: ICourseRepoInterface
+  ) {}
 
   async createEnrollment(
     dto: CreateEnrollmentDTO
@@ -129,8 +132,10 @@ class EnrollmentService {
         );
         if (updated) {
           updatedEnrollment = updated;
+          await this.courseRepository.addEnrollment(updated?.courseId.toString())          
         }
         message = "Payment verified successfully";
+
       } else if (session.status === "expired") {
         const updated = await this.enrollmentRepository.updateStatus(
           (enrollment._id as mongoose.Types.ObjectId).toString(),
@@ -224,19 +229,6 @@ class EnrollmentService {
     } catch (error) {
       console.error("Error getting enrollment by payment ID:", error);
       throw error;
-    }
-  }
-
-  async getEnrollmentCounts(): Promise<EnrollmentCountsDTO | null> {
-    try {
-      const enrollments = await this.enrollmentRepository.findAllEnrollments();
-      if (!enrollments) {
-        return null;
-      }
-      return EnrollmentMapper.toEnrollmentCounts(enrollments);
-    } catch (error) {
-      console.error("Error in getting enrollment counts");
-      return null;
     }
   }
 

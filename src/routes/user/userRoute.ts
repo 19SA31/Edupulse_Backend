@@ -79,7 +79,10 @@ const tutorService = new TutorService(tutorRepository, s3Service);
 const tutorController = new TutorController(tutorService);
 
 const enrollmentRepository = new EnrollmentRepository();
-const enrollmentService = new EnrollmentService(enrollmentRepository);
+const enrollmentService = new EnrollmentService(
+  enrollmentRepository,
+  courseRepository
+);
 const enrollmentController = new EnrollmentController(enrollmentService);
 
 userRoute.post(
@@ -187,13 +190,6 @@ userRoute.get(
   verifyToken("user"),
   authMiddleware,
   enrollmentController.getUserEnrollments.bind(enrollmentController)
-);
-
-userRoute.get(
-  "/enrollment-counts",
-  verifyToken("user"),
-  authMiddleware,
-  enrollmentController.getEnrollmentCounts.bind(enrollmentController)
 );
 
 userRoute.get(

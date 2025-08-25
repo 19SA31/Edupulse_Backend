@@ -24,10 +24,6 @@ export interface ITutorService {
     requestDTO: SubmitVerificationDocumentsRequestDTO
   ): Promise<ServiceResponse<SubmitVerificationDocumentsResponseDTO>>;
 
-  getVerificationStatus(
-    requestDTO: GetVerificationStatusRequestDTO
-  ): Promise<ServiceResponse<GetVerificationStatusResponseDTO>>;
-
   getVerificationDocuments(
     requestDTO: GetVerificationDocumentsRequestDTO
   ): Promise<ServiceResponse<GetVerificationDocumentsResponseDTO>>;

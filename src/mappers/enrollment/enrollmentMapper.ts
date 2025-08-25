@@ -9,8 +9,6 @@ import {
   EnrollmentVerificationResponseDTO,
   GetUserEnrollmentsDTO,
   PopulatedEnrollmentResponseDTO,
-  EnrollmentCountsDTO,
-  EnrollmentCount,
   EnrolledCoursesDTO,
   PurchaseEmailDTO,
 } from "../../dto/enrollment/enrollmentDTO";
@@ -227,23 +225,6 @@ export class EnrollmentMapper {
     };
   }
 
-  static toEnrollmentCounts(enrollments: IEnrollment[]): EnrollmentCountsDTO {
-    const counts: Record<string, number> = {};
-
-    for (const enrollment of enrollments) {
-      const courseId = enrollment.courseId.toString();
-      counts[courseId] = (counts[courseId] || 0) + 1;
-    }
-
-    const result: EnrollmentCount[] = Object.entries(counts).map(
-      ([courseId, count]) => ({
-        courseId,
-        count,
-      })
-    );
-
-    return { enrollments: result };
-  }
 
   static toEnrolledCourses(enrollments: IEnrollment[]): EnrolledCoursesDTO[] {
     return enrollments.map((e) => ({

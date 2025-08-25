@@ -222,4 +222,52 @@ export class CourseRepository
       throw new Error(`Failed to find course details: ${error}`);
     }
   }
+
+  async addEnrollment(id: string): Promise<void> {
+    const course = await this.findOne({ _id: id });
+    if (course) {
+      course.enrollmentCount = (course.enrollmentCount || 0) + 1;
+      course.save();
+    } else {
+      throw new Error("Course not found");
+    }
+  }
+
+  async getTutorCourses(
+    id: string,
+    page: number = 1,
+    limit: number = 10,
+    search: string = ""
+  ): Promise<{ courses: Course[]; total: number }> {
+    try {
+      const skip = (page - 1) * limit;
+
+      let filter: any = { tutorId: id };
+
+      if (search) {
+        filter.$or = [
+          { title: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } },
+        ];
+      }
+
+      const courses = await this.findWithFiltersAndSort(
+        filter,
+        skip,
+        limit,
+        { createdAt: -1 },
+        [
+          { path: "categoryId", select: "name" },
+          { path: "tutorId", select: "name avatar" },
+        ]
+      );
+
+      const total = await this.countDocuments(filter);
+
+      return { courses, total };
+    } catch (error) {
+      console.error("Error in getTutorCourses repository:", error);
+      throw error;
+    }
+  }
 }

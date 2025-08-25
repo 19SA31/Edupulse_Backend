@@ -115,8 +115,6 @@ class EnrollmentController {
         verifyPaymentDTO
       );
 
-
-
       if (!result.enrollment?.paymentId) {
         res
           .status(HTTP_statusCode.BadRequest)
@@ -167,11 +165,7 @@ class EnrollmentController {
         res
           .status(HTTP_statusCode.TaskFailed)
           .json(
-            new ResponseModel(
-              false,
-              "Failed Tutor notification mail ",
-              null
-            )
+            new ResponseModel(false, "Failed Tutor notification mail ", null)
           );
       }
 
@@ -220,7 +214,6 @@ class EnrollmentController {
     try {
       const userId = req.user?.id;
       const { page, limit, search } = req.query;
-      console.log("Query params:", { page, limit, search });
 
       if (!userId) {
         res
@@ -390,40 +383,6 @@ class EnrollmentController {
     }
   };
 
-  getEnrollmentCounts = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const enrollmentsWithCounts =
-        await this.enrollmentService.getEnrollmentCounts();
-      if (!enrollmentsWithCounts) {
-        res
-          .status(HTTP_statusCode.NotFound)
-          .json(new ResponseModel(false, "No data found", null));
-      }
-      res
-        .status(HTTP_statusCode.OK)
-        .json(
-          new ResponseModel(
-            true,
-            "enrollment counts fetched successfully",
-            enrollmentsWithCounts
-          )
-        );
-    } catch (error: unknown) {
-      console.error("Get enrollment counts error:", error);
-
-      if (error instanceof ValidationError || error instanceof Error) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, (error as Error).message, null));
-      } else {
-        res
-          .status(HTTP_statusCode.InternalServerError)
-          .json(
-            new ResponseModel(false, "Failed to get enrollment counts", null)
-          );
-      }
-    }
-  };
   getEnrolledCourses = async (
     req: AuthRequest,
     res: Response

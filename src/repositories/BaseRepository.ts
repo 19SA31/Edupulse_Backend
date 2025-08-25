@@ -103,6 +103,7 @@ class BaseRepository<T extends Document> {
 
     return query.exec();
   }
+  
 }
 
 export default BaseRepository;

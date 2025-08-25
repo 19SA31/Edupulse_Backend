@@ -141,46 +141,6 @@ export class TutorService implements ITutorService {
     }
   }
 
-  async getVerificationStatus(
-    requestDTO: GetVerificationStatusRequestDTO
-  ): Promise<ServiceResponse<GetVerificationStatusResponseDTO>> {
-    try {
-      const tutorDTO = await this._tutorRepository.findTutorByEmailOrPhone(
-        requestDTO.email,
-        requestDTO.phone
-      );
-
-      if (!tutorDTO) {
-        return { success: false, message: "Tutor not found" };
-      }
-
-      const verificationDocs =
-        await this._tutorRepository.findVerificationDocsByTutorId(tutorDTO._id);
-
-      const responseData = TutorMapper.mapToGetVerificationStatusResponse({
-        status: verificationDocs?.verificationStatus || "not_submitted",
-        tutorId: tutorDTO._id,
-        submittedAt: verificationDocs?.submittedAt,
-        reviewedAt: verificationDocs?.reviewedAt,
-        rejectionReason: verificationDocs?.rejectionReason,
-      });
-
-      return {
-        success: true,
-        message: verificationDocs
-          ? "Verification status retrieved successfully"
-          : "No verification documents found",
-        data: responseData,
-      };
-    } catch (error: any) {
-      console.error("Error in getVerificationStatus:", error);
-      return {
-        success: false,
-        message: "Error retrieving verification status",
-      };
-    }
-  }
-
   async getVerificationDocuments(
     requestDTO: GetVerificationDocumentsRequestDTO
   ): Promise<ServiceResponse<GetVerificationDocumentsResponseDTO>> {
@@ -494,6 +454,14 @@ export class TutorService implements ITutorService {
       return TutorMapper.toListedTutorDTOArray(tutors);
     } catch (error) {
       throw new Error(`Failed to fetch listed tutors: ${error}`);
+    }
+  }
+
+  async getTutorCourses(): Promise <void>{
+    try{
+
+    }catch(error){
+
     }
   }
 }

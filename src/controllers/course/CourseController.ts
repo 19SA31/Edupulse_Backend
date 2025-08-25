@@ -477,4 +477,48 @@ export class CourseController {
       }
     }
   }
+
+  async getTutorCourses(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const tutorId = req.user?.id;
+      if (!tutorId) {
+        res
+          .status(HTTP_statusCode.Unauthorized)
+          .json(
+            new ResponseModel(false, "Tutor authentication required", null)
+          );
+        return;
+      }
+
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const search = (req.query.search as string) || "";
+
+      const result = await this._CourseService.getTutorCourses(
+        tutorId,
+        page,
+        limit,
+        search
+      );
+
+      res
+        .status(HTTP_statusCode.OK)
+        .json(
+          new ResponseModel(true, "Tutor courses fetched successfully", result)
+        );
+    } catch (error: unknown) {
+      if (error instanceof ValidationError) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(new ResponseModel(false, error.message, null));
+      } else {
+        const response = new ResponseModel(
+          false,
+          "Error fetching tutor's courses",
+          null
+        );
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
+    }
+  }
 }

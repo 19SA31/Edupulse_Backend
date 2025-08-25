@@ -96,12 +96,7 @@ tutorRoute.post(
   tutorController.submitVerificationDocuments.bind(tutorController)
 );
 
-tutorRoute.get(
-  "/verification/status",
-  verifyToken("tutor"),
-  authMiddleware,
-  tutorController.getVerificationStatus.bind(tutorController)
-);
+
 
 tutorRoute.get(
   "/profile",
@@ -111,7 +106,7 @@ tutorRoute.get(
 );
 
 tutorRoute.put(
-  "/profile/update-profile",
+  "/update-profile",
   verifyToken("tutor"),
   authMiddleware,
   uploadAvatar,
@@ -119,14 +114,14 @@ tutorRoute.put(
 );
 
 tutorRoute.get(
-  "/course/get-category",
+  "/get-category",
   verifyToken("tutor"),
   authMiddleware,
   courseController.getCategoryNames.bind(courseController)
 );
 
 tutorRoute.post(
-  "/course/create",
+  "/create-course",
   verifyToken("tutor"),
   authMiddleware,
   uploadCourseFiles,

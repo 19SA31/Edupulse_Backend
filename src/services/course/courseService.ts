@@ -408,5 +408,34 @@ export class CourseService implements ICourseService {
     }
   }
 
+  async getTutorCourses(
+    id: string,
+    page: number = 1,
+    limit: number = 10,
+    search: string = ""
+  ): Promise<{
+    courses: CourseDetailsDto[];
+    total: number;
+    totalPages: number;
+  }> {
+    try {
+      const { courses: tutorCourses, total } =
+        await this._courseRepo.getTutorCourses(id, page, limit, search);
 
+      const courseDtos = await Promise.all(
+        tutorCourses.map((course) =>
+          CourseMapper.toCourseDetailsDto(course, this._s3Service)
+        )
+      );
+
+      return {
+        courses: courseDtos,
+        total,
+        totalPages: Math.ceil(total / limit),
+      };
+    } catch (error) {
+      console.error("Error in fetching tutor courses:", error);
+      throw new Error(`Failed to fetch tutor courses: ${error}`);
+    }
+  }
 }

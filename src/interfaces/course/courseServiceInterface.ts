@@ -52,4 +52,14 @@ export interface ICourseService {
   }): Promise<ListedCourseDTO[]>;
   getAllListedCategories(): Promise<ListedCategoryDTO[]>;
   getCourseDetails(id: string): Promise<CourseDetailsDto>;
+  getTutorCourses(
+    id: string,
+    page: number,
+    limit: number,
+    search: string
+  ): Promise<{
+    courses: CourseDetailsDto[];
+    total: number;
+    totalPages: number;
+  }>;
 }

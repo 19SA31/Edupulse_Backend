@@ -32,4 +32,11 @@ export interface ICourseRepoInterface {
   ): Promise<Course[]>;
   findAllListedCategories(): Promise<Category[]>;
   getCourseDetails(id: string): Promise<Course>;
+  addEnrollment(id: string): Promise<void>;
+  getTutorCourses(
+    id: string,
+    page: number,
+    limit: number,
+    search: string
+  ): Promise<{ courses: Course[]; total: number }>;
 }

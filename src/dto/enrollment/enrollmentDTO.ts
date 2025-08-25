@@ -110,14 +110,6 @@ export interface EnrollmentValidationDTO {
   errors: string[];
 }
 
-export interface EnrollmentCount {
-  courseId: string;
-  count: number;
-}
-
-export interface EnrollmentCountsDTO {
-  enrollments: EnrollmentCount[];
-}
 
 export interface EnrolledCoursesDTO {
   courseId: string;
