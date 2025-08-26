@@ -239,13 +239,9 @@ class EnrollmentController {
         getUserEnrollmentsDTO.limit = 10;
       }
 
-      console.log("Processed DTO:", getUserEnrollmentsDTO);
-
       const result = await this.enrollmentService.getUserEnrollments(
         getUserEnrollmentsDTO
       );
-      console.log("Service result:", result);
-
       const response = new ResponseModel(
         true,
         "User enrollments fetched successfully",

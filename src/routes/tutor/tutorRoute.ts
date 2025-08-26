@@ -96,8 +96,6 @@ tutorRoute.post(
   tutorController.submitVerificationDocuments.bind(tutorController)
 );
 
-
-
 tutorRoute.get(
   "/profile",
   verifyToken("tutor"),
@@ -126,6 +124,13 @@ tutorRoute.post(
   authMiddleware,
   uploadCourseFiles,
   courseController.createCourse.bind(courseController)
+);
+
+tutorRoute.get(
+  "/tutor-courses",
+  verifyToken("tutor"),
+  authMiddleware,
+  courseController.getTutorCourses.bind(courseController)
 );
 
 export default tutorRoute;

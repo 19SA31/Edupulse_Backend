@@ -105,13 +105,6 @@ class EnrollmentRepository
 
     const totalPages = Math.ceil(totalCount / limit);
 
-    console.log("Final result:", {
-      enrollmentsCount: enrollments.length,
-      totalPages,
-      totalCount,
-      search: search || "none",
-    });
-
     return {
       enrollments,
       totalPages,

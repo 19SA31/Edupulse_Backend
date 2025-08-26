@@ -160,9 +160,6 @@ export class EnrollmentMapper {
     page = Math.max(page, 1);
 
     const skip = (page - 1) * limit;
-
-    console.log("Pagination params:", { skip, limit, page });
-
     return { skip, limit, page };
   }
 
