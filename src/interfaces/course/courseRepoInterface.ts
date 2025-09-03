@@ -39,4 +39,5 @@ export interface ICourseRepoInterface {
     limit: number,
     search: string
   ): Promise<{ courses: Course[]; total: number }>;
+  updateCourse(courseId: string, courseData: Partial<Course>): Promise<Course>;
 }

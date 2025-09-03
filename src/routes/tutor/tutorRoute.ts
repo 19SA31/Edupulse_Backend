@@ -133,4 +133,19 @@ tutorRoute.get(
   courseController.getTutorCourses.bind(courseController)
 );
 
+tutorRoute.get(
+  "/course-details/:id",
+  verifyToken("tutor"),
+  authMiddleware,
+  courseController.getCourseDetails.bind(courseController)
+);
+
+tutorRoute.put(
+  "/edit-course/:courseId",
+  verifyToken("tutor"),
+  authMiddleware,
+  uploadCourseFiles, 
+  courseController.editCourse.bind(courseController)
+);
+
 export default tutorRoute;

@@ -212,3 +212,22 @@ export interface ListedCourseDTO {
   tutorName: string;
   enrollmentCount: number;
 }
+
+export interface EditCourseDto {
+  title: string;
+  description: string;
+  benefits: string;
+  requirements: string;
+  category: string;
+  price: number;
+  chapters: ChapterDto[];
+  thumbnailImage?: {
+    file?: File;
+    preview?: string;
+    isExisting?: boolean;
+  };
+}
+
+export interface UpdateCourseDto extends CreateCourseDto {
+  thumbnailUrl?: string;
+}

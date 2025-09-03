@@ -7,6 +7,7 @@ import {
   CourseListingDto,
   ListedCourseDTO,
   CourseDetailsDto,
+  EditCourseDto,
 } from "../../dto/course/CourseDTO";
 import { ListedTutorDTO } from "../../dto/tutor/TutorDTO";
 import { ListedCategoryDTO } from "../../dto/course/CategoryDTO";
@@ -62,4 +63,11 @@ export interface ICourseService {
     total: number;
     totalPages: number;
   }>;
+  editCourse(
+    courseId: string,
+    courseDto: EditCourseDto,
+    files: { [fieldname: string]: Express.Multer.File[] },
+    thumbnailFile?: Express.Multer.File,
+    existingThumbnailUrl?: string
+  ): Promise<Course>;
 }

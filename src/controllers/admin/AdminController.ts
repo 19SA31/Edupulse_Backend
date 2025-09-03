@@ -32,8 +32,10 @@ export class AdminController {
       });
 
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
-      console.error("Error in getUsers controller:", error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error in getUsers controller:", error.message);
+      }
 
       const response = new ResponseModel(
         false,
@@ -66,8 +68,10 @@ export class AdminController {
       );
 
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
-      console.error("Error in getTutors controller:", error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error in getTutors controller:", error.message);
+      }
 
       const response = new ResponseModel(
         false,
@@ -92,19 +96,21 @@ export class AdminController {
       );
 
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
-      console.error("Error in listUnlistUser controller:", error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error in listUnlistUser controller:", error.message);
 
-      if (error.message === "User not found") {
-        const response = new ResponseModel(false, "User not found", null);
-        res.status(HTTP_statusCode.NotFound).json(response);
-      } else {
-        const response = new ResponseModel(
-          false,
-          "An unexpected error occurred",
-          null
-        );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
+        if (error.message === "User not found") {
+          const response = new ResponseModel(false, "User not found", null);
+          res.status(HTTP_statusCode.NotFound).json(response);
+        } else {
+          const response = new ResponseModel(
+            false,
+            "An unexpected error occurred",
+            null
+          );
+          res.status(HTTP_statusCode.InternalServerError).json(response);
+        }
       }
     }
   }
@@ -122,26 +128,27 @@ export class AdminController {
       );
 
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
-      console.error("Error in listUnlistTutor controller:", error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error in listUnlistTutor controller:", error.message);
 
-      if (error.message === "Tutor not found") {
-        const response = new ResponseModel(false, "Tutor not found", null);
-        res.status(HTTP_statusCode.NotFound).json(response);
-      } else {
-        const response = new ResponseModel(
-          false,
-          "An unexpected error occurred",
-          null
-        );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
+        if (error.message === "Tutor not found") {
+          const response = new ResponseModel(false, "Tutor not found", null);
+          res.status(HTTP_statusCode.NotFound).json(response);
+        } else {
+          const response = new ResponseModel(
+            false,
+            "An unexpected error occurred",
+            null
+          );
+          res.status(HTTP_statusCode.InternalServerError).json(response);
+        }
       }
     }
   }
 
   async addCategory(req: Request, res: Response): Promise<void> {
     try {
-
       const category = await this._AdminService.addCourseCategory(req.body);
 
       const response = new ResponseModel(
@@ -151,20 +158,22 @@ export class AdminController {
       );
 
       res.status(HTTP_statusCode.updated).json(response);
-    } catch (error: any) {
-      console.error("Error in addCategory controller:", error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error in addCategory controller:", error.message);
 
-      if (error instanceof ValidationError) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, error.message, null));
-      } else {
-        const response = new ResponseModel(
-          false,
-          "Failed to create category",
-          null
-        );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
+        if (error instanceof ValidationError) {
+          res
+            .status(HTTP_statusCode.BadRequest)
+            .json(new ResponseModel(false, error.message, null));
+        } else {
+          const response = new ResponseModel(
+            false,
+            "Failed to create category",
+            null
+          );
+          res.status(HTTP_statusCode.InternalServerError).json(response);
+        }
       }
     }
   }
@@ -187,8 +196,10 @@ export class AdminController {
       );
 
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
-      console.error("Error in getCategories controller:", error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error in getCategories controller:", error.message);
+      }
 
       const response = new ResponseModel(
         false,
@@ -202,7 +213,6 @@ export class AdminController {
 
   async editCategory(req: Request, res: Response): Promise<void> {
     try {
-
       const categoryId = req.params.id;
       const updateData = req.body;
 
@@ -218,29 +228,30 @@ export class AdminController {
       );
 
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
-      console.error("Error in editCategory controller:", error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error in editCategory controller:", error.message);
 
-      if (error.message === "Category not found") {
-        const response = new ResponseModel(false, "Category not found", null);
-        res.status(HTTP_statusCode.NotFound).json(response);
-      } else if (error.message.includes("already exists")) {
-        const response = new ResponseModel(false, error.message, null);
-        res.status(HTTP_statusCode.BadRequest).json(response);
-      } else {
-        const response = new ResponseModel(
-          false,
-          "An unexpected error occurred",
-          null
-        );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
+        if (error.message === "Category not found") {
+          const response = new ResponseModel(false, "Category not found", null);
+          res.status(HTTP_statusCode.NotFound).json(response);
+        } else if (error.message.includes("already exists")) {
+          const response = new ResponseModel(false, error.message, null);
+          res.status(HTTP_statusCode.BadRequest).json(response);
+        } else {
+          const response = new ResponseModel(
+            false,
+            "An unexpected error occurred",
+            null
+          );
+          res.status(HTTP_statusCode.InternalServerError).json(response);
+        }
       }
     }
   }
 
   async toggleCategoryStatus(req: Request, res: Response): Promise<void> {
     try {
-
       const categoryId = req.params.id;
 
       const updatedCategory = await this._AdminService.toggleCategoryListStatus(
@@ -254,19 +265,24 @@ export class AdminController {
       );
 
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
-      console.error("Error in toggleCategoryStatus controller:", error.message);
-
-      if (error.message === "Category not found") {
-        const response = new ResponseModel(false, "Category not found", null);
-        res.status(HTTP_statusCode.NotFound).json(response);
-      } else {
-        const response = new ResponseModel(
-          false,
-          "An unexpected error occurred",
-          null
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error(
+          "Error in toggleCategoryStatus controller:",
+          error.message
         );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
+
+        if (error.message === "Category not found") {
+          const response = new ResponseModel(false, "Category not found", null);
+          res.status(HTTP_statusCode.NotFound).json(response);
+        } else {
+          const response = new ResponseModel(
+            false,
+            "An unexpected error occurred",
+            null
+          );
+          res.status(HTTP_statusCode.InternalServerError).json(response);
+        }
       }
     }
   }
@@ -292,8 +308,10 @@ export class AdminController {
       );
 
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
-      console.error("Error in getTutors controller:", error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error in getTutors controller:", error.message);
+      }
 
       const response = new ResponseModel(
         false,
@@ -309,7 +327,6 @@ export class AdminController {
     try {
       const { tutorId } = req.params;
       const { reason } = req.body;
-
 
       if (!reason || reason.trim() === "") {
         const response = new ResponseModel(
@@ -365,19 +382,21 @@ export class AdminController {
         );
         res.status(HTTP_statusCode.BadRequest).json(response);
       }
-    } catch (error: any) {
-      console.error("Error in rejectTutor controller:", error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error in rejectTutor controller:", error.message);
 
-      if (error.message === "Tutor not found") {
-        const response = new ResponseModel(false, "Tutor not found", null);
-        res.status(HTTP_statusCode.NotFound).json(response);
-      } else {
-        const response = new ResponseModel(
-          false,
-          "An unexpected error occurred",
-          null
-        );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
+        if (error.message === "Tutor not found") {
+          const response = new ResponseModel(false, "Tutor not found", null);
+          res.status(HTTP_statusCode.NotFound).json(response);
+        } else {
+          const response = new ResponseModel(
+            false,
+            "An unexpected error occurred",
+            null
+          );
+          res.status(HTTP_statusCode.InternalServerError).json(response);
+        }
       }
     }
   }
@@ -404,19 +423,21 @@ export class AdminController {
         );
         res.status(HTTP_statusCode.BadRequest).json(response);
       }
-    } catch (error: any) {
-      console.error("Error in verifyTutor controller:", error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Error in verifyTutor controller:", error.message);
 
-      if (error.message === "Tutor not found") {
-        const response = new ResponseModel(false, "Tutor not found", null);
-        res.status(HTTP_statusCode.NotFound).json(response);
-      } else {
-        const response = new ResponseModel(
-          false,
-          "An unexpected error occurred",
-          null
-        );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
+        if (error.message === "Tutor not found") {
+          const response = new ResponseModel(false, "Tutor not found", null);
+          res.status(HTTP_statusCode.NotFound).json(response);
+        } else {
+          const response = new ResponseModel(
+            false,
+            "An unexpected error occurred",
+            null
+          );
+          res.status(HTTP_statusCode.InternalServerError).json(response);
+        }
       }
     }
   }

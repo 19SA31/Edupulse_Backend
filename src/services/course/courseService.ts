@@ -13,6 +13,7 @@ import {
   CourseListingDto,
   ListedCourseDTO,
   CourseDetailsDto,
+  EditCourseDto,
 } from "../../dto/course/CourseDTO";
 import { ListedCategoryDTO } from "../../dto/course/CategoryDTO";
 import { S3Service } from "../../utils/s3";
@@ -436,6 +437,246 @@ export class CourseService implements ICourseService {
     } catch (error) {
       console.error("Error in fetching tutor courses:", error);
       throw new Error(`Failed to fetch tutor courses: ${error}`);
+    }
+  }
+
+  async editCourse(
+    courseId: string,
+    courseDto: EditCourseDto,
+    files: { [fieldname: string]: Express.Multer.File[] },
+    thumbnailFile?: Express.Multer.File,
+    existingThumbnailUrl?: string
+  ): Promise<Course> {
+    try {
+      const existingCourse = await this._courseRepo.getCourseDetails(courseId);
+      if (!existingCourse) {
+        throw new Error("Course not found");
+      }
+
+      let thumbnailUrl = existingCourse.thumbnailImage;
+      const filesToDelete: string[] = [];
+
+      if (thumbnailFile) {
+        if (thumbnailUrl) {
+          filesToDelete.push(thumbnailUrl);
+        }
+
+        const folderPath = `courses/thumbnails`;
+        thumbnailUrl = await this._s3Service.uploadFile(
+          folderPath,
+          thumbnailFile
+        );
+      } else if (existingThumbnailUrl && !thumbnailFile) {
+        thumbnailUrl = existingThumbnailUrl;
+      }
+
+      const { processedChapters, filesToCleanup } =
+        await this.editProcessChaptersWithFiles(
+          courseDto.chapters,
+          files,
+          existingCourse.chapters
+        );
+
+      filesToDelete.push(...filesToCleanup);
+
+      const courseData: Partial<Course> = {
+        title: courseDto.title,
+        description: courseDto.description,
+        benefits: courseDto.benefits,
+        requirements: courseDto.requirements,
+        categoryId: courseDto.category as any,
+        price: courseDto.price,
+        thumbnailImage: thumbnailUrl,
+        chapters: processedChapters,
+        updatedAt: new Date(),
+      };
+
+      const updatedCourse = await this._courseRepo.updateCourse(
+        courseId,
+        courseData
+      );
+
+      await this.cleanupFiles(filesToDelete);
+
+      return CourseMapper.toEntity(updatedCourse);
+    } catch (error: any) {
+      console.error("Error in CourseService.editCourse:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      throw new Error(`Failed to edit course: ${errorMessage}`);
+    }
+  }
+
+  private async editProcessChaptersWithFiles(
+    chapters: ChapterDto[],
+    files: { [fieldname: string]: Express.Multer.File[] },
+    existingChapters: any[] = []
+  ): Promise<{ processedChapters: any[]; filesToCleanup: string[] }> {
+    const processedChapters = [];
+    const filesToCleanup: string[] = [];
+
+    for (let chapterIndex = 0; chapterIndex < chapters.length; chapterIndex++) {
+      const chapter = chapters[chapterIndex];
+      const processedLessons = [];
+
+      const lessons = chapter.lessons || [];
+      const existingChapter = existingChapters[chapterIndex];
+
+      for (let lessonIndex = 0; lessonIndex < lessons.length; lessonIndex++) {
+        const lesson = lessons[lessonIndex];
+        const existingLesson = existingChapter?.lessons?.[lessonIndex];
+
+        const { processedDocuments, filesToDelete: docFilesToDelete } =
+          await this.processDocuments(
+            lesson.documents || [],
+            files,
+            chapterIndex,
+            lessonIndex,
+            existingLesson?.documents || []
+          );
+
+        const { processedVideos, filesToDelete: videoFilesToDelete } =
+          await this.processVideos(
+            lesson.videos || [],
+            files,
+            chapterIndex,
+            lessonIndex,
+            existingLesson?.videos || []
+          );
+
+        filesToCleanup.push(...docFilesToDelete, ...videoFilesToDelete);
+
+        processedLessons.push({
+          title: lesson.title,
+          description: lesson.description,
+          documents: processedDocuments,
+          videos: processedVideos,
+          order: lesson.order || lessonIndex,
+        });
+      }
+
+      processedChapters.push({
+        title: chapter.title,
+        description: chapter.description,
+        lessons: processedLessons,
+        order: chapter.order || chapterIndex,
+      });
+    }
+
+    return { processedChapters, filesToCleanup };
+  }
+
+  private async processDocuments(
+    documents: any[],
+    files: { [fieldname: string]: Express.Multer.File[] },
+    chapterIndex: number,
+    lessonIndex: number,
+    existingDocuments: any[] = []
+  ): Promise<{ processedDocuments: any[]; filesToDelete: string[] }> {
+    const processedDocuments = [];
+    const filesToDelete: string[] = [];
+
+    for (let docIndex = 0; docIndex < documents.length; docIndex++) {
+      const doc = documents[docIndex];
+      const existingDoc = existingDocuments[docIndex];
+
+      if (doc.isExisting && existingDoc) {
+        processedDocuments.push(existingDoc);
+      } else if (doc.file && doc.file instanceof File) {
+        if (existingDoc?.fileName) {
+          filesToDelete.push(existingDoc.fileName);
+        }
+
+        const fieldName = `lesson_documents_${chapterIndex}_${lessonIndex}_${docIndex}`;
+        const fileArray = files[fieldName];
+
+        if (fileArray && fileArray.length > 0) {
+          const file = fileArray[0];
+          try {
+            const fileName = await this._s3Service.uploadFile(
+              `courses/documents/chapter_${chapterIndex}/lesson_${lessonIndex}`,
+              file
+            );
+            processedDocuments.push({ fileName });
+          } catch (uploadError) {
+            console.error(
+              `Error uploading document ${file.originalname}:`,
+              uploadError
+            );
+            throw new Error(`Failed to upload document: ${file.originalname}`);
+          }
+        }
+      } else if (doc.url) {
+        if (existingDoc?.fileName) {
+          filesToDelete.push(existingDoc.fileName);
+        }
+        processedDocuments.push({ fileName: doc.url });
+      }
+    }
+
+    return { processedDocuments, filesToDelete };
+  }
+
+  private async processVideos(
+    videos: any[],
+    files: { [fieldname: string]: Express.Multer.File[] },
+    chapterIndex: number,
+    lessonIndex: number,
+    existingVideos: any[] = []
+  ): Promise<{ processedVideos: any[]; filesToDelete: string[] }> {
+    const processedVideos = [];
+    const filesToDelete: string[] = [];
+
+    for (let videoIndex = 0; videoIndex < videos.length; videoIndex++) {
+      const video = videos[videoIndex];
+      const existingVideo = existingVideos[videoIndex];
+
+      if (video.isExisting && existingVideo) {
+        processedVideos.push(existingVideo);
+      } else if (video.file && video.file instanceof File) {
+        if (existingVideo?.fileName) {
+          filesToDelete.push(existingVideo.fileName);
+        }
+
+        const fieldName = `lesson_videos_${chapterIndex}_${lessonIndex}_${videoIndex}`;
+        const fileArray = files[fieldName];
+
+        if (fileArray && fileArray.length > 0) {
+          const file = fileArray[0];
+          try {
+            const fileName = await this._s3Service.uploadFile(
+              `courses/videos/chapter_${chapterIndex}/lesson_${lessonIndex}`,
+              file
+            );
+            processedVideos.push({ fileName });
+          } catch (uploadError) {
+            console.error(
+              `Error uploading video ${file.originalname}:`,
+              uploadError
+            );
+            throw new Error(`Failed to upload video: ${file.originalname}`);
+          }
+        }
+      } else if (video.url) {
+        if (existingVideo?.fileName) {
+          filesToDelete.push(existingVideo.fileName);
+        }
+        processedVideos.push({ fileName: video.url });
+      }
+    }
+
+    return { processedVideos, filesToDelete };
+  }
+
+  private async cleanupFiles(fileKeys: string[]): Promise<void> {
+    for (const fileKey of fileKeys) {
+      if (fileKey) {
+        try {
+          await this._s3Service.deleteFile(fileKey);
+        } catch (error) {
+          console.warn(`Failed to delete file ${fileKey}:`, error);
+        }
+      }
     }
   }
 }

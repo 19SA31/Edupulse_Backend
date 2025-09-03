@@ -270,4 +270,22 @@ export class CourseRepository
       throw error;
     }
   }
+
+  async updateCourse(
+    courseId: string,
+    courseData: Partial<Course>
+  ): Promise<Course> {
+    try {
+      const updatedCourse = await this.update(courseId, courseData);
+
+      if (!updatedCourse) {
+        throw new Error("Course not found");
+      }
+
+      return updatedCourse;
+    } catch (error) {
+      console.error("Error in CourseRepository.updateCourse:", error);
+      throw new Error(`Failed to update course: ${error}`);
+    }
+  }
 }

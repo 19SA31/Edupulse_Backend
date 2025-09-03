@@ -38,7 +38,7 @@ export class AuthenticationController {
 
       const response = new ResponseModel(true, "OTP sent successfully");
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.handleUserOtpError(error, res, next);
     }
   }
@@ -76,7 +76,7 @@ export class AuthenticationController {
 
       const response = new ResponseModel(true, "OTP verified successfully");
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.handleUserVerifyOtpError(error, res, next);
     }
   }
@@ -113,7 +113,7 @@ export class AuthenticationController {
       );
 
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.handleUserLoginError(error, res, next);
     }
   }
@@ -139,7 +139,7 @@ export class AuthenticationController {
 
       const response = new ResponseModel(true, "Password reset successfully");
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.handleUserResetPasswordError(error, res, next);
     }
   }
@@ -157,7 +157,7 @@ export class AuthenticationController {
         "You have been logged out successfully"
       );
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
+    } catch (error: unknown) {
       const response = new ResponseModel(false, "Internal server error");
       res.status(HTTP_statusCode.InternalServerError).json(response);
       next(error);
@@ -170,13 +170,11 @@ export class AuthenticationController {
     next: NextFunction
   ): Promise<void> {
     try {
-
-
       await this.tutorAuthService.signUp(req.body);
 
       const response = new ResponseModel(true, "OTP sent successfully");
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.handleTutorOtpError(error, res, next);
     }
   }
@@ -187,14 +185,11 @@ export class AuthenticationController {
     next: NextFunction
   ): Promise<void> {
     try {
-
-
       await this.tutorAuthService.otpCheck(req.body);
 
- 
       const response = new ResponseModel(true, "OTP verified successfully");
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.handleTutorVerifyOtpError(error, res, next);
     }
   }
@@ -220,7 +215,7 @@ export class AuthenticationController {
       );
 
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.handleTutorLoginError(error, res, next);
     }
   }
@@ -235,7 +230,7 @@ export class AuthenticationController {
 
       const response = new ResponseModel(true, "Password reset successfully");
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.handleTutorResetPasswordError(error, res, next);
     }
   }
@@ -249,7 +244,7 @@ export class AuthenticationController {
         "You have been logged out successfully"
       );
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
+    } catch (error: unknown) {
       const response = new ResponseModel(
         false,
         `Internal server error: ${error}`
@@ -294,7 +289,6 @@ export class AuthenticationController {
         serviceResult.refreshToken
       );
 
-
       const response = new ResponseModel(true, "Admin logged in successfully", {
         accessToken: serviceResult.accessToken,
         refreshToken: serviceResult.refreshToken,
@@ -302,7 +296,7 @@ export class AuthenticationController {
       });
 
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.handleAdminLoginError(error, res, next);
     }
   }
@@ -316,12 +310,14 @@ export class AuthenticationController {
         "You have been logged out successfully"
       );
       res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
-      const response = new ResponseModel(
-        false,
-        `Internal server error: ${error.message}`
-      );
-      res.status(HTTP_statusCode.InternalServerError).json(response);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        const response = new ResponseModel(
+          false,
+          `Internal server error: ${error.message}`
+        );
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
     }
   }
 
@@ -334,14 +330,14 @@ export class AuthenticationController {
       httpOnly: true,
       secure: process.env.NODE_ENV === "development",
       sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000, 
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.cookie("AccessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "development",
       sameSite: "strict",
-      maxAge: 1 * 24 * 60 * 60 * 1000, 
+      maxAge: 1 * 24 * 60 * 60 * 1000,
     });
   }
 
@@ -360,221 +356,239 @@ export class AuthenticationController {
   }
 
   private handleUserOtpError(
-    error: any,
+    error: unknown,
     res: Response,
     next: NextFunction
   ): void {
     console.error("Error in sendUserOtp:", error);
 
     let response: ResponseModel;
-    switch (error.message) {
-      case "Email already in use":
-        response = new ResponseModel(false, "Email already in use");
-        res.status(HTTP_statusCode.Conflict).json(response);
-        break;
-      case "Phone already in use":
-        response = new ResponseModel(false, "Phone number already in use");
-        res.status(HTTP_statusCode.Conflict).json(response);
-        break;
-      case "Otp not send":
-        response = new ResponseModel(false, "OTP not sent");
-        res.status(HTTP_statusCode.InternalServerError).json(response);
-        break;
-      case "Email not found":
-        response = new ResponseModel(false, "Email address not found");
-        res.status(HTTP_statusCode.BadRequest).json(response);
-        break;
-      default:
-        response = new ResponseModel(
-          false,
-          "Something went wrong, please try again later"
-        );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
+    if (error instanceof Error) {
+      switch (error.message) {
+        case "Email already in use":
+          response = new ResponseModel(false, "Email already in use");
+          res.status(HTTP_statusCode.Conflict).json(response);
+          break;
+        case "Phone already in use":
+          response = new ResponseModel(false, "Phone number already in use");
+          res.status(HTTP_statusCode.Conflict).json(response);
+          break;
+        case "Otp not send":
+          response = new ResponseModel(false, "OTP not sent");
+          res.status(HTTP_statusCode.InternalServerError).json(response);
+          break;
+        case "Email not found":
+          response = new ResponseModel(false, "Email address not found");
+          res.status(HTTP_statusCode.BadRequest).json(response);
+          break;
+        default:
+          response = new ResponseModel(
+            false,
+            "Something went wrong, please try again later"
+          );
+          res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
     }
+
     next(error);
   }
 
   private handleUserVerifyOtpError(
-    error: any,
+    error: unknown,
     res: Response,
     next: NextFunction
   ): void {
     console.error("Error in verifyUserOtp:", error);
 
     let response: ResponseModel;
-    switch (error.message) {
-      case "OTP not found":
-        response = new ResponseModel(false, "OTP not found or expired");
-        res.status(HTTP_statusCode.BadRequest).json(response);
-        break;
-      case "Password is required for new user registration":
-        response = new ResponseModel(
-          false,
-          "Password is required for registration"
-        );
-        res.status(HTTP_statusCode.BadRequest).json(response);
-        break;
-      default:
-        response = new ResponseModel(false, "Server error occurred");
-        res.status(HTTP_statusCode.InternalServerError).json(response);
+    if (error instanceof Error) {
+      switch (error.message) {
+        case "OTP not found":
+          response = new ResponseModel(false, "OTP not found or expired");
+          res.status(HTTP_statusCode.BadRequest).json(response);
+          break;
+        case "Password is required for new user registration":
+          response = new ResponseModel(
+            false,
+            "Password is required for registration"
+          );
+          res.status(HTTP_statusCode.BadRequest).json(response);
+          break;
+        default:
+          response = new ResponseModel(false, "Server error occurred");
+          res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
     }
+
     next(error);
   }
 
   private handleUserLoginError(
-    error: any,
+    error: unknown,
     res: Response,
     next: NextFunction
   ): void {
     console.error("Error in userLogin:", error);
 
     let response: ResponseModel;
-    switch (error.message) {
-      case "Invalid email":
-        response = new ResponseModel(false, "Invalid email address");
-        res.status(HTTP_statusCode.BadRequest).json(response);
-        break;
-      case "Invalid password":
-        response = new ResponseModel(false, "Invalid password");
-        res.status(HTTP_statusCode.BadRequest).json(response);
-        break;
-      case "User blocked":
-        response = new ResponseModel(false, "Your account has been blocked");
-        res.status(HTTP_statusCode.NoAccess).json(response);
-        break;
-      default:
-        response = new ResponseModel(false, "Internal Server Error");
-        res.status(HTTP_statusCode.InternalServerError).json(response);
+    if (error instanceof Error) {
+      switch (error.message) {
+        case "Invalid email":
+          response = new ResponseModel(false, "Invalid email address");
+          res.status(HTTP_statusCode.BadRequest).json(response);
+          break;
+        case "Invalid password":
+          response = new ResponseModel(false, "Invalid password");
+          res.status(HTTP_statusCode.BadRequest).json(response);
+          break;
+        case "User blocked":
+          response = new ResponseModel(false, "Your account has been blocked");
+          res.status(HTTP_statusCode.NoAccess).json(response);
+          break;
+        default:
+          response = new ResponseModel(false, "Internal Server Error");
+          res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
     }
+
     next(error);
   }
 
   private handleUserResetPasswordError(
-    error: any,
+    error: unknown,
     res: Response,
     next: NextFunction
   ): void {
     console.error("Error in resetUserPassword:", error);
 
     let response: ResponseModel;
-    switch (error.message) {
-      case "Invalid email":
-        response = new ResponseModel(false, "Email address not found");
-        res.status(HTTP_statusCode.BadRequest).json(response);
-        break;
-      default:
-        response = new ResponseModel(false, "Internal Server Error");
-        res.status(HTTP_statusCode.InternalServerError).json(response);
+    if (error instanceof Error) {
+      switch (error.message) {
+        case "Invalid email":
+          response = new ResponseModel(false, "Email address not found");
+          res.status(HTTP_statusCode.BadRequest).json(response);
+          break;
+        default:
+          response = new ResponseModel(false, "Internal Server Error");
+          res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
     }
+
     next(error);
   }
 
   private handleTutorOtpError(
-    error: any,
+    error: unknown,
     res: Response,
     next: NextFunction
   ): void {
     let response: ResponseModel;
-
-    if (error.message === "Email already in use") {
-      response = new ResponseModel(false, "Email already in use");
-      res.status(HTTP_statusCode.Conflict).json(response);
-    } else if (error.message === "Phone already in use") {
-      response = new ResponseModel(false, "Phone number already in use");
-      res.status(HTTP_statusCode.Conflict).json(response);
-    } else if (error.message === "Email not found") {
-      response = new ResponseModel(false, "Email not found");
-      res.status(HTTP_statusCode.NotFound).json(response);
-    } else if (error.message === "Failed to send OTP email") {
-      response = new ResponseModel(false, "OTP not sent");
-      res.status(HTTP_statusCode.InternalServerError).json(response);
-    } else {
-      response = new ResponseModel(
-        false,
-        "Something went wrong, please try again later"
-      );
-      res.status(HTTP_statusCode.InternalServerError).json(response);
+    if (error instanceof Error) {
+      if (error.message === "Email already in use") {
+        response = new ResponseModel(false, "Email already in use");
+        res.status(HTTP_statusCode.Conflict).json(response);
+      } else if (error.message === "Phone already in use") {
+        response = new ResponseModel(false, "Phone number already in use");
+        res.status(HTTP_statusCode.Conflict).json(response);
+      } else if (error.message === "Email not found") {
+        response = new ResponseModel(false, "Email not found");
+        res.status(HTTP_statusCode.NotFound).json(response);
+      } else if (error.message === "Failed to send OTP email") {
+        response = new ResponseModel(false, "OTP not sent");
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      } else {
+        response = new ResponseModel(
+          false,
+          "Something went wrong, please try again later"
+        );
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
     }
+
     next(error);
   }
 
   private handleTutorVerifyOtpError(
-    error: any,
+    error: unknown,
     res: Response,
     next: NextFunction
   ): void {
     console.error("Error in verifyTutorOtp:", error);
 
     let response: ResponseModel;
-
-    if (error.message === "Invalid OTP") {
-      response = new ResponseModel(false, "Invalid OTP");
-      res.status(HTTP_statusCode.BadRequest).json(response);
-    } else if (
-      error.message === "Password is required for new tutor registration"
-    ) {
-      response = new ResponseModel(false, "Password is required");
-      res.status(HTTP_statusCode.BadRequest).json(response);
-    } else {
-      response = new ResponseModel(false, "Server error");
-      res.status(HTTP_statusCode.InternalServerError).json(response);
+    if (error instanceof Error) {
+      if (error.message === "Invalid OTP") {
+        response = new ResponseModel(false, "Invalid OTP");
+        res.status(HTTP_statusCode.BadRequest).json(response);
+      } else if (
+        error.message === "Password is required for new tutor registration"
+      ) {
+        response = new ResponseModel(false, "Password is required");
+        res.status(HTTP_statusCode.BadRequest).json(response);
+      } else {
+        response = new ResponseModel(false, "Server error");
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
     }
   }
 
   private handleTutorLoginError(
-    error: any,
+    error: unknown,
     res: Response,
     next: NextFunction
   ): void {
     console.error("Error in tutorLogin: ", error);
 
     let response: ResponseModel;
-
-    if (error.message === "Invalid email or password") {
-      response = new ResponseModel(false, "Invalid email or password");
-      res.status(HTTP_statusCode.BadRequest).json(response);
-    } else if (error.message === "Tutor account is blocked") {
-      response = new ResponseModel(false, "Tutor account is blocked");
-      res.status(HTTP_statusCode.NoAccess).json(response);
-    } else {
-      response = new ResponseModel(false, "Internal Server Error");
-      res.status(HTTP_statusCode.InternalServerError).json(response);
+    if (error instanceof Error) {
+      if (error.message === "Invalid email or password") {
+        response = new ResponseModel(false, "Invalid email or password");
+        res.status(HTTP_statusCode.BadRequest).json(response);
+      } else if (error.message === "Tutor account is blocked") {
+        response = new ResponseModel(false, "Tutor account is blocked");
+        res.status(HTTP_statusCode.NoAccess).json(response);
+      } else {
+        response = new ResponseModel(false, "Internal Server Error");
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
     }
   }
 
   private handleTutorResetPasswordError(
-    error: any,
+    error: unknown,
     res: Response,
     next: NextFunction
   ): void {
     console.error("Error in resetTutorPassword: ", error);
 
     let response: ResponseModel;
-
-    if (error.message === "Email not found") {
-      response = new ResponseModel(false, "Email not found");
-      res.status(HTTP_statusCode.NotFound).json(response);
-    } else {
-      response = new ResponseModel(false, "Internal Server Error");
-      res.status(HTTP_statusCode.InternalServerError).json(response);
+    if (error instanceof Error) {
+      if (error.message === "Email not found") {
+        response = new ResponseModel(false, "Email not found");
+        res.status(HTTP_statusCode.NotFound).json(response);
+      } else {
+        response = new ResponseModel(false, "Internal Server Error");
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
     }
   }
 
   private handleAdminLoginError(
-    error: any,
+    error: unknown,
     res: Response,
     next: NextFunction
   ): void {
     console.error("Error in adminLogin: ", error);
 
     let response: ResponseModel;
-
-    if (error.message === "Invalid email or password") {
-      response = new ResponseModel(false, "Invalid email or password");
-      res.status(HTTP_statusCode.BadRequest).json(response);
-    } else {
-      response = new ResponseModel(false, "Internal Server Error");
-      res.status(HTTP_statusCode.InternalServerError).json(response);
+    if (error instanceof Error) {
+      if (error.message === "Invalid email or password") {
+        response = new ResponseModel(false, "Invalid email or password");
+        res.status(HTTP_statusCode.BadRequest).json(response);
+      } else {
+        response = new ResponseModel(false, "Internal Server Error");
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
     }
   }
 }
