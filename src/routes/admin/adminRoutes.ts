@@ -15,6 +15,8 @@ import { AdminRepository } from "../../repositories/admin/adminRepo";
 import { CourseRepository } from "../../repositories/course/courseRepo";
 import { CourseService } from "../../services/course/courseService";
 import { CourseController } from "../../controllers/course/CourseController";
+import EnrollmentService from "../../services/enrollment/enrollmentService";
+import EnrollmentRepository from "../../repositories/enrollment/enrollmentRepo";
 
 import { verifyToken } from "../../utils/jwt";
 
@@ -43,8 +45,18 @@ const AuthenticationControllerInstance = new AuthenticationController(
 
 const AdminControllerInstance = new AdminController(AdminServiceInstance);
 
+const enrollmentRepository = new EnrollmentRepository();
 const courseRepository = new CourseRepository();
-const courseService = new CourseService(courseRepository, s3Service);
+const enrollmentService = new EnrollmentService(
+  enrollmentRepository,
+  courseRepository
+);
+
+const courseService = new CourseService(
+  courseRepository,
+  s3Service,
+  enrollmentService
+);
 const courseController = new CourseController(courseService);
 
 adminRoutes.post(

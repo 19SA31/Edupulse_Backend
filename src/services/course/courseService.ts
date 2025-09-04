@@ -3,6 +3,7 @@ import { CategoryMapper } from "../../mappers/course/categoryMapper";
 import { CourseMapper } from "../../mappers/course/courseMapper";
 import { ICourseService } from "../../interfaces/course/courseServiceInterface";
 import { ICourseRepoInterface } from "../../interfaces/course/courseRepoInterface";
+import { IEnrollmentService } from "../../interfaces/enrollment/enrollmentServiceInterface";
 import { Course } from "../../interfaces/course/courseInterface";
 import {
   CourseForReview,
@@ -21,10 +22,16 @@ import { S3Service } from "../../utils/s3";
 export class CourseService implements ICourseService {
   private _courseRepo: ICourseRepoInterface;
   private _s3Service: S3Service;
+  private _enrollmentService: IEnrollmentService;
 
-  constructor(courseRepo: ICourseRepoInterface, s3Service: S3Service) {
+  constructor(
+    courseRepo: ICourseRepoInterface,
+    s3Service: S3Service,
+    enrollmentService: IEnrollmentService
+  ) {
     this._courseRepo = courseRepo;
     this._s3Service = s3Service;
+    this._enrollmentService = enrollmentService;
   }
 
   async getAllCategories(): Promise<CategoryDTOArr> {
@@ -298,17 +305,40 @@ export class CourseService implements ICourseService {
     }
   }
 
-  async getAllListedCourses(filters: {
-    search?: string;
-    category?: string;
-    minPrice?: number;
-    maxPrice?: number;
-    sortBy?: string;
-    page?: number;
-    limit?: number;
-  }): Promise<ListedCourseDTO[]> {
+  async getAllListedCourses(
+    filters: {
+      search?: string;
+      category?: string;
+      minPrice?: number;
+      maxPrice?: number;
+      sortBy?: string;
+      page?: number;
+      limit?: number;
+    },
+    userId?: string
+  ): Promise<ListedCourseDTO[]> {
     try {
-      const filterConditions: any = { isListed: true };
+      let userEnrolledCourseIds: string[] = [];
+      if (userId) {
+        const enrolledCourses =
+          await this._enrollmentService.getEnrolledCourses(userId);
+        if (enrolledCourses) {
+          userEnrolledCourseIds = enrolledCourses.map(
+            (course) => course.courseId
+          );
+        }
+      }
+
+      let filterConditions: any = {};
+
+      if (userEnrolledCourseIds.length > 0) {
+        filterConditions.$or = [
+          { isListed: true },
+          { _id: { $in: userEnrolledCourseIds } },
+        ];
+      } else {
+        filterConditions.isListed = true;
+      }
 
       if (filters.category && filters.category !== "All classes") {
         filterConditions.categoryName = filters.category;
@@ -325,10 +355,20 @@ export class CourseService implements ICourseService {
       }
 
       if (filters.search) {
-        filterConditions.$or = [
-          { title: { $regex: filters.search, $options: "i" } },
-          { description: { $regex: filters.search, $options: "i" } },
-        ];
+        const searchConditions = {
+          $or: [
+            { title: { $regex: filters.search, $options: "i" } },
+            { description: { $regex: filters.search, $options: "i" } },
+          ],
+        };
+
+        if (Object.keys(filterConditions).length > 0) {
+          filterConditions = {
+            $and: [filterConditions, searchConditions],
+          };
+        } else {
+          filterConditions = searchConditions;
+        }
       }
 
       let sortOptions: any = {};
@@ -361,9 +401,14 @@ export class CourseService implements ICourseService {
           sortOptions = { createdAt: -1 };
       }
 
+      const page = filters.page || 1;
+      const limit = filters.limit || 50;
+
       const courses = await this._courseRepo.findAllListedCoursesWithFilters(
         filterConditions,
-        sortOptions
+        sortOptions,
+        page,
+        limit
       );
 
       await Promise.all(
@@ -458,7 +503,8 @@ export class CourseService implements ICourseService {
 
       if (thumbnailFile) {
         if (thumbnailUrl) {
-          filesToDelete.push(thumbnailUrl);
+          const oldThumbnail = this.extractS3FileName(thumbnailUrl);
+          filesToDelete.push(oldThumbnail);
         }
 
         const folderPath = `courses/thumbnails`;
@@ -467,7 +513,7 @@ export class CourseService implements ICourseService {
           thumbnailFile
         );
       } else if (existingThumbnailUrl && !thumbnailFile) {
-        thumbnailUrl = existingThumbnailUrl;
+        thumbnailUrl = this.extractS3FileName(existingThumbnailUrl);
       }
 
       const { processedChapters, filesToCleanup } =
@@ -527,7 +573,7 @@ export class CourseService implements ICourseService {
         const existingLesson = existingChapter?.lessons?.[lessonIndex];
 
         const { processedDocuments, filesToDelete: docFilesToDelete } =
-          await this.processDocuments(
+          await this.processDocumentsForEdit(
             lesson.documents || [],
             files,
             chapterIndex,
@@ -536,7 +582,7 @@ export class CourseService implements ICourseService {
           );
 
         const { processedVideos, filesToDelete: videoFilesToDelete } =
-          await this.processVideos(
+          await this.processVideosForEdit(
             lesson.videos || [],
             files,
             chapterIndex,
@@ -566,7 +612,7 @@ export class CourseService implements ICourseService {
     return { processedChapters, filesToCleanup };
   }
 
-  private async processDocuments(
+  private async processDocumentsForEdit(
     documents: any[],
     files: { [fieldname: string]: Express.Multer.File[] },
     chapterIndex: number,
@@ -580,44 +626,39 @@ export class CourseService implements ICourseService {
       const doc = documents[docIndex];
       const existingDoc = existingDocuments[docIndex];
 
-      if (doc.isExisting && existingDoc) {
-        processedDocuments.push(existingDoc);
-      } else if (doc.file && doc.file instanceof File) {
+      const fieldName = `lesson_documents_${chapterIndex}_${lessonIndex}_${docIndex}`;
+      const fileArray = files[fieldName];
+
+      if (fileArray && fileArray.length > 0) {
         if (existingDoc?.fileName) {
-          filesToDelete.push(existingDoc.fileName);
+          const oldFileName = this.extractS3FileName(existingDoc.fileName);
+          filesToDelete.push(oldFileName);
         }
 
-        const fieldName = `lesson_documents_${chapterIndex}_${lessonIndex}_${docIndex}`;
-        const fileArray = files[fieldName];
-
-        if (fileArray && fileArray.length > 0) {
-          const file = fileArray[0];
-          try {
-            const fileName = await this._s3Service.uploadFile(
-              `courses/documents/chapter_${chapterIndex}/lesson_${lessonIndex}`,
-              file
-            );
-            processedDocuments.push({ fileName });
-          } catch (uploadError) {
-            console.error(
-              `Error uploading document ${file.originalname}:`,
-              uploadError
-            );
-            throw new Error(`Failed to upload document: ${file.originalname}`);
-          }
+        const file = fileArray[0];
+        try {
+          const fileName = await this._s3Service.uploadFile(
+            `courses/documents/chapter_${chapterIndex}/lesson_${lessonIndex}`,
+            file
+          );
+          processedDocuments.push({ fileName });
+        } catch (uploadError) {
+          console.error(
+            `Error uploading document ${file.originalname}:`,
+            uploadError
+          );
+          throw new Error(`Failed to upload document: ${file.originalname}`);
         }
-      } else if (doc.url) {
-        if (existingDoc?.fileName) {
-          filesToDelete.push(existingDoc.fileName);
-        }
-        processedDocuments.push({ fileName: doc.url });
+      } else if (existingDoc) {
+        const fileName = this.extractS3FileName(existingDoc.fileName);
+        processedDocuments.push({ fileName });
       }
     }
 
     return { processedDocuments, filesToDelete };
   }
 
-  private async processVideos(
+  private async processVideosForEdit(
     videos: any[],
     files: { [fieldname: string]: Express.Multer.File[] },
     chapterIndex: number,
@@ -631,41 +672,52 @@ export class CourseService implements ICourseService {
       const video = videos[videoIndex];
       const existingVideo = existingVideos[videoIndex];
 
-      if (video.isExisting && existingVideo) {
-        processedVideos.push(existingVideo);
-      } else if (video.file && video.file instanceof File) {
+      const fieldName = `lesson_videos_${chapterIndex}_${lessonIndex}_${videoIndex}`;
+      const fileArray = files[fieldName];
+
+      if (fileArray && fileArray.length > 0) {
         if (existingVideo?.fileName) {
-          filesToDelete.push(existingVideo.fileName);
+          const oldFileName = this.extractS3FileName(existingVideo.fileName);
+          filesToDelete.push(oldFileName);
         }
 
-        const fieldName = `lesson_videos_${chapterIndex}_${lessonIndex}_${videoIndex}`;
-        const fileArray = files[fieldName];
-
-        if (fileArray && fileArray.length > 0) {
-          const file = fileArray[0];
-          try {
-            const fileName = await this._s3Service.uploadFile(
-              `courses/videos/chapter_${chapterIndex}/lesson_${lessonIndex}`,
-              file
-            );
-            processedVideos.push({ fileName });
-          } catch (uploadError) {
-            console.error(
-              `Error uploading video ${file.originalname}:`,
-              uploadError
-            );
-            throw new Error(`Failed to upload video: ${file.originalname}`);
-          }
+        const file = fileArray[0];
+        try {
+          const fileName = await this._s3Service.uploadFile(
+            `courses/videos/chapter_${chapterIndex}/lesson_${lessonIndex}`,
+            file
+          );
+          processedVideos.push({ fileName });
+        } catch (uploadError) {
+          console.error(
+            `Error uploading video ${file.originalname}:`,
+            uploadError
+          );
+          throw new Error(`Failed to upload video: ${file.originalname}`);
         }
-      } else if (video.url) {
-        if (existingVideo?.fileName) {
-          filesToDelete.push(existingVideo.fileName);
-        }
-        processedVideos.push({ fileName: video.url });
+      } else if (existingVideo) {
+        const fileName = this.extractS3FileName(existingVideo.fileName);
+        processedVideos.push({ fileName });
       }
     }
 
     return { processedVideos, filesToDelete };
+  }
+
+  private extractS3FileName(filePathOrUrl: string): string {
+    if (!filePathOrUrl.includes("://")) {
+      return filePathOrUrl;
+    }
+
+    try {
+      const url = new URL(filePathOrUrl);
+      const pathname = url.pathname.substring(1);
+      const cleanPath = pathname.split("?")[0];
+      return decodeURIComponent(cleanPath);
+    } catch (error) {
+      console.warn("Failed to parse URL, returning as is:", filePathOrUrl);
+      return filePathOrUrl;
+    }
   }
 
   private async cleanupFiles(fileKeys: string[]): Promise<void> {

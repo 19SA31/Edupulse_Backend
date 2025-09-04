@@ -22,6 +22,8 @@ import { AuthAdminRepository } from "../../repositories/admin/authAdminRepo";
 import { CourseRepository } from "../../repositories/course/courseRepo";
 import { CourseService } from "../../services/course/courseService";
 import { CourseController } from "../../controllers/course/CourseController";
+import EnrollmentService from "../../services/enrollment/enrollmentService";
+import EnrollmentRepository from "../../repositories/enrollment/enrollmentRepo";
 
 const tutorRoute = express.Router();
 
@@ -49,8 +51,18 @@ const tutorService = new TutorService(tutorRepository, s3Service);
 const tutorController = new TutorController(tutorService);
 const authMiddleware = createAuthMiddleware("tutor", tutorService);
 
+const enrollmentRepository = new EnrollmentRepository();
 const courseRepository = new CourseRepository();
-const courseService = new CourseService(courseRepository, s3Service);
+const enrollmentService = new EnrollmentService(
+  enrollmentRepository,
+  courseRepository
+);
+
+const courseService = new CourseService(
+  courseRepository,
+  s3Service,
+  enrollmentService
+);
 const courseController = new CourseController(courseService);
 
 tutorRoute.post(
@@ -144,7 +156,7 @@ tutorRoute.put(
   "/edit-course/:courseId",
   verifyToken("tutor"),
   authMiddleware,
-  uploadCourseFiles, 
+  uploadCourseFiles,
   courseController.editCourse.bind(courseController)
 );
 

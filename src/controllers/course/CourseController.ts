@@ -339,6 +339,7 @@ export class CourseController {
 
   async getAllListedCourses(req: Request, res: Response): Promise<void> {
     try {
+      const userId = (req as AuthRequest).user?.id;
       const {
         search,
         category,
@@ -392,7 +393,10 @@ export class CourseController {
         return;
       }
 
-      const courses = await this._CourseService.getAllListedCourses(filters);
+      const courses = await this._CourseService.getAllListedCourses(
+        filters,
+        userId
+      );
       res
         .status(HTTP_statusCode.OK)
         .json(

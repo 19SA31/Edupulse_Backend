@@ -71,18 +71,24 @@ const userController = new UserController(userService);
 const authMiddleware = createAuthMiddleware("user", userService);
 
 const courseRepository = new CourseRepository();
-const courseService = new CourseService(courseRepository, s3Service);
-const courseController = new CourseController(courseService);
-
-const tutorRepository = new TutorRepository();
-const tutorService = new TutorService(tutorRepository, s3Service);
-const tutorController = new TutorController(tutorService);
 
 const enrollmentRepository = new EnrollmentRepository();
 const enrollmentService = new EnrollmentService(
   enrollmentRepository,
   courseRepository
 );
+
+const courseService = new CourseService(
+  courseRepository,
+  s3Service,
+  enrollmentService
+);
+const courseController = new CourseController(courseService);
+
+const tutorRepository = new TutorRepository();
+const tutorService = new TutorService(tutorRepository, s3Service);
+const tutorController = new TutorController(tutorService);
+
 const enrollmentController = new EnrollmentController(enrollmentService);
 
 userRoute.post(

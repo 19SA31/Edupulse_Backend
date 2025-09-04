@@ -9,7 +9,8 @@ import {
   EnrollmentVerificationResponseDTO,
   GetEnrollmentByPaymentDTO,
   EnrollmentResponseDTO,
-  PurchaseEmailDTO
+  PurchaseEmailDTO,
+  EnrolledCoursesDTO,
 } from "../../dto/enrollment/enrollmentDTO";
 
 export interface IEnrollmentService {
@@ -28,7 +29,6 @@ export interface IEnrollmentService {
   getEnrollmentByPaymentId(
     dto: GetEnrollmentByPaymentDTO
   ): Promise<EnrollmentResponseDTO | null>;
-  getPaymentData(
-    paymentId: string
-  ): Promise<PurchaseEmailDTO | null>;
+  getPaymentData(paymentId: string): Promise<PurchaseEmailDTO | null>;
+  getEnrolledCourses(userId: string): Promise<EnrolledCoursesDTO[] | null>;
 }

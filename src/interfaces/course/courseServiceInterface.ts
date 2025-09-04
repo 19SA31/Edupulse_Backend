@@ -42,15 +42,18 @@ export interface ICourseService {
   }>;
   listUnlistCourseService(id: string): Promise<void>;
   getAllCourses(): Promise<ListedCourseDTO[]>;
-  getAllListedCourses(filters: {
-    search?: string;
-    category?: string;
-    minPrice?: number;
-    maxPrice?: number;
-    sortBy?: string;
-    page?: number;
-    limit?: number;
-  }): Promise<ListedCourseDTO[]>;
+  getAllListedCourses(
+    filters: {
+      search?: string;
+      category?: string;
+      minPrice?: number;
+      maxPrice?: number;
+      sortBy?: string;
+      page?: number;
+      limit?: number;
+    },
+    userId?: string
+  ): Promise<ListedCourseDTO[]>;
   getAllListedCategories(): Promise<ListedCategoryDTO[]>;
   getCourseDetails(id: string): Promise<CourseDetailsDto>;
   getTutorCourses(

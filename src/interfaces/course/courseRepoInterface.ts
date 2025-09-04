@@ -28,7 +28,9 @@ export interface ICourseRepoInterface {
   findAllListedCourses(): Promise<Course[]>;
   findAllListedCoursesWithFilters(
     filterConditions: any,
-    sortOptions: any
+    sortOptions: any,
+    page: number,
+    limit: number
   ): Promise<Course[]>;
   findAllListedCategories(): Promise<Category[]>;
   getCourseDetails(id: string): Promise<Course>;
