@@ -1,6 +1,6 @@
 import { Document, Model } from "mongoose";
 import adminModel from "../../models/Admin";
-import { IAdminAuthRepository } from "../../interfaces/admin/adminAuthRepoInterface";
+import { IAdminAuthRepository } from "../../interfaces/admin/IAdminAuthRepository";
 import { AdminVerificationResultDTO } from "../../dto/admin/AdminAuthDTO";
 import { AdminAuthMapper } from "../../mappers/admin/AdminAuthMapper";
 import BaseRepository from "../BaseRepository";

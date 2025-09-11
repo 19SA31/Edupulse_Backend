@@ -11,7 +11,7 @@ import {
   Tutor,
   User,
 } from "../../interfaces/adminInterface/adminInterface";
-import { IAdminRepositoryInterface } from "../../interfaces/admin/adminRepositoryInterface";
+import { IAdminRepositoryInterface } from "../../interfaces/admin/IAdminRepositoryInterface";
 
 export class AdminRepository
   extends BaseRepository<any>

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { IEnrollmentRepository } from "../../interfaces/enrollment/enrollmentRepoInterface";
+import { IEnrollmentRepository } from "../../interfaces/enrollment/IEnrollmentRepository";
 import { stripe } from "../../config/stripe";
 import {
   CreateEnrollmentDTO,
@@ -14,9 +14,12 @@ import {
   EnrollmentResponseDTO,
   EnrolledCoursesDTO,
   PurchaseEmailDTO,
+  GetAllEnrollmentsDTO,
+  AllEnrollmentsResponseDTO
 } from "../../dto/enrollment/enrollmentDTO";
 import { EnrollmentMapper } from "../../mappers/enrollment/enrollmentMapper";
-import { ICourseRepoInterface } from "../../interfaces/course/courseRepoInterface";
+import { ICourseRepoInterface } from "../../interfaces/course/ICourseRepoInterface";
+import { error } from "console";
 
 class EnrollmentService {
   constructor(
@@ -31,6 +34,16 @@ class EnrollmentService {
       const validation = EnrollmentMapper.validateCreateEnrollmentDTO(dto);
       if (!validation.isValid) {
         throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
+      }
+
+      const courses = this.enrollmentRepository.findAllEnrolledCourses(
+        dto.userId
+      );
+
+      const courseLimit: number = 4;
+
+      if (Object.entries(courses).length > courseLimit) {
+        throw new Error(`Cannot purchace more than 4 courses`);
       }
 
       const domainData = EnrollmentMapper.toDomainModel(dto);
@@ -132,10 +145,11 @@ class EnrollmentService {
         );
         if (updated) {
           updatedEnrollment = updated;
-          await this.courseRepository.addEnrollment(updated?.courseId.toString())          
+          await this.courseRepository.addEnrollment(
+            updated?.courseId.toString()
+          );
         }
         message = "Payment verified successfully";
-
       } else if (session.status === "expired") {
         const updated = await this.enrollmentRepository.updateStatus(
           (enrollment._id as mongoose.Types.ObjectId).toString(),
@@ -261,6 +275,42 @@ class EnrollmentService {
     } catch (error) {
       console.error("error in fetching payment data:", error);
       throw new Error(`Failed to fetch payment data: ${error}`);
+    }
+  }
+
+  async getAllEnrollments(
+    dto: GetAllEnrollmentsDTO
+  ): Promise<AllEnrollmentsResponseDTO> {
+    try {
+
+      const { skip, limit, page } = EnrollmentMapper.mapPaginationParams({
+        page: dto.page,
+        limit: dto.limit,
+        userId: "",
+      });
+
+      const result =
+        await this.enrollmentRepository.getAllEnrollmentsWithPagination(
+          skip,
+          limit,
+          dto.search,
+          dto.status,
+          dto.date
+        );
+
+      return EnrollmentMapper.toAllEnrollmentsResponse(
+        result.enrollments,
+        result.totalPages,
+        result.totalCount,
+        page,
+        limit
+      );
+    } catch (error: any) {
+      console.error(
+        "Error in EnrollmentService getAllEnrollments:",
+        error.message
+      );
+      throw error;
     }
   }
 }

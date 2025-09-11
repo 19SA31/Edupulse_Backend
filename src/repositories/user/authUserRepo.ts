@@ -8,7 +8,7 @@ import {
 } from "../../interfaces/userInterface/userInterface";
 import bcrypt from "bcrypt";
 import BaseRepository from "../BaseRepository";
-import { IAuthRepository } from "../../interfaces/user/userAuthRepoInterface";
+import { IAuthRepository } from "../../interfaces/user/IAuthRepository";
 import { UserExistenceDto } from "../../dto/user/UserAuthDTO";
 import { AuthMapper } from "../../mappers/user/UserAuthMapper";
 

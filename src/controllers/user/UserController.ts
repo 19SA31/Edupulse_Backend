@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { IUserService } from '../../interfaces/user/userServiceInterface';
+import { IUserService } from '../../interfaces/user/IUserService';
 import { ResponseModel } from '../../models/ResponseModel';
 import { UpdateProfileData, CropData } from '../../interfaces/userInterface/userInterface';
 import HTTP_statusCode from '../../enums/HttpStatusCode';

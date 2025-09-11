@@ -1,6 +1,6 @@
-import { IAuthService } from "../../interfaces/user/userAuthServiceInterface";
-import { ITutorAuthInterface } from "../../interfaces/tutor/tutorAuthServiceInterface";
-import { IAdminAuthServiceInterface } from "../../interfaces/admin/adminAuthServiceInterface";
+import { IAuthService } from "../../interfaces/user/IAuthService";
+import { ITutorAuthInterface } from "../../interfaces/tutor/ITutorAuthInterface";
+import { IAdminAuthServiceInterface } from "../../interfaces/admin/IAdminAuthServiceInterface";
 import HTTP_statusCode from "../../enums/HttpStatusCode";
 import { Request, Response, NextFunction } from "express";
 import { ResponseModel } from "../../models/ResponseModel";
@@ -179,26 +179,18 @@ export class AuthenticationController {
     }
   }
 
-  async verifyTutorOtp(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async verifyTutorOtp(req: Request, res: Response): Promise<void> {
     try {
       await this.tutorAuthService.otpCheck(req.body);
 
       const response = new ResponseModel(true, "OTP verified successfully");
       res.status(HTTP_statusCode.OK).json(response);
     } catch (error: unknown) {
-      this.handleTutorVerifyOtpError(error, res, next);
+      this.handleTutorVerifyOtpError(error, res);
     }
   }
 
-  async tutorLogin(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async tutorLogin(req: Request, res: Response): Promise<void> {
     try {
       const loginResult = await this.tutorAuthService.loginService(req.body);
 
@@ -216,22 +208,18 @@ export class AuthenticationController {
 
       res.status(HTTP_statusCode.OK).json(response);
     } catch (error: unknown) {
-      this.handleTutorLoginError(error, res, next);
+      this.handleTutorLoginError(error, res);
     }
   }
 
-  async resetTutorPassword(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async resetTutorPassword(req: Request, res: Response): Promise<void> {
     try {
       await this.tutorAuthService.resetPasswordService(req.body);
 
       const response = new ResponseModel(true, "Password reset successfully");
       res.status(HTTP_statusCode.OK).json(response);
     } catch (error: unknown) {
-      this.handleTutorResetPasswordError(error, res, next);
+      this.handleTutorResetPasswordError(error, res);
     }
   }
 
@@ -253,11 +241,7 @@ export class AuthenticationController {
     }
   }
 
-  async adminLogin(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async adminLogin(req: Request, res: Response): Promise<void> {
     try {
       const { email, password } = req.body;
 
@@ -297,7 +281,7 @@ export class AuthenticationController {
 
       res.status(HTTP_statusCode.OK).json(response);
     } catch (error: unknown) {
-      this.handleAdminLoginError(error, res, next);
+      this.handleAdminLoginError(error, res);
     }
   }
 
@@ -508,11 +492,7 @@ export class AuthenticationController {
     next(error);
   }
 
-  private handleTutorVerifyOtpError(
-    error: unknown,
-    res: Response,
-    next: NextFunction
-  ): void {
+  private handleTutorVerifyOtpError(error: unknown, res: Response): void {
     console.error("Error in verifyTutorOtp:", error);
 
     let response: ResponseModel;
@@ -532,11 +512,7 @@ export class AuthenticationController {
     }
   }
 
-  private handleTutorLoginError(
-    error: unknown,
-    res: Response,
-    next: NextFunction
-  ): void {
+  private handleTutorLoginError(error: unknown, res: Response): void {
     console.error("Error in tutorLogin: ", error);
 
     let response: ResponseModel;
@@ -554,11 +530,7 @@ export class AuthenticationController {
     }
   }
 
-  private handleTutorResetPasswordError(
-    error: unknown,
-    res: Response,
-    next: NextFunction
-  ): void {
+  private handleTutorResetPasswordError(error: unknown, res: Response): void {
     console.error("Error in resetTutorPassword: ", error);
 
     let response: ResponseModel;
@@ -573,11 +545,7 @@ export class AuthenticationController {
     }
   }
 
-  private handleAdminLoginError(
-    error: unknown,
-    res: Response,
-    next: NextFunction
-  ): void {
+  private handleAdminLoginError(error: unknown, res: Response): void {
     console.error("Error in adminLogin: ", error);
 
     let response: ResponseModel;

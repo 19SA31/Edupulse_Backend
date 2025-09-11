@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import HTTP_statusCode from "../../enums/HttpStatusCode";
-import { IAdminService } from "../../interfaces/admin/adminServiceInterface";
+import { IAdminService } from "../../interfaces/admin/IAdminService";
 import { ResponseModel } from "../../models/ResponseModel";
 import { sendRejectionEmail } from "../../config/emailConfig";
 import { ValidationError } from "../../errors/ValidationError";

@@ -4,7 +4,7 @@ import {
   ListingTutor,
   UpdateProfileData,
 } from "../../interfaces/tutorInterface/tutorInterface";
-import { ITutorRepository } from "../../interfaces/tutor/tutorRepoInterface";
+import { ITutorRepository } from "../../interfaces/tutor/ITutorRepository";
 import { TutorDocuments } from "../../models/TutorDocs";
 import TutorModel from "../../models/Tutors";
 import { TutorMapper } from "../../mappers/tutor/TutorMapper";

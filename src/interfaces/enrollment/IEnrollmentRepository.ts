@@ -30,6 +30,17 @@ export interface IEnrollmentRepository {
     limit: number,
     populateOptions?: PopulateOptions[]
   ): Promise<IEnrollment[]>;
-  findAllEnrolledCourses(userId:string):Promise<IEnrollment[]>
-  getPurchaseMailData(paymentId: string): Promise<PopulatedEnrollment | null>
+  findAllEnrolledCourses(userId: string): Promise<IEnrollment[]>;
+  getPurchaseMailData(paymentId: string): Promise<PopulatedEnrollment | null>;
+  getAllEnrollmentsWithPagination(
+    skip: number,
+    limit: number,
+    search?: string,
+    status?: string,
+    date?: string
+  ): Promise<{
+    enrollments: any[];
+    totalPages: number;
+    totalCount: number;
+  }>;
 }

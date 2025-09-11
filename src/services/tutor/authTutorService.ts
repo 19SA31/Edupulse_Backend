@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { S3Service } from "../../utils/s3";
-import { ITutorAuthInterface } from "../../interfaces/tutor/tutorAuthServiceInterface";
-import { ITutorAuthRepository } from "../../interfaces/tutor/tutorAuthRepoInterface";
+import { ITutorAuthInterface } from "../../interfaces/tutor/ITutorAuthInterface";
+import { ITutorAuthRepository } from "../../interfaces/tutor/ITutorAuthRepository";
 import sendMail from "../../config/emailConfig";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";

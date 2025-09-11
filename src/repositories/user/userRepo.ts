@@ -4,7 +4,7 @@ import {
   IUser,
   UpdateProfileData,
 } from "../../interfaces/userInterface/userInterface";
-import { IUserRepository } from "../../interfaces/user/userRepoInterface";
+import { IUserRepository } from "../../interfaces/user/IUserRepository";
 
 class UserRepository extends BaseRepository<IUser> implements IUserRepository {
   constructor() {

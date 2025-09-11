@@ -421,6 +421,56 @@ class EnrollmentController {
       }
     }
   };
+
+  getAllEnrollments = async (
+    req: AuthRequest,
+    res: Response
+  ): Promise<void> => {
+    try {
+      const { page, limit, search, status, date } = req.query;
+
+      const getAllEnrollmentsDTO = {
+        page: page ? parseInt(page as string, 10) : 1,
+        limit: limit ? parseInt(limit as string, 10) : 10,
+        search: search as string,
+        status: status as string,
+        date: date as string,
+      };
+
+      if (isNaN(getAllEnrollmentsDTO.page) || getAllEnrollmentsDTO.page < 1) {
+        getAllEnrollmentsDTO.page = 1;
+      }
+      if (isNaN(getAllEnrollmentsDTO.limit) || getAllEnrollmentsDTO.limit < 1) {
+        getAllEnrollmentsDTO.limit = 10;
+      }
+
+      const result = await this.enrollmentService.getAllEnrollments(
+        getAllEnrollmentsDTO
+      );
+
+      res
+        .status(HTTP_statusCode.OK)
+        .json(
+          new ResponseModel(
+            true,
+            "All enrollments fetched successfully",
+            result
+          )
+        );
+    } catch (error: unknown) {
+      console.error("Get all enrollments error:", error);
+
+      if (error instanceof ValidationError || error instanceof Error) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(new ResponseModel(false, (error as Error).message, null));
+      } else {
+        res
+          .status(HTTP_statusCode.InternalServerError)
+          .json(new ResponseModel(false, "Failed to fetch enrollments", null));
+      }
+    }
+  };
 }
 
 export default EnrollmentController;

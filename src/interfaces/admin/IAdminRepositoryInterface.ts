@@ -2,8 +2,8 @@ import {
   User,
   Tutor,
   Category,
-} from "../../interfaces/adminInterface/adminInterface";
-import { TutorDocs } from "../../interfaces/tutorInterface/tutorInterface";
+} from "../adminInterface/adminInterface";
+import { TutorDocs } from "../tutorInterface/tutorInterface";
 
 export interface IAdminRepositoryInterface {
   getAllUsers(

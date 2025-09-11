@@ -19,6 +19,7 @@ import EnrollmentService from "../../services/enrollment/enrollmentService";
 import EnrollmentRepository from "../../repositories/enrollment/enrollmentRepo";
 
 import { verifyToken } from "../../utils/jwt";
+import EnrollmentController from "../../controllers/enrollment/enrollemntController";
 
 const adminRoutes = express.Router();
 
@@ -58,6 +59,7 @@ const courseService = new CourseService(
   enrollmentService
 );
 const courseController = new CourseController(courseService);
+const enrollemntController = new EnrollmentController(enrollmentService);
 
 adminRoutes.post(
   "/login",
@@ -169,4 +171,9 @@ adminRoutes.put(
   courseController.listUnlistCourse.bind(courseController)
 );
 
+adminRoutes.get(
+  "/enrollments",
+  verifyToken("admin"),
+  enrollemntController.getAllEnrollments.bind(enrollemntController)
+);
 export default adminRoutes;

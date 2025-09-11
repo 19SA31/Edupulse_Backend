@@ -1,9 +1,9 @@
 import { CategoryDTOArr } from "../../dto/course/CategoryDTO";
 import { CategoryMapper } from "../../mappers/course/categoryMapper";
 import { CourseMapper } from "../../mappers/course/courseMapper";
-import { ICourseService } from "../../interfaces/course/courseServiceInterface";
-import { ICourseRepoInterface } from "../../interfaces/course/courseRepoInterface";
-import { IEnrollmentService } from "../../interfaces/enrollment/enrollmentServiceInterface";
+import { ICourseService } from "../../interfaces/course/ICourseService";
+import { ICourseRepoInterface } from "../../interfaces/course/ICourseRepoInterface";
+import { IEnrollmentService } from "../../interfaces/enrollment/IEnrollmentService";
 import { Course } from "../../interfaces/course/courseInterface";
 import {
   CourseForReview,

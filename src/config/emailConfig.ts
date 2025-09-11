@@ -15,7 +15,7 @@ const sendMail = async (
   subject: string,
   otp: string
 ): Promise<boolean> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -49,7 +49,7 @@ export const sendRejectionEmail = async (
   tutorName: string,
   reason: string
 ): Promise<boolean> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -83,7 +83,7 @@ export const sendCourseRejectionEmail = async (
   courseTitle: string,
   reason: string
 ): Promise<boolean> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -118,7 +118,7 @@ export const sendCoursePurchaseEmail = async (
   tutorName: string,
   price: string
 ): Promise<boolean> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -153,7 +153,7 @@ export const tutorNotificationEmail = async (
   tutorName: string,
   tutorEmail: string,
 ): Promise<boolean> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {

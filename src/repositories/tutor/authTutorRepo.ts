@@ -10,7 +10,7 @@ import {
 } from "../../interfaces/tutorInterface/tutorInterface";
 import bcrypt from "bcrypt";
 import BaseRepository from "../BaseRepository";
-import { ITutorAuthRepository } from "../../interfaces/tutor/tutorAuthRepoInterface";
+import { ITutorAuthRepository } from "../../interfaces/tutor/ITutorAuthRepository";
 
 export class AuthTutorRepository
   extends BaseRepository<any>

@@ -2,10 +2,24 @@ import { Request, Response, NextFunction } from "express";
 import { AuthRequest } from "../../utils/jwt";
 import { ResponseModel } from "../../models/ResponseModel";
 import HTTP_statusCode from "../../enums/HttpStatusCode";
-import { ICourseService } from "../../interfaces/course/courseServiceInterface";
-import { CreateCourseDto, EditCourseDto } from "../../dto/course/CourseDTO";
+import { ICourseService } from "../../interfaces/course/ICourseService";
+import {
+  CreateCourseDto,
+  EditCourseDto,
+  ChapterDto,
+} from "../../dto/course/CourseDTO";
 import { ValidationError } from "../../errors/ValidationError";
 import { sendCourseRejectionEmail } from "../../config/emailConfig";
+
+interface Lesson {
+  title: string;
+  videoFile?: string;
+}
+
+interface Chapter {
+  title: string;
+  lessons?: Lesson[];
+}
 
 export class CourseController {
   private _CourseService: ICourseService;
@@ -13,11 +27,7 @@ export class CourseController {
     this._CourseService = CourseServiceIsntance;
   }
 
-  async getCategoryNames(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async getCategoryNames(req: Request, res: Response): Promise<void> {
     try {
       const fetchCategroyNames = await this._CourseService.getAllCategories();
       res
@@ -69,7 +79,7 @@ export class CourseController {
           .json(new ResponseModel(false, (error as Error).message, null));
       } else {
         res
-          .status(500)
+          .status(HTTP_statusCode.InternalServerError)
           .json(new ResponseModel(false, "Failed to fetch courses", null));
       }
     }
@@ -89,17 +99,16 @@ export class CourseController {
 
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-      let parsedChapters;
+      let parsedChapters: ChapterDto[];
       try {
         parsedChapters =
           typeof chapters === "string" ? JSON.parse(chapters) : chapters;
-        parsedChapters.forEach((chapter: any, chapterIndex: number) => {
-          chapter.lessons?.forEach((lesson: any, lessonIndex: number) => {});
-        });
+        // Removed the unused forEach loops that were causing ESLint errors
+        // If you need to validate chapters structure, do it here with proper validation
       } catch (parseError) {
         console.error("Error parsing chapters:", parseError);
         res
-          .status(400)
+          .status(HTTP_statusCode.BadRequest)
           .json(new ResponseModel(false, "Invalid chapters data format"));
         return;
       }
@@ -108,14 +117,14 @@ export class CourseController {
 
       if (!tutorId) {
         res
-          .status(401)
+          .status(HTTP_statusCode.Unauthorized)
           .json(new ResponseModel(false, "Unauthorized: Tutor ID not found"));
         return;
       }
 
       if (!title || !description || !category || !price || !parsedChapters) {
         res
-          .status(400)
+          .status(HTTP_statusCode.BadRequest)
           .json(new ResponseModel(false, "Missing required fields"));
         return;
       }
@@ -140,7 +149,7 @@ export class CourseController {
       );
 
       res
-        .status(201)
+        .status(HTTP_statusCode.OK)
         .json(
           new ResponseModel(true, "Course created successfully", createdCourse)
         );
@@ -152,7 +161,7 @@ export class CourseController {
           .json(new ResponseModel(false, error.message, null));
       } else if (error instanceof Error) {
         res
-          .status(500)
+          .status(HTTP_statusCode.InternalServerError)
           .json(
             new ResponseModel(false, "Failed to create course", error.message)
           );
@@ -186,7 +195,7 @@ export class CourseController {
           .json(new ResponseModel(false, error.message, null));
       } else if (error instanceof Error) {
         res
-          .status(500)
+          .status(HTTP_statusCode.InternalServerError)
           .json(
             new ResponseModel(false, "Failed to publish course", error.message)
           );
@@ -241,7 +250,7 @@ export class CourseController {
           .json(new ResponseModel(false, error.message, null));
       } else if (error instanceof Error) {
         res
-          .status(500)
+          .status(HTTP_statusCode.InternalServerError)
           .json(
             new ResponseModel(false, "Failed to reject course", error.message)
           );
@@ -542,14 +551,14 @@ export class CourseController {
 
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-      let parsedChapters;
+      let parsedChapters: ChapterDto[];
       try {
         parsedChapters =
           typeof chapters === "string" ? JSON.parse(chapters) : chapters;
       } catch (parseError) {
         console.error("Error parsing chapters:", parseError);
         res
-          .status(400)
+          .status(HTTP_statusCode.BadRequest)
           .json(new ResponseModel(false, "Invalid chapters data format"));
         return;
       }
@@ -558,7 +567,7 @@ export class CourseController {
 
       if (!tutorId) {
         res
-          .status(401)
+          .status(HTTP_statusCode.Unauthorized)
           .json(new ResponseModel(false, "Unauthorized: Tutor ID not found"));
         return;
       }
@@ -568,14 +577,14 @@ export class CourseController {
       );
       if (!existingCourse || existingCourse.tutor._id !== tutorId) {
         res
-          .status(403)
+          .status(HTTP_statusCode.NoAccess)
           .json(new ResponseModel(false, "You can only edit your own courses"));
         return;
       }
 
       if (!title || !description || !category || !price || !parsedChapters) {
         res
-          .status(400)
+          .status(HTTP_statusCode.BadRequest)
           .json(new ResponseModel(false, "Missing required fields"));
         return;
       }
@@ -605,7 +614,7 @@ export class CourseController {
       );
 
       res
-        .status(200)
+        .status(HTTP_statusCode.OK)
         .json(
           new ResponseModel(true, "Course updated successfully", updatedCourse)
         );
@@ -617,7 +626,7 @@ export class CourseController {
           .json(new ResponseModel(false, error.message, null));
       } else if (error instanceof Error) {
         res
-          .status(500)
+          .status(HTTP_statusCode.InternalServerError)
           .json(
             new ResponseModel(false, "Failed to update course", error.message)
           );

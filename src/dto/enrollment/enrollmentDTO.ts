@@ -114,3 +114,24 @@ export interface EnrollmentValidationDTO {
 export interface EnrolledCoursesDTO {
   courseId: string;
 }
+
+
+export interface GetAllEnrollmentsDTO {
+  page: number;
+  limit: number;
+  search?: string;
+  status?: string;
+  date?: string;
+}
+
+export interface AllEnrollmentsResponseDTO {
+  enrollments: PopulatedEnrollmentResponseDTO[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalCount: number;
+    limit: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+}

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { ResponseModel } from "../../models/ResponseModel";
-import { ITutorService } from "../../interfaces/tutor/tutorServiceInterface";
+import { ITutorService } from "../../interfaces/tutor/ITutorService";
 import { TutorMapper } from "../../mappers/tutor/TutorMapper";
 import HTTP_statusCode from "../../enums/HttpStatusCode";
 import { ValidationError } from "../../errors/ValidationError";

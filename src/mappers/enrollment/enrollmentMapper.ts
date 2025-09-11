@@ -11,6 +11,7 @@ import {
   PopulatedEnrollmentResponseDTO,
   EnrolledCoursesDTO,
   PurchaseEmailDTO,
+  AllEnrollmentsResponseDTO,
 } from "../../dto/enrollment/enrollmentDTO";
 import { PopulatedEnrollment } from "../../interfaces/enrollment/enrollmentInterface";
 
@@ -222,7 +223,6 @@ export class EnrollmentMapper {
     };
   }
 
-
   static toEnrolledCourses(enrollments: IEnrollment[]): EnrolledCoursesDTO[] {
     return enrollments.map((e) => ({
       courseId: e.courseId.toString(),
@@ -238,5 +238,64 @@ export class EnrollmentMapper {
       tutorName: data.tutorId.name,
       price: data.price,
     };
+  }
+
+  static toAllEnrollmentsResponse(
+    enrollments: any[],
+    totalPages: number,
+    totalCount: number,
+    currentPage: number,
+    limit: number
+  ): AllEnrollmentsResponseDTO {
+    return {
+      enrollments: this.toPopulatedWithUserDTOs(enrollments),
+      pagination: {
+        currentPage,
+        totalPages,
+        totalCount,
+        limit,
+        hasNextPage: currentPage < totalPages,
+        hasPreviousPage: currentPage > 1,
+      },
+    };
+  }
+
+  static toPopulatedWithUserDTO(enrollment: any) {
+    return {
+      _id: enrollment._id?.toString() || "",
+      userId: enrollment.userId
+        ? {
+            _id: enrollment.userId._id?.toString() || "",
+            name: enrollment.userId.name || "Unknown User",
+            email: enrollment.userId.email || "",
+            phone: enrollment.userId.phone || "",
+          }
+        : null,
+      courseId: {
+        _id: enrollment.courseId?._id?.toString() || "",
+        title: enrollment.courseId?.title || "Unknown Course",
+        price: enrollment.courseId?.price || 0,
+        thumbnailImage: enrollment.courseId?.thumbnailImage || "",
+      },
+      tutorId: {
+        _id: enrollment.tutorId?._id?.toString() || "",
+        name: enrollment.tutorId?.name || "Unknown Tutor",
+      },
+      categoryId: {
+        _id: enrollment.categoryId?._id?.toString() || "",
+        name: enrollment.categoryId?.name || "Unknown Category",
+      },
+      price: enrollment.price,
+      paymentId: enrollment.paymentId,
+      paymentMethod: enrollment.paymentMethod || "stripe",
+      status: enrollment.status,
+      dateOfEnrollment: enrollment.dateOfEnrollment,
+    };
+  }
+
+  static toPopulatedWithUserDTOs(enrollments: any[]) {
+    return enrollments.map((enrollment) =>
+      this.toPopulatedWithUserDTO(enrollment)
+    );
   }
 }

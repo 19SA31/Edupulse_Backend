@@ -1,5 +1,5 @@
 import BaseRepository from "../BaseRepository";
-import { ICourseRepoInterface } from "../../interfaces/course/courseRepoInterface";
+import { ICourseRepoInterface } from "../../interfaces/course/ICourseRepoInterface";
 import courseModel from "../../models/CourseModel";
 import tutorModel from "../../models/Tutors";
 import categoryModel from "../../models/CategoryModel";

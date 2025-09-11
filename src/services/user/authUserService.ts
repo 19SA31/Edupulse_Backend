@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { S3Service } from "../../utils/s3";
-import { IAuthService } from "../../interfaces/user/userAuthServiceInterface";
-import { IAuthRepository } from "../../interfaces/user/userAuthRepoInterface";
+import { IAuthService } from "../../interfaces/user/IAuthService";
+import { IAuthRepository } from "../../interfaces/user/IAuthRepository";
 import sendMail from "../../config/emailConfig";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";

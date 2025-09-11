@@ -1,6 +1,6 @@
 // services/userService.ts
-import { IUserService } from "../../interfaces/user/userServiceInterface";
-import { IUserRepository } from "../../interfaces/user/userRepoInterface";
+import { IUserService } from "../../interfaces/user/IUserService";
+import { IUserRepository } from "../../interfaces/user/IUserRepository";
 import {
   UpdateProfileData,
   UserProfileData,

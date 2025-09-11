@@ -1,6 +1,6 @@
 // src/services/admin/AdminService.ts
-import { IAdminService } from "../../interfaces/admin/adminServiceInterface";
-import { IAdminRepositoryInterface } from "../../interfaces/admin/adminRepositoryInterface";
+import { IAdminService } from "../../interfaces/admin/IAdminService";
+import { IAdminRepositoryInterface } from "../../interfaces/admin/IAdminRepositoryInterface";
 import { UserDto } from "../../dto/admin/UserDTO";
 import { TutorDto } from "../../dto/admin/TutorDTO";
 import { ValidationError } from "../../errors/ValidationError";
@@ -8,6 +8,7 @@ import {
   CategoryDto,
   CreateCategoryDto,
   UpdateCategoryDto,
+  
 } from "../../dto/admin/CategoryDTO";
 import { UserMapper } from "../../mappers/admin/UserMapper";
 import { TutorMapper } from "../../mappers/admin/TutorMapper";
@@ -77,7 +78,7 @@ export class AdminService implements IAdminService {
     }
   }
 
-  async getAllTutors(
+  async getAllTutors( 
     skip: number,
     limit: number,
     search: any

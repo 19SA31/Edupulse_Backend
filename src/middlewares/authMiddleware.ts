@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import HTTP_statusCode from "../enums/HttpStatusCode";
 
 interface AuthRequest extends Request {
   user?: {
@@ -22,7 +23,7 @@ export const createAuthMiddleware = (
   ): Promise<void> => {
     try {
       if (!req.user) {
-        res.status(401).json({
+        res.status(HTTP_statusCode.Unauthorized).json({
           message: "Unauthorized: Authentication required",
           shouldLogout: true
         });
@@ -32,7 +33,7 @@ export const createAuthMiddleware = (
       const { id, role: userRole } = req.user;
 
       if (userRole !== role) {
-        res.status(403).json({
+        res.status(HTTP_statusCode.NoAccess).json({
           message: "Access denied: Invalid role",
           shouldLogout: true
         });
@@ -47,15 +48,15 @@ export const createAuthMiddleware = (
 
       next();
     } catch (error: any) {
-      let statusCode = 403;
+      let statusCode = HTTP_statusCode.NoAccess;
       let shouldLogout = true;
       let message = error.message || "Access denied";
 
       if (error.message?.includes("not found")) {
-        statusCode = 404;
+        statusCode = HTTP_statusCode.NotFound;
         message = "Account not found";
       } else if (error.message?.includes("blocked")) {
-        statusCode = 403;
+        statusCode = HTTP_statusCode.NoAccess;
         message = "Your account has been blocked. Please contact support.";
       }
 

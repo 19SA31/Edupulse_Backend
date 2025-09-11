@@ -1,5 +1,5 @@
-import { ITutorRepository } from "../../interfaces/tutor/tutorRepoInterface";
-import { ITutorService } from "../../interfaces/tutor/tutorServiceInterface";
+import { ITutorRepository } from "../../interfaces/tutor/ITutorRepository";
+import { ITutorService } from "../../interfaces/tutor/ITutorService";
 import { ServiceResponse } from "../../interfaces/tutorInterface/tutorInterface";
 import { S3Service } from "../../utils/s3";
 import { TutorMapper } from "../../mappers/tutor/TutorMapper";

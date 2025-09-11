@@ -172,7 +172,7 @@ export class CourseMapper {
     );
   }
 
-  static toPublishedCourseDto(course: Course): PublishedCourseDto {
+static toPublishedCourseDto(course: Course): PublishedCourseDto {
     return {
       _id: course._id?.toString() || "",
       title: course.title,
@@ -183,7 +183,7 @@ export class CourseMapper {
       price: course.price,
       thumbnailImage: course.thumbnailImage || "",
       tutorId: course.tutorId?.toString() || "",
-      isPublished: course.isPublished,
+      isPublished: course.isPublished === "published",
       isListed: course.isListed,
       enrollmentCount: course.enrollmentCount,
       createdAt: course.createdAt,
@@ -202,7 +202,7 @@ export class CourseMapper {
       price: course.price,
       thumbnailImage: course.thumbnailImage || "",
       tutorId: course.tutorId?.toString() || "",
-      isPublished: course.isPublished,
+      isPublished: course.isPublished === "published",
       isListed: course.isListed,
       enrollmentCount: course.enrollmentCount,
       createdAt: course.createdAt,
