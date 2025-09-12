@@ -43,4 +43,5 @@ export interface IEnrollmentRepository {
     totalPages: number;
     totalCount: number;
   }>;
+  findCourseCountsTutor(userId: string,tutorId: string): Promise<IEnrollment[]|null>
 }

@@ -243,6 +243,13 @@ class EnrollmentRepository
       totalCount,
     };
   }
+
+  async findCourseCountsTutor(
+    userId: string,
+    tutorId: string
+  ): Promise<IEnrollment[] | null> {
+    return await this.findWithCondition({ userId, tutorId });
+  }
 }
 
 export default EnrollmentRepository;

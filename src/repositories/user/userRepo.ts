@@ -7,6 +7,7 @@ import {
 import { IUserRepository } from "../../interfaces/user/IUserRepository";
 
 class UserRepository extends BaseRepository<IUser> implements IUserRepository {
+  
   constructor() {
     super(userModel);
   }

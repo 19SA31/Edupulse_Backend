@@ -36,15 +36,18 @@ class EnrollmentService {
         throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
       }
 
-      const courses = this.enrollmentRepository.findAllEnrolledCourses(
-        dto.userId
+      const tutorCourses = this.enrollmentRepository.findCourseCountsTutor(
+        dto.userId,
+        dto.tutorId
       );
 
-      const courseLimit: number = 4;
+      const courseCount= Object.entries(tutorCourses)
+      const courseLimit:number=1
 
-      if (Object.entries(courses).length > courseLimit) {
-        throw new Error(`Cannot purchace more than 4 courses`);
+      if(courseCount.length>courseLimit){
+        throw new Error("Cannot purchase more than 3 courses for this tutor")
       }
+
 
       const domainData = EnrollmentMapper.toDomainModel(dto);
 
