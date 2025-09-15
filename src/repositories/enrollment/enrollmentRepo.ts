@@ -134,7 +134,9 @@ class EnrollmentRepository
     limit: number,
     search?: string,
     status?: string,
-    date?: string
+    startDate?: string,
+    endDate?: string,
+    sortBy?: string
   ): Promise<{
     enrollments: any[];
     totalPages: number;
@@ -146,15 +148,21 @@ class EnrollmentRepository
       filter.status = status;
     }
 
-    if (date && date.trim()) {
-      const startDate = new Date(date);
-      const endDate = new Date(date);
-      endDate.setDate(endDate.getDate() + 1);
+    
+    if (startDate || endDate) {
+      filter.dateOfEnrollment = {};
 
-      filter.dateOfEnrollment = {
-        $gte: startDate,
-        $lt: endDate,
-      };
+      if (startDate && startDate.trim()) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        filter.dateOfEnrollment.$gte = start;
+      }
+
+      if (endDate && endDate.trim()) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        filter.dateOfEnrollment.$lte = end;
+      }
     }
 
     const populateOptions: PopulateOptions[] = [
@@ -176,65 +184,72 @@ class EnrollmentRepository
       },
     ];
 
-    let enrollments: any[] = [];
-    let totalCount: number = 0;
+    
+    let sortObject: any = {};
+    if (sortBy && sortBy.trim()) {
+      switch (sortBy) {
+        case "name-asc":
+          sortObject = { "userId.name": 1 };
+          break;
+        case "name-desc":
+          sortObject = { "userId.name": -1 };
+          break;
+        case "course-asc":
+          sortObject = { "courseId.title": 1 };
+          break;
+        case "course-desc":
+          sortObject = { "courseId.title": -1 };
+          break;
+        case "price-asc":
+          sortObject = { price: 1 };
+          break;
+        case "price-desc":
+          sortObject = { price: -1 };
+          break;
+        case "date-asc":
+          sortObject = { dateOfEnrollment: 1 };
+          break;
+        case "date-desc":
+          sortObject = { dateOfEnrollment: -1 };
+          break;
+        default:
+          sortObject = { dateOfEnrollment: -1 }; 
+      }
+    } else {
+      sortObject = { dateOfEnrollment: -1 }; 
+    }
 
+    let allEnrollments = await this.findWithConditionPopulateAndSort(
+      filter,
+      populateOptions,
+      sortObject
+    );
+
+    
     if (search && search.trim()) {
       const searchRegex = new RegExp(search.trim(), "i");
 
-      const populateOptionsWithSearch: PopulateOptions[] = [
-        {
-          path: "userId",
-          select: "name email phone",
-          match: {
-            $or: [
-              { name: { $regex: searchRegex } },
-              { email: { $regex: searchRegex } },
-            ],
-          },
-        },
-        {
-          path: "courseId",
-          select: "title price thumbnailImage",
-          match: { title: { $regex: searchRegex } },
-        },
-        {
-          path: "tutorId",
-          select: "name email",
-          match: { name: { $regex: searchRegex } },
-        },
-        {
-          path: "categoryId",
-          select: "name",
-          match: { name: { $regex: searchRegex } },
-        },
-      ];
+      allEnrollments = allEnrollments.filter((enrollment: any) => {
+        const userMatch =
+          enrollment.userId &&
+          (searchRegex.test(enrollment.userId.name) ||
+            searchRegex.test(enrollment.userId.email));
 
-      const allEnrollments = await this.findWithConditionAndPopulate(
-        filter,
-        populateOptionsWithSearch
-      );
+        const courseMatch =
+          enrollment.courseId && searchRegex.test(enrollment.courseId.title);
 
-      const filteredEnrollments = allEnrollments.filter(
-        (enrollment: any) =>
-          enrollment.userId ||
-          enrollment.courseId ||
-          enrollment.tutorId ||
-          enrollment.categoryId
-      );
+        const tutorMatch =
+          enrollment.tutorId && searchRegex.test(enrollment.tutorId.name);
 
-      totalCount = filteredEnrollments.length;
-      enrollments = filteredEnrollments.slice(skip, skip + limit);
-    } else {
-      enrollments = await this.findWithPagination(
-        filter,
-        skip,
-        limit,
-        populateOptions
-      );
-      totalCount = await this.countDocuments(filter);
+        const categoryMatch =
+          enrollment.categoryId && searchRegex.test(enrollment.categoryId.name);
+
+        return userMatch || courseMatch || tutorMatch || categoryMatch;
+      });
     }
 
+    const totalCount = allEnrollments.length;
+    const enrollments = allEnrollments.slice(skip, skip + limit);
     const totalPages = Math.ceil(totalCount / limit);
 
     return {

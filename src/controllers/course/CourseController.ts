@@ -22,14 +22,14 @@ interface Chapter {
 }
 
 export class CourseController {
-  private _CourseService: ICourseService;
+  private _courseService: ICourseService;
   constructor(CourseServiceIsntance: ICourseService) {
-    this._CourseService = CourseServiceIsntance;
+    this._courseService = CourseServiceIsntance;
   }
 
   async getCategoryNames(req: Request, res: Response): Promise<void> {
     try {
-      const fetchCategroyNames = await this._CourseService.getAllCategories();
+      const fetchCategroyNames = await this._courseService.getAllCategories();
       res
         .status(HTTP_statusCode.OK)
         .json(
@@ -53,7 +53,7 @@ export class CourseController {
 
       const searchTerm = search ? (search as string).trim() : undefined;
 
-      const result = await this._CourseService.getUnpublishedCourses(
+      const result = await this._courseService.getUnpublishedCourses(
         skip,
         pageLimit,
         searchTerm
@@ -142,7 +142,7 @@ export class CourseController {
 
       const thumbnailFile = files?.thumbnail?.[0];
 
-      const createdCourse = await this._CourseService.createCourse(
+      const createdCourse = await this._courseService.createCourse(
         courseDto,
         files,
         thumbnailFile
@@ -177,7 +177,7 @@ export class CourseController {
           .json(new ResponseModel(false, "Course id not available"));
         return;
       }
-      const publishResponse = await this._CourseService.publishCourse(id);
+      const publishResponse = await this._courseService.publishCourse(id);
       res
         .status(HTTP_statusCode.OK)
         .json(
@@ -214,7 +214,7 @@ export class CourseController {
         return;
       }
 
-      const { course, tutor } = await this._CourseService.rejectCourse(id);
+      const { course, tutor } = await this._courseService.rejectCourse(id);
       if (!tutor) {
         res
           .status(HTTP_statusCode.BadRequest)
@@ -266,7 +266,7 @@ export class CourseController {
       const pageLimit = parseInt(limit as string, 10);
       const skip = (pageNumber - 1) * pageLimit;
 
-      const result = await this._CourseService.getPublishedCoursesForListing(
+      const result = await this._courseService.getPublishedCoursesForListing(
         skip,
         pageLimit,
         search
@@ -297,7 +297,7 @@ export class CourseController {
   async listUnlistCourse(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      await this._CourseService.listUnlistCourseService(id);
+      await this._courseService.listUnlistCourseService(id);
       res
         .status(HTTP_statusCode.OK)
         .json(new ResponseModel(true, "Course listing changed successfully"));
@@ -319,7 +319,7 @@ export class CourseController {
 
   async getAllCourses(req: Request, res: Response): Promise<void> {
     try {
-      const listedCourses = await this._CourseService.getAllCourses();
+      const listedCourses = await this._courseService.getAllCourses();
 
       res
         .status(HTTP_statusCode.OK)
@@ -402,7 +402,7 @@ export class CourseController {
         return;
       }
 
-      const courses = await this._CourseService.getAllListedCourses(
+      const courses = await this._courseService.getAllListedCourses(
         filters,
         userId
       );
@@ -436,7 +436,7 @@ export class CourseController {
   async getAllListedCategories(req: Request, res: Response): Promise<void> {
     try {
       const listedCategories =
-        await this._CourseService.getAllListedCategories();
+        await this._courseService.getAllListedCategories();
       res
         .status(HTTP_statusCode.OK)
         .json(
@@ -465,7 +465,7 @@ export class CourseController {
   async getCourseDetails(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const courseDetails = await this._CourseService.getCourseDetails(id);
+      const courseDetails = await this._courseService.getCourseDetails(id);
       res
         .status(HTTP_statusCode.OK)
         .json(
@@ -507,7 +507,7 @@ export class CourseController {
       const limit = parseInt(req.query.limit as string) || 10;
       const search = (req.query.search as string) || "";
 
-      const result = await this._CourseService.getTutorCourses(
+      const result = await this._courseService.getTutorCourses(
         tutorId,
         page,
         limit,
@@ -572,7 +572,7 @@ export class CourseController {
         return;
       }
 
-      const existingCourse = await this._CourseService.getCourseDetails(
+      const existingCourse = await this._courseService.getCourseDetails(
         courseId
       );
       if (!existingCourse || existingCourse.tutor._id !== tutorId) {
@@ -605,7 +605,7 @@ export class CourseController {
 
       const thumbnailFile = files?.thumbnail?.[0];
 
-      const updatedCourse = await this._CourseService.editCourse(
+      const updatedCourse = await this._courseService.editCourse(
         courseId,
         courseDto,
         files,

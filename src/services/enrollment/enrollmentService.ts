@@ -15,7 +15,7 @@ import {
   EnrolledCoursesDTO,
   PurchaseEmailDTO,
   GetAllEnrollmentsDTO,
-  AllEnrollmentsResponseDTO
+  AllEnrollmentsResponseDTO,
 } from "../../dto/enrollment/enrollmentDTO";
 import { EnrollmentMapper } from "../../mappers/enrollment/enrollmentMapper";
 import { ICourseRepoInterface } from "../../interfaces/course/ICourseRepoInterface";
@@ -41,13 +41,12 @@ class EnrollmentService {
         dto.tutorId
       );
 
-      const courseCount= Object.entries(tutorCourses)
-      const courseLimit:number=1
+      const courseCount = Object.entries(tutorCourses);
+      const courseLimit: number = 1;
 
-      if(courseCount.length>courseLimit){
-        throw new Error("Cannot purchase more than 3 courses for this tutor")
+      if (courseCount.length > courseLimit) {
+        throw new Error("Cannot purchase more than 3 courses for this tutor");
       }
-
 
       const domainData = EnrollmentMapper.toDomainModel(dto);
 
@@ -285,7 +284,6 @@ class EnrollmentService {
     dto: GetAllEnrollmentsDTO
   ): Promise<AllEnrollmentsResponseDTO> {
     try {
-
       const { skip, limit, page } = EnrollmentMapper.mapPaginationParams({
         page: dto.page,
         limit: dto.limit,
@@ -298,8 +296,12 @@ class EnrollmentService {
           limit,
           dto.search,
           dto.status,
-          dto.date
+          dto.startDate,
+          dto.endDate,
+          dto.sortBy
         );
+
+      console.log("IIII", result);
 
       return EnrollmentMapper.toAllEnrollmentsResponse(
         result.enrollments,

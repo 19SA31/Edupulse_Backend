@@ -427,14 +427,17 @@ class EnrollmentController {
     res: Response
   ): Promise<void> => {
     try {
-      const { page, limit, search, status, date } = req.query;
+      const { page, limit, search, status, startDate, endDate, sortBy } =
+        req.query;
 
       const getAllEnrollmentsDTO = {
         page: page ? parseInt(page as string, 10) : 1,
         limit: limit ? parseInt(limit as string, 10) : 10,
         search: search as string,
         status: status as string,
-        date: date as string,
+        startDate: startDate as string,
+        endDate: endDate as string,
+        sortBy: sortBy as string,
       };
 
       if (isNaN(getAllEnrollmentsDTO.page) || getAllEnrollmentsDTO.page < 1) {

@@ -20,10 +20,12 @@ export class AdminController {
       const pageLimit = parseInt(limit as string, 10);
       const skip = (pageNumber - 1) * pageLimit;
 
+      const searchQuery = search ? String(search) : null;
+
       const { users, totalPages } = await this._AdminService.getAllUsers(
         skip,
         pageLimit,
-        search
+        searchQuery
       );
 
       const response = new ResponseModel(true, "Fetch users successfully", {
@@ -55,10 +57,12 @@ export class AdminController {
       const pageLimit = parseInt(limit as string, 10);
       const skip = (pageNumber - 1) * pageLimit;
 
+      const searchQuery = search ? String(search) : null;
+
       const result = await this._AdminService.getAllTutors(
         skip,
         pageLimit,
-        search
+        searchQuery
       );
 
       const response = new ResponseModel(
@@ -186,8 +190,10 @@ export class AdminController {
       const pageLimit = parseInt(limit as string, 10);
       const skip = (pageNumber - 1) * pageLimit;
 
+      const searchQuery = search ? String(search) : "";
+
       const { categories, totalPages } =
-        await this._AdminService.getAllCategories(skip, pageLimit, search);
+        await this._AdminService.getAllCategories(skip, pageLimit, searchQuery);
 
       const response = new ResponseModel(
         true,
@@ -295,10 +301,12 @@ export class AdminController {
       const pageLimit = parseInt(limit as string, 10);
       const skip = (pageNumber - 1) * pageLimit;
 
+      const searchQuery = search ? String(search) : null;
+
       const result = await this._AdminService.getAllTutorDocs(
         skip,
         pageLimit,
-        search
+        searchQuery
       );
 
       const response = new ResponseModel(

@@ -103,7 +103,26 @@ class BaseRepository<T extends Document> {
 
     return query.exec();
   }
-  
+
+  async findWithConditionPopulateAndSort(
+    condition: object,
+    populateOptions?: PopulateOptions[],
+    sortObject?: any
+  ): Promise<T[]> {
+    let query = this._model.find(condition);
+
+    if (populateOptions) {
+      for (const pop of populateOptions) {
+        query = query.populate(pop);
+      }
+    }
+
+    if (sortObject) {
+      query = query.sort(sortObject);
+    }
+
+    return query.exec();
+  }
 }
 
 export default BaseRepository;

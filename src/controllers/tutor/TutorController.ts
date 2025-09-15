@@ -324,7 +324,7 @@ export class TutorController {
           .status(HTTP_statusCode.BadRequest)
           .json(new ResponseModel(false, result.message));
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error submitting verification documents:", error);
       res
         .status(HTTP_statusCode.InternalServerError)
@@ -369,7 +369,7 @@ export class TutorController {
           .status(HTTP_statusCode.NotFound)
           .json(new ResponseModel(false, result.message));
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error getting verification documents:", error);
       res
         .status(HTTP_statusCode.InternalServerError)

@@ -37,7 +37,9 @@ export interface IEnrollmentRepository {
     limit: number,
     search?: string,
     status?: string,
-    date?: string
+    startDate?: string,
+    endDate?: string,
+    sortBy?:string
   ): Promise<{
     enrollments: any[];
     totalPages: number;

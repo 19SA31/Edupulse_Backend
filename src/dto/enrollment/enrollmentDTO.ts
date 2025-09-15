@@ -63,7 +63,7 @@ export interface PopulatedEnrollmentResponseDTO {
 }
 
 export interface PurchaseEmailDTO {
-  userEmail:string;
+  userEmail: string;
   userName: string;
   courseTitle: string;
   tutorEmail: string;
@@ -99,10 +99,10 @@ export interface EnrollmentVerificationResponseDTO {
   enrollmentId?: string;
 }
 
-export interface EnrollmentErrorDTO {
+export interface EnrollmentErrorDTO<T = unknown>{
   code: string;
   message: string;
-  details?: Record<string, any>;
+  details?: Record<string, T>;
 }
 
 export interface EnrollmentValidationDTO {
@@ -110,18 +110,18 @@ export interface EnrollmentValidationDTO {
   errors: string[];
 }
 
-
 export interface EnrolledCoursesDTO {
   courseId: string;
 }
 
-
 export interface GetAllEnrollmentsDTO {
   page: number;
   limit: number;
-  search?: string;
-  status?: string;
-  date?: string;
+  search: string;
+  status: string;
+  startDate: string;
+  endDate: string;
+  sortBy: string;
 }
 
 export interface AllEnrollmentsResponseDTO {
