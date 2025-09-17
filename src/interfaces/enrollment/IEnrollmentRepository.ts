@@ -41,7 +41,7 @@ export interface IEnrollmentRepository {
     endDate?: string,
     sortBy?:string
   ): Promise<{
-    enrollments: any[];
+    enrollments: IEnrollment[];
     totalPages: number;
     totalCount: number;
   }>;

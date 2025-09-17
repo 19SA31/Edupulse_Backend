@@ -6,7 +6,7 @@ export interface IFile {
   fileName: string;
 }
 
-export interface IModule {
+export interface Ilesson {
   title: string;
   description: string;
   documents: IFile[];
@@ -17,7 +17,7 @@ export interface IModule {
 export interface IChapter {
   title: string;
   description: string;
-  modules: IModule[];
+  lessons: Ilesson[];
   order: number;
 }
 
@@ -28,11 +28,11 @@ export interface Course {
   description: string;
   benefits: string;
   requirements: string;
-  categoryId: Types.ObjectId;
+  categoryId: Types.ObjectId | string;
   price: number;
   thumbnailImage?: string;
   chapters: IChapter[];
-  tutorId: Types.ObjectId;
+  tutorId: Types.ObjectId | string;
   isPublished: string;
   isListed: boolean;
   enrollmentCount: number;
@@ -49,3 +49,4 @@ export interface Category{
   name:string;
   description:string;
 }
+

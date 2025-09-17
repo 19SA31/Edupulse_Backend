@@ -18,6 +18,7 @@ import {
 } from "../../dto/course/CourseDTO";
 import { ListedCategoryDTO } from "../../dto/course/CategoryDTO";
 import { S3Service } from "../../utils/s3";
+import { ObjectId } from "mongoose";
 
 export class CourseService implements ICourseService {
   private _courseRepo: ICourseRepoInterface;
@@ -64,11 +65,11 @@ export class CourseService implements ICourseService {
         description: courseDto.description,
         benefits: courseDto.benefits,
         requirements: courseDto.requirements,
-        categoryId: courseDto.category as any,
+        categoryId: courseDto.category as string,
         price: courseDto.price,
         thumbnailImage: thumbnailUrl,
         chapters: processedChapters,
-        tutorId: courseDto.tutorId as any,
+        tutorId: courseDto.tutorId as string,
         isListed: false,
         enrollmentCount: 0,
         createdAt: new Date(),
@@ -77,13 +78,13 @@ export class CourseService implements ICourseService {
 
       const createdCourse = await this._courseRepo.createCourse(courseData);
       return CourseMapper.toEntity(createdCourse);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error in CourseService.createCourse:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
       throw new Error(`Failed to create course: ${errorMessage}`);
     }
-  }
+  } 
 
   private async processChaptersWithFiles(
     chapters: ChapterDto[],
