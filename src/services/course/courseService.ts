@@ -4,7 +4,13 @@ import { CourseMapper } from "../../mappers/course/courseMapper";
 import { ICourseService } from "../../interfaces/course/ICourseService";
 import { ICourseRepoInterface } from "../../interfaces/course/ICourseRepoInterface";
 import { IEnrollmentService } from "../../interfaces/enrollment/IEnrollmentService";
-import { Course } from "../../interfaces/course/courseInterface";
+import {
+  Course,
+  CourseFilters,
+  FilterConditions,
+  SortOptions,
+  RawTutor
+} from "../../interfaces/course/courseInterface";
 import {
   CourseForReview,
   CreateCourseDto,
@@ -84,7 +90,7 @@ export class CourseService implements ICourseService {
         error instanceof Error ? error.message : "Unknown error occurred";
       throw new Error(`Failed to create course: ${errorMessage}`);
     }
-  } 
+  }
 
   private async processChaptersWithFiles(
     chapters: ChapterDto[],
@@ -231,7 +237,10 @@ export class CourseService implements ICourseService {
   async rejectCourse(courseId: string): Promise<CourseRejectDto> {
     try {
       const { course, tutor } = await this._courseRepo.rejectCourse(courseId);
-      return CourseMapper.toCourseRejectDto(course, tutor);
+      return CourseMapper.toCourseRejectDto(
+        course,
+        tutor as unknown as RawTutor
+      );
     } catch (error: unknown) {
       console.error("Error in Course reject service:", error);
       throw error;
@@ -307,15 +316,7 @@ export class CourseService implements ICourseService {
   }
 
   async getAllListedCourses(
-    filters: {
-      search?: string;
-      category?: string;
-      minPrice?: number;
-      maxPrice?: number;
-      sortBy?: string;
-      page?: number;
-      limit?: number;
-    },
+    filters: CourseFilters,
     userId?: string
   ): Promise<ListedCourseDTO[]> {
     try {
@@ -330,7 +331,7 @@ export class CourseService implements ICourseService {
         }
       }
 
-      let filterConditions: any = {};
+      let filterConditions: FilterConditions = {};
 
       if (userEnrolledCourseIds.length > 0) {
         filterConditions.$or = [
@@ -356,7 +357,7 @@ export class CourseService implements ICourseService {
       }
 
       if (filters.search) {
-        const searchConditions = {
+        const searchConditions: FilterConditions = {
           $or: [
             { title: { $regex: filters.search, $options: "i" } },
             { description: { $regex: filters.search, $options: "i" } },
@@ -372,7 +373,7 @@ export class CourseService implements ICourseService {
         }
       }
 
-      let sortOptions: any = {};
+      let sortOptions: SortOptions = {};
       switch (filters.sortBy) {
         case "price_asc":
           sortOptions = { price: 1 };

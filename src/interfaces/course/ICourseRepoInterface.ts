@@ -1,5 +1,5 @@
 import { Category, CourseReject } from "./courseInterface";
-import { Course } from "./courseInterface";
+import { Course, FilterConditions, SortOptions } from "./courseInterface";
 
 export interface ICourseRepoInterface {
   getCategories(): Promise<Category[]>;
@@ -27,8 +27,8 @@ export interface ICourseRepoInterface {
   listUnlistCourse(id: string): Promise<void>;
   findAllListedCourses(): Promise<Course[]>;
   findAllListedCoursesWithFilters(
-    filterConditions: any,
-    sortOptions: any,
+    filterConditions: FilterConditions,
+    sortOptions: SortOptions,
     page: number,
     limit: number
   ): Promise<Course[]>;

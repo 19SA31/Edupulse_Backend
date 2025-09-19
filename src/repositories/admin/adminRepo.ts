@@ -65,7 +65,7 @@ export class AdminRepository
       const searchFilter = search
         ? {
             name: { $regex: search, $options: "i" },
-          }
+          } 
         : {};
 
       const tutors = await this._tutorRepository.findWithPagination(
@@ -366,7 +366,7 @@ export class AdminRepository
       if (!tutor) {
         throw new Error("Tutor not found");
       }
-
+ 
       await this._tutorDocsRepository.update(tutorDocs._id.toString(), {
         verificationStatus: "rejected",
         rejectionReason: reason,

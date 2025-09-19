@@ -10,7 +10,7 @@ import {
 } from "../../dto/course/CourseDTO";
 import { ValidationError } from "../../errors/ValidationError";
 import { sendCourseRejectionEmail } from "../../config/emailConfig";
-
+import { CourseFilters } from "../../interfaces/course/courseInterface";
 interface Lesson {
   title: string;
   videoFile?: string;
@@ -359,12 +359,14 @@ export class CourseController {
         limit = 50,
       } = req.query;
 
-      const filters = {
+      const filters: CourseFilters = {
         search: search as string,
         category: category as string,
         minPrice: minPrice ? Number(minPrice) : undefined,
         maxPrice: maxPrice ? Number(maxPrice) : undefined,
         sortBy: sortBy as string,
+        page: page ? Number(page) : undefined,
+        limit: limit ? Number(limit) : undefined,
       };
 
       if (

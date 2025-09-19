@@ -6,6 +6,9 @@ import categoryModel from "../../models/CategoryModel";
 import {
   Category,
   CourseReject,
+  FilterConditions,
+  SortOptions,
+  PopulateOption
 } from "../../interfaces/course/courseInterface";
 import { Course } from "../../interfaces/course/courseInterface";
 import { Tutor } from "../../interfaces/adminInterface/adminInterface";
@@ -144,13 +147,13 @@ export class CourseRepository
   }
 
   async findAllListedCoursesWithFilters(
-    filterConditions: any,
-    sortOptions: any,
+    filterConditions: FilterConditions,
+    sortOptions: SortOptions,
     page = 1,
     limit = 50
   ): Promise<Course[]> {
     try {
-      const populateOptions = [
+      const populateOptions: PopulateOption[] = [
         { path: "categoryId", select: "name" },
         { path: "tutorId", select: "name" },
       ];

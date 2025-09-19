@@ -1,7 +1,7 @@
-import mongoose, { Document, ObjectId } from "mongoose";
+import mongoose, { Document, ObjectId, Types } from "mongoose";
 
 export interface Tutor extends Document {
-  _id: string | ObjectId;
+  _id: string | ObjectId |Types.ObjectId;
   name: string;
   email: string;
   phone: string;
