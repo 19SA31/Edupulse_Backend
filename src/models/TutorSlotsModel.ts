@@ -5,28 +5,21 @@ export enum SlotDuration {
   ONE_HOUR = 60,
 }
 
-export enum SlotStatus {
-  AVAILABLE = "AVAILABLE",
-  BOOKED = "BOOKED",
-  CANCELLED = "CANCELLED",
-  COMPLETED = "COMPLETED",
-}
-
-export interface Slot {
+export interface Slots {
   _id: string;
-  start: Date;
-  end: Date;
-  duration: SlotDuration;
-  priceInINR: number;
-  status: SlotStatus;
-  isBooked: boolean;
+  time: string; 
+  duration: SlotDuration; 
+  price: number; 
+  availability: boolean;
   bookedBy: Types.ObjectId | null;
 }
 
 export interface TutorSlot {
   tutorId: Types.ObjectId;
   date: Date;
-  slots: Slot[];
+  slots: Slots[];
+  halfHourPrice: number; 
+  oneHourPrice: number; 
   active: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -43,22 +36,33 @@ const TutorSlotsSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    halfHourPrice: {
+      type: Number,
+      required: true,
+    },
+    oneHourPrice: {
+      type: Number,
+      required: true,
+    },
     slots: [
       {
-        start: { type: Date, required: true },
-        end: { type: Date, required: true },
+        time: {
+          type: String, 
+          required: true,
+        },
         duration: {
           type: Number,
           enum: [SlotDuration.HALF_HOUR, SlotDuration.ONE_HOUR],
           required: true,
         },
-        price: { type: Number, required: true },
-        status: {
-          type: String,
-          enum: Object.values(SlotStatus),
-          default: SlotStatus.AVAILABLE,
+        price: {
+          type: Number, 
+          required: true,
         },
-        isBooked: { type: Boolean, default: false },
+        availability: {
+          type: Boolean,
+          default: true,
+        },
         bookedBy: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
@@ -66,7 +70,10 @@ const TutorSlotsSchema = new mongoose.Schema(
         },
       },
     ],
-    active: { type: Boolean, default: true },
+    active: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,
