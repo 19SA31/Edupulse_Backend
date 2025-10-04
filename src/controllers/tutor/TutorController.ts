@@ -422,8 +422,7 @@ export class TutorController {
         return;
       }
 
-      const { page, limit, search } = req.params
-      
+      const { page, limit, search } = req.params;
     } catch (error: unknown) {
       if (error instanceof ValidationError) {
         res
@@ -437,6 +436,93 @@ export class TutorController {
         );
         res.status(HTTP_statusCode.InternalServerError).json(response);
       }
+    }
+  }
+
+  async createSlots(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { date, halfHourPrice, oneHourPrice, slots } = req.body;
+      const tutorId = req.user?.id;
+
+      if (!tutorId) {
+        res
+          .status(HTTP_statusCode.Unauthorized)
+          .json(
+            new ResponseModel(false, "Tutor authentication required", null)
+          );
+        return;
+      }
+
+      if (!date || !halfHourPrice || !oneHourPrice || !Array.isArray(slots)) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(
+            new ResponseModel(
+              false,
+              "Date, prices, and slots array are required",
+              null
+            )
+          );
+        return;
+      }
+
+      if (slots.length === 0) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(
+            new ResponseModel(false, "At least one slot is required", null)
+          );
+        return;
+      }
+
+      const requestDTO = TutorMapper.mapCreateSlotsRequest(
+        tutorId,
+        date,
+        halfHourPrice,
+        oneHourPrice,
+        slots
+      );
+
+      const result = await this._tutorService.createSlots(requestDTO);
+
+      if (!result.success) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(new ResponseModel(false, result.message, null));
+        return;
+      }
+
+      res
+        .status(HTTP_statusCode.OK)
+        .json(new ResponseModel(true, result.message, result.data));
+    } catch (error) {
+      console.error("Create slots controller error:", error);
+
+      if (error instanceof Error) {
+        const errorMessage = error.message;
+
+        if (
+          errorMessage.includes("Invalid") ||
+          errorMessage.includes("must be") ||
+          errorMessage.includes("cannot be")
+        ) {
+          res
+            .status(HTTP_statusCode.BadRequest)
+            .json(new ResponseModel(false, errorMessage, null));
+          return;
+        }
+
+        if (errorMessage.includes("Tutor not found")) {
+          res
+            .status(HTTP_statusCode.NotFound)
+            .json(new ResponseModel(false, errorMessage, null));
+          return;
+        }
+      }
+
+      res
+        .status(HTTP_statusCode.InternalServerError)
+        .json(new ResponseModel(false, "Error creating slots", null));
     }
   }
 }

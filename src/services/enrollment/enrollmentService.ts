@@ -36,16 +36,18 @@ class EnrollmentService {
         throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
       }
 
-      const tutorCourses = this.enrollmentRepository.findCourseCountsTutor(
+      const tutorCourses = await this.enrollmentRepository.findCourseCountsTutor(
         dto.userId,
         dto.tutorId
       );
+      
+      if(tutorCourses){
+        let checkdate1=tutorCourses[tutorCourses.length-1].dateOfEnrollment
+        let checkdate2=tutorCourses[tutorCourses.length-2].dateOfEnrollment
+        if(checkdate1.getMonth()===checkdate2.getMonth()){
+          throw new Error(`Cannot buy more than 2 course of this tutor for this month`)
+        }
 
-      const courseCount = Object.entries(tutorCourses);
-      const courseLimit: number = 1;
-
-      if (courseCount.length > courseLimit) {
-        throw new Error("Cannot purchase more than 3 courses for this tutor");
       }
 
       const domainData = EnrollmentMapper.toDomainModel(dto);
@@ -300,8 +302,6 @@ class EnrollmentService {
           dto.endDate,
           dto.sortBy
         );
-
-      console.log("IIII", result);
 
       return EnrollmentMapper.toAllEnrollmentsResponse(
         result.enrollments,

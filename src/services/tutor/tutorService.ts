@@ -12,6 +12,12 @@ import {
   GetVerificationDocumentsResponseDTO,
   VerificationDocsServiceDTO,
   ListedTutorDTO,
+  SlotDTO,
+  SlotValidationDTO,
+  CreateSlotsRequestDTO,
+  CreateTutorSlotsDTO,
+  CreateSlotsServiceResponseDTO,
+  
 } from "../../dto/tutor/TutorDTO";
 import {
   UpdateProfileData,
@@ -457,11 +463,152 @@ export class TutorService implements ITutorService {
     }
   }
 
-  async getTutorCourses(): Promise <void>{
-    try{
+  async createSlots(
+    requestDTO: CreateSlotsRequestDTO
+  ): Promise<CreateSlotsServiceResponseDTO> {
+    try {
+      await this.ensureTutorActive(requestDTO.tutorId);
 
-    }catch(error){
+      const validation = this.validateSlotData(requestDTO);
+      if (!validation.isValid) {
+        return {
+          success: false,
+          message: validation.errors.join(", "),
+          data: null,
+        };
+      }
 
+      const existingSlots = await this._tutorRepository.findSlotsByTutorAndDate(
+        requestDTO.tutorId,
+        requestDTO.date
+      );
+
+      if (existingSlots) {
+        return {
+          success: false,
+          message:
+            "Slots already exist for this date. Please update existing slots instead.",
+          data: null,
+        };
+      }
+
+      const processedSlots = this.processSlotData(
+        requestDTO.slots,
+        requestDTO.halfHourPrice,
+        requestDTO.oneHourPrice
+      );
+
+      const createDTO: CreateTutorSlotsDTO = {
+        tutorId: requestDTO.tutorId,
+        date: requestDTO.date,
+        halfHourPrice: requestDTO.halfHourPrice,
+        oneHourPrice: requestDTO.oneHourPrice,
+        slots: processedSlots,
+        active: true,
+      };
+
+      const createdSlot = await this._tutorRepository.createTutorSlots(
+        createDTO
+      );
+
+      if (!createdSlot) {
+        return {
+          success: false,
+          message: "Failed to create slots",
+          data: null,
+        };
+      }
+
+      const responseData = TutorMapper.mapToCreateSlotsResponse(createdSlot);
+
+      return {
+        success: true,
+        message: "Slots created successfully",
+        data: responseData,
+      };
+    } catch (error: any) {
+      console.error("Error in createSlots service:", error);
+      return {
+        success: false,
+        message: error.message || "Error creating slots",
+        data: null,
+      };
     }
+  }
+
+  private validateSlotData(
+    requestDTO: CreateSlotsRequestDTO
+  ): SlotValidationDTO {
+    const errors: string[] = [];
+
+    const slotDate = new Date(requestDTO.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (slotDate < today) {
+      errors.push("Cannot create slots for past dates");
+    }
+
+    if (requestDTO.halfHourPrice <= 0) {
+      errors.push("Half hour price must be greater than 0");
+    }
+
+    if (requestDTO.oneHourPrice <= 0) {
+      errors.push("One hour price must be greater than 0");
+    }
+
+    if (requestDTO.halfHourPrice >= requestDTO.oneHourPrice) {
+      errors.push("One hour price should be greater than half hour price");
+    }
+
+    if (!requestDTO.slots || requestDTO.slots.length === 0) {
+      errors.push("At least one slot is required");
+    }
+
+    const timeSlots = new Set<string>();
+    requestDTO.slots.forEach((slot, index) => {
+      if (!slot.time || !this.isValidTimeFormat(slot.time)) {
+        errors.push(`Invalid time format for slot ${index + 1}`);
+      }
+
+      if (![30, 60].includes(slot.duration)) {
+        errors.push(
+          `Invalid duration for slot ${index + 1}. Must be 30 or 60 minutes`
+        );
+      }
+
+      if (slot.price <= 0) {
+        errors.push(`Invalid price for slot ${index + 1}`);
+      }
+
+      if (timeSlots.has(slot.time)) {
+        errors.push(`Duplicate time slot: ${slot.time}`);
+      }
+      timeSlots.add(slot.time);
+    });
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  }
+
+  private isValidTimeFormat(time: string): boolean {
+    const timeRegex = /^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i;
+    return timeRegex.test(time);
+  }
+
+  private processSlotData(
+    slots: SlotDTO[],
+    halfHourPrice: number,
+    oneHourPrice: number
+  ): SlotDTO[] {
+    return slots.map((slot) => ({
+      time: slot.time.trim(),
+      duration: slot.duration,
+      price: slot.duration === 30 ? halfHourPrice : oneHourPrice,
+      availability: true,
+      bookedBy: null,
+    }));
   }
 }

@@ -7,13 +7,14 @@ import {
 import { ITutorRepository } from "../../interfaces/tutor/ITutorRepository";
 import { TutorDocuments } from "../../models/TutorDocs";
 import TutorModel from "../../models/Tutors";
+import TutorSlotsModel from "../../models/TutorSlotsModel";
 import { TutorMapper } from "../../mappers/tutor/TutorMapper";
 import {
   TutorServiceDTO,
   VerificationDocsServiceDTO,
   CreateVerificationDocsDTO,
   UpdateVerificationDocsDTO,
-  ListedTutorDTO,
+  CreateTutorSlotsDTO,
 } from "../../dto/tutor/TutorDTO";
 
 export class TutorRepository
@@ -352,6 +353,65 @@ export class TutorRepository
       });
     } catch (error) {
       throw new Error(`Failed to find listed tutors: ${error}`);
+    }
+  }
+  async findSlotsByTutorAndDate(
+    tutorId: string,
+    date: Date
+  ): Promise<any | null> {
+    try {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      return await TutorSlotsModel.findOne({
+        tutorId,
+        date: {
+          $gte: startOfDay,
+          $lte: endOfDay,
+        },
+      }).exec();
+    } catch (error) {
+      console.error("Error finding slots by tutor and date:", error);
+      throw error;
+    }
+  }
+
+  async createTutorSlots(slotData: CreateTutorSlotsDTO): Promise<any> {
+    try {
+      const tutorSlot = new TutorSlotsModel(slotData);
+      return await tutorSlot.save();
+    } catch (error) {
+      console.error("Error creating tutor slots:", error);
+      throw error;
+    }
+  }
+
+  async findSlotsByTutor(
+    tutorId: string,
+    skip: number,
+    limit: number
+  ): Promise<any[]> {
+    try {
+      return await TutorSlotsModel.find({ tutorId })
+        .sort({ date: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec();
+    } catch (error) {
+      console.error("Error finding slots by tutor:", error);
+      throw error;
+    }
+  }
+
+  async countSlotsByTutor(tutorId: string): Promise<number> {
+    try {
+      return await TutorSlotsModel.countDocuments({ tutorId }).exec();
+    } catch (error) {
+      console.error("Error counting slots by tutor:", error);
+      throw error;
     }
   }
 }

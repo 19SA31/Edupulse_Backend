@@ -5,6 +5,7 @@ import {
   Tutor,
   TutorDocs,
   DocumentFiles,
+  TutorSlot,
 } from "../../interfaces/tutorInterface/tutorInterface";
 import {
   SubmitVerificationDocumentsRequestDTO,
@@ -18,6 +19,8 @@ import {
   CreateVerificationDocsDTO,
   UpdateVerificationDocsDTO,
   ListedTutorDTO,
+  CreateSlotsRequestDTO,
+  CreateSlotsResponseDTO
 } from "../../dto/tutor/TutorDTO";
 
 export class TutorMapper {
@@ -197,4 +200,39 @@ export class TutorMapper {
   static toListedTutorDTOArray(tutors: any[]): ListedTutorDTO[] {
     return tutors.map((tutor) => this.toListedTutorDTO(tutor));
   }
+
+  static mapCreateSlotsRequest(
+  tutorId: string,
+  date: string,
+  halfHourPrice: number,
+  oneHourPrice: number,
+  slots: any[]
+): CreateSlotsRequestDTO {
+  return {
+    tutorId,
+    date: new Date(date),
+    halfHourPrice: Number(halfHourPrice),
+    oneHourPrice: Number(oneHourPrice),
+    slots: slots.map((slot) => ({
+      time: slot.time,
+      duration: Number(slot.duration) as 30 | 60,
+      price: Number(slot.price),
+      availability: slot.availability !== false,
+      bookedBy: slot.bookedBy || null,
+    })),
+  };
+}
+
+static mapToCreateSlotsResponse(slotData: any): CreateSlotsResponseDTO {
+  return {
+    slotId: slotData._id.toString(),
+    tutorId: slotData.tutorId.toString(),
+    date: slotData.date,
+    halfHourPrice: slotData.halfHourPrice,
+    oneHourPrice: slotData.oneHourPrice,
+    slotsCreated: slotData.slots.length,
+    active: slotData.active,
+    createdAt: slotData.createdAt,
+  };
+}
 }
