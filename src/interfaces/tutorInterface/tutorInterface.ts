@@ -226,3 +226,5 @@ export interface TutorSlot {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type TutorSlotDocument = TutorSlot & Document;

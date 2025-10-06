@@ -1,19 +1,20 @@
 import {
   SubmitVerificationDocumentsRequestDTO,
   SubmitVerificationDocumentsResponseDTO,
-  GetVerificationStatusRequestDTO,
-  GetVerificationStatusResponseDTO,
   GetVerificationDocumentsRequestDTO,
   GetVerificationDocumentsResponseDTO,
   ListedTutorDTO,
-  TutorServiceDTO
+  CreateSlotsRequestDTO,
+  CreateSlotsServiceResponseDTO
 } from "../../dto/tutor/TutorDTO";
-import { UpdateProfileData, TutorProfileData } from "../tutorInterface/tutorInterface"; 
+import {
+  UpdateProfileData,
+  TutorProfileData,
+} from "../tutorInterface/tutorInterface";
 import { ServiceResponse } from "../tutorInterface/tutorInterface";
 
 export interface ITutorService {
-
-  ensureTutorActive(tutorId: string): Promise<void>
+  ensureTutorActive(tutorId: string): Promise<void>;
   updateProfile(
     tutorId: string,
     updateData: UpdateProfileData
@@ -27,5 +28,8 @@ export interface ITutorService {
   getVerificationDocuments(
     requestDTO: GetVerificationDocumentsRequestDTO
   ): Promise<ServiceResponse<GetVerificationDocumentsResponseDTO>>;
-    getAllListedTutors(): Promise<ListedTutorDTO[]>;
+  getAllListedTutors(): Promise<ListedTutorDTO[]>;
+  createSlots(
+    requestDTO: CreateSlotsRequestDTO
+  ): Promise<CreateSlotsServiceResponseDTO>;
 }

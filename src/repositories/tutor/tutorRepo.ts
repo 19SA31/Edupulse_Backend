@@ -3,6 +3,7 @@ import {
   Tutor,
   ListingTutor,
   UpdateProfileData,
+  TutorSlotDocument,
 } from "../../interfaces/tutorInterface/tutorInterface";
 import { ITutorRepository } from "../../interfaces/tutor/ITutorRepository";
 import { TutorDocuments } from "../../models/TutorDocs";
@@ -358,7 +359,7 @@ export class TutorRepository
   async findSlotsByTutorAndDate(
     tutorId: string,
     date: Date
-  ): Promise<any | null> {
+  ): Promise<TutorSlotDocument | null> {
     try {
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
@@ -379,7 +380,9 @@ export class TutorRepository
     }
   }
 
-  async createTutorSlots(slotData: CreateTutorSlotsDTO): Promise<any> {
+  async createTutorSlots(
+    slotData: CreateTutorSlotsDTO
+  ): Promise<TutorSlotDocument> {
     try {
       const tutorSlot = new TutorSlotsModel(slotData);
       return await tutorSlot.save();
@@ -393,7 +396,7 @@ export class TutorRepository
     tutorId: string,
     skip: number,
     limit: number
-  ): Promise<any[]> {
+  ): Promise<TutorSlotDocument[]> {
     try {
       return await TutorSlotsModel.find({ tutorId })
         .sort({ date: -1 })
