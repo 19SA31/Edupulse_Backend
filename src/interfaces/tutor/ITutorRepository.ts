@@ -1,4 +1,4 @@
-import { Tutor } from "../tutorInterface/tutorInterface";
+import { Tutor, TutorSlotDocument } from "../tutorInterface/tutorInterface";
 import {
   TutorServiceDTO,
   VerificationDocsServiceDTO,
@@ -66,5 +66,6 @@ export interface ITutorRepository {
     skip: number,
     limit: number
   ): Promise<any[]>;
-  countSlotsByTutor(tutorId: string): Promise<number>
+  countSlotsByTutor(tutorId: string): Promise<number>;
+  getTutorSlots(tutorId: string): Promise<TutorSlotDocument[]>;
 }

@@ -160,4 +160,11 @@ tutorRoute.put(
   courseController.editCourse.bind(courseController)
 );
 
+tutorRoute.post(
+  "/create-slots",
+  verifyToken("tutor"),
+  authMiddleware,
+  tutorController.createSlots.bind(tutorController)
+)
+
 export default tutorRoute;

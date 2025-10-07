@@ -23,6 +23,7 @@ export class TutorRepository
   implements ITutorRepository
 {
   private tutorDocsModel: typeof TutorDocuments;
+  private tutorSlotsModel= new BaseRepository<any>(TutorSlotsModel)
 
   constructor() {
     super(TutorModel);
@@ -416,5 +417,9 @@ export class TutorRepository
       console.error("Error counting slots by tutor:", error);
       throw error;
     }
+  }
+
+  async getTutorSlots(tutorId: string): Promise<TutorSlotDocument[]>{
+    return await this.tutorSlotsModel.findWithCondition({tutorId})
   }
 }

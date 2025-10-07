@@ -441,6 +441,7 @@ export class TutorController {
 
   async createSlots(req: AuthRequest, res: Response): Promise<void> {
     try {
+      console.log("hey there")
       const { date, halfHourPrice, oneHourPrice, slots } = req.body;
       const tutorId = req.user?.id;
 
