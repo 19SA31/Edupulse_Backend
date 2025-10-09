@@ -147,3 +147,26 @@ export interface SlotValidationDTO {
   isValid: boolean;
   errors: string[];
 }
+
+export interface GetTutorSlotsRequestDTO {
+  tutorId: string;
+}
+
+export interface GetTutorSlotsResponseDTO {
+  slotId: string;
+  tutorId: string;
+  date: Date;
+  halfHourPrice: number;
+  oneHourPrice: number;
+  slots: {
+    slotId: string;
+    time: string;
+    duration: 30 | 60;
+    price: number;
+    availability: boolean;
+    bookedBy: string | null;
+  }[];
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}

@@ -1,9 +1,9 @@
+import { Types } from "mongoose";
 import BaseRepository from "../BaseRepository";
 import {
   Tutor,
-  ListingTutor,
   UpdateProfileData,
-  TutorSlotDocument,
+  TutorSlot,
 } from "../../interfaces/tutorInterface/tutorInterface";
 import { ITutorRepository } from "../../interfaces/tutor/ITutorRepository";
 import { TutorDocuments } from "../../models/TutorDocs";
@@ -23,11 +23,12 @@ export class TutorRepository
   implements ITutorRepository
 {
   private tutorDocsModel: typeof TutorDocuments;
-  private tutorSlotsModel= new BaseRepository<any>(TutorSlotsModel)
+  private tutorSlotsModel: BaseRepository<TutorSlot>;
 
   constructor() {
     super(TutorModel);
     this.tutorDocsModel = TutorDocuments;
+    this.tutorSlotsModel = new BaseRepository<TutorSlot>(TutorSlotsModel);
   }
 
   async findById(id: string): Promise<Tutor | null> {
@@ -357,10 +358,11 @@ export class TutorRepository
       throw new Error(`Failed to find listed tutors: ${error}`);
     }
   }
+
   async findSlotsByTutorAndDate(
     tutorId: string,
     date: Date
-  ): Promise<TutorSlotDocument | null> {
+  ): Promise<TutorSlot | null> {
     try {
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
@@ -368,58 +370,49 @@ export class TutorRepository
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
 
-      return await TutorSlotsModel.findOne({
+      return await this.tutorSlotsModel.findOne({
         tutorId,
         date: {
           $gte: startOfDay,
           $lte: endOfDay,
         },
-      }).exec();
+      });
     } catch (error) {
       console.error("Error finding slots by tutor and date:", error);
       throw error;
     }
   }
 
-  async createTutorSlots(
-    slotData: CreateTutorSlotsDTO
-  ): Promise<TutorSlotDocument> {
-    try {
-      const tutorSlot = new TutorSlotsModel(slotData);
-      return await tutorSlot.save();
-    } catch (error) {
-      console.error("Error creating tutor slots:", error);
-      throw error;
-    }
-  }
+async createTutorSlots(slotData: CreateTutorSlotsDTO): Promise<TutorSlot> {
+  try {
 
-  async findSlotsByTutor(
-    tutorId: string,
-    skip: number,
-    limit: number
-  ): Promise<TutorSlotDocument[]> {
-    try {
-      return await TutorSlotsModel.find({ tutorId })
-        .sort({ date: -1 })
-        .skip(skip)
-        .limit(limit)
-        .exec();
-    } catch (error) {
-      console.error("Error finding slots by tutor:", error);
-      throw error;
-    }
+    const slotDataWithObjectId = {
+      ...slotData,
+      tutorId: new Types.ObjectId(slotData.tutorId),
+    };
+    
+    return await this.tutorSlotsModel.create(slotDataWithObjectId as any);
+  } catch (error) {
+    console.error("Error creating tutor slots:", error);
+    throw error;
   }
+}
 
   async countSlotsByTutor(tutorId: string): Promise<number> {
     try {
-      return await TutorSlotsModel.countDocuments({ tutorId }).exec();
+      return await this.tutorSlotsModel.countDocuments({ tutorId });
     } catch (error) {
       console.error("Error counting slots by tutor:", error);
       throw error;
     }
   }
 
-  async getTutorSlots(tutorId: string): Promise<TutorSlotDocument[]>{
-    return await this.tutorSlotsModel.findWithCondition({tutorId})
+  async getTutorSlots(tutorId: string): Promise<TutorSlot[]> {
+    try {
+      return await this.tutorSlotsModel.findWithCondition({ tutorId });
+    } catch (error) {
+      console.error("Error getting tutor slots:", error);
+      throw error;
+    }
   }
 }

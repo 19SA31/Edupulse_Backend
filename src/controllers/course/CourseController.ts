@@ -103,8 +103,7 @@ export class CourseController {
       try {
         parsedChapters =
           typeof chapters === "string" ? JSON.parse(chapters) : chapters;
-        // Removed the unused forEach loops that were causing ESLint errors
-        // If you need to validate chapters structure, do it here with proper validation
+
       } catch (parseError) {
         console.error("Error parsing chapters:", parseError);
         res
@@ -408,6 +407,7 @@ export class CourseController {
         filters,
         userId
       );
+      console.log("LLL",courses)
       res
         .status(HTTP_statusCode.OK)
         .json(

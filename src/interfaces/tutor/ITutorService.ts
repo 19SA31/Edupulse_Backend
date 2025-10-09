@@ -5,7 +5,8 @@ import {
   GetVerificationDocumentsResponseDTO,
   ListedTutorDTO,
   CreateSlotsRequestDTO,
-  CreateSlotsServiceResponseDTO
+  CreateSlotsServiceResponseDTO,
+  GetTutorSlotsResponseDTO
 } from "../../dto/tutor/TutorDTO";
 import {
   UpdateProfileData,
@@ -32,4 +33,5 @@ export interface ITutorService {
   createSlots(
     requestDTO: CreateSlotsRequestDTO
   ): Promise<CreateSlotsServiceResponseDTO>;
+  getTutorSlots(tutorId: string): Promise<GetTutorSlotsResponseDTO[] | null>;
 }

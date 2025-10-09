@@ -165,6 +165,13 @@ tutorRoute.post(
   verifyToken("tutor"),
   authMiddleware,
   tutorController.createSlots.bind(tutorController)
-)
+);
+
+tutorRoute.get(
+  "/get-slots",
+  verifyToken("tutor"),
+  authMiddleware,
+  tutorController.getTutorSlots.bind(tutorController)
+);
 
 export default tutorRoute;

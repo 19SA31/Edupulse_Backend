@@ -1,4 +1,4 @@
-import { Tutor, TutorSlotDocument } from "../tutorInterface/tutorInterface";
+import { Tutor, TutorSlot } from "../tutorInterface/tutorInterface";
 import {
   TutorServiceDTO,
   VerificationDocsServiceDTO,
@@ -59,13 +59,11 @@ export interface ITutorRepository {
   findVerificationDocsWithTutorInfo(tutorId: string): Promise<any>;
   findAllVerificationDocsWithTutorInfo(): Promise<any[]>;
   findAllListedTutors(): Promise<Tutor[]>;
-  findSlotsByTutorAndDate(tutorId: string, date: Date): Promise<any | null>;
-  createTutorSlots(slotData: CreateTutorSlotsDTO): Promise<any>;
-  findSlotsByTutor(
+  findSlotsByTutorAndDate(
     tutorId: string,
-    skip: number,
-    limit: number
-  ): Promise<any[]>;
+    date: Date
+  ): Promise<TutorSlot | null>; 
+  createTutorSlots(slotData: CreateTutorSlotsDTO): Promise<TutorSlot>; 
   countSlotsByTutor(tutorId: string): Promise<number>;
-  getTutorSlots(tutorId: string): Promise<TutorSlotDocument[]>;
+  getTutorSlots(tutorId: string): Promise<TutorSlot[]>;
 }

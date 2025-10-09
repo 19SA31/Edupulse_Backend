@@ -8,6 +8,7 @@ import {
   CropData,
   UpdateProfileData,
 } from "../../interfaces/tutorInterface/tutorInterface";
+import { Http2ServerRequest } from "http2";
 
 interface AuthRequest extends Request {
   user?: {
@@ -441,7 +442,6 @@ export class TutorController {
 
   async createSlots(req: AuthRequest, res: Response): Promise<void> {
     try {
-      console.log("hey there")
       const { date, halfHourPrice, oneHourPrice, slots } = req.body;
       const tutorId = req.user?.id;
 
@@ -485,7 +485,7 @@ export class TutorController {
       );
 
       const result = await this._tutorService.createSlots(requestDTO);
-
+      console.log(result)
       if (!result.success) {
         res
           .status(HTTP_statusCode.BadRequest)
@@ -524,6 +524,46 @@ export class TutorController {
       res
         .status(HTTP_statusCode.InternalServerError)
         .json(new ResponseModel(false, "Error creating slots", null));
+    }
+  }
+
+  async getTutorSlots(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      console.log("inside gettutorslots")
+      const tutorId = req.user?.id;
+
+      if (!tutorId) {
+        res
+          .status(HTTP_statusCode.Unauthorized)
+          .json(
+            new ResponseModel(false, "Tutor authentication required", null)
+          );
+        return;
+      }
+      const result = await this._tutorService.getTutorSlots(tutorId);
+
+      if (!result) {
+        res
+          .status(HTTP_statusCode.NotFound)
+          .json(new ResponseModel(false, "No slots ", null));
+      }
+      console.log("hello",result)
+      res
+        .status(HTTP_statusCode.OK)
+        .json(new ResponseModel(true, "Slots fetched successfully", result));
+    } catch (error: unknown) {
+      if (error instanceof ValidationError) {
+        res
+          .status(HTTP_statusCode.BadRequest)
+          .json(new ResponseModel(false, error.message, null));
+      } else {
+        const response = new ResponseModel(
+          false,
+          "Error fetching tutor slots",
+          null
+        );
+        res.status(HTTP_statusCode.InternalServerError).json(response);
+      }
     }
   }
 }

@@ -36,19 +36,7 @@ class EnrollmentService {
         throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
       }
 
-      const tutorCourses = await this.enrollmentRepository.findCourseCountsTutor(
-        dto.userId,
-        dto.tutorId
-      );
       
-      if(tutorCourses){
-        let checkdate1=tutorCourses[tutorCourses.length-1].dateOfEnrollment
-        let checkdate2=tutorCourses[tutorCourses.length-2].dateOfEnrollment
-        if(checkdate1.getMonth()===checkdate2.getMonth()){
-          throw new Error(`Cannot buy more than 2 course of this tutor for this month`)
-        }
-
-      }
 
       const domainData = EnrollmentMapper.toDomainModel(dto);
 

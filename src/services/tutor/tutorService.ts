@@ -6,8 +6,6 @@ import { TutorMapper } from "../../mappers/tutor/TutorMapper";
 import {
   SubmitVerificationDocumentsRequestDTO,
   SubmitVerificationDocumentsResponseDTO,
-  GetVerificationStatusRequestDTO,
-  GetVerificationStatusResponseDTO,
   GetVerificationDocumentsRequestDTO,
   GetVerificationDocumentsResponseDTO,
   VerificationDocsServiceDTO,
@@ -17,7 +15,7 @@ import {
   CreateSlotsRequestDTO,
   CreateTutorSlotsDTO,
   CreateSlotsServiceResponseDTO,
-  
+  GetTutorSlotsResponseDTO,
 } from "../../dto/tutor/TutorDTO";
 import {
   UpdateProfileData,
@@ -483,6 +481,8 @@ export class TutorService implements ITutorService {
         requestDTO.date
       );
 
+      console.log(existingSlots)
+
       if (existingSlots) {
         return {
           success: false,
@@ -610,5 +610,20 @@ export class TutorService implements ITutorService {
       availability: true,
       bookedBy: null,
     }));
+  }
+
+  async getTutorSlots(
+    tutorId: string
+  ): Promise<GetTutorSlotsResponseDTO[] | null> {
+    const slotDocs = await this._tutorRepository.getTutorSlots(tutorId);
+
+    if (!slotDocs || slotDocs.length === 0) {
+      return null;
+    }
+
+    const responseData = slotDocs.map((doc) =>
+      TutorMapper.mapToGetTutorSlotsResponse(doc)
+    );
+    return responseData;
   }
 }

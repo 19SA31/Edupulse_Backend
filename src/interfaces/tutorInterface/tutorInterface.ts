@@ -211,20 +211,6 @@ export interface ListingTutor {
   isVerified: boolean;
 }
 
-export interface Slots {
-  _id: string;
-  time: string; 
-  availability: boolean;
-  bookedBy: Types.ObjectId | null;
-}
+export { TutorSlot, Slots, SlotDuration } from "../../models/TutorSlotsModel";
 
-export interface TutorSlot {
-  tutorId: Types.ObjectId;
-  date: Date;
-  slots: Slots[];
-  active: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
 
-export type TutorSlotDocument = TutorSlot & Document;

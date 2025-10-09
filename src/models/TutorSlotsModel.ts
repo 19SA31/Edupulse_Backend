@@ -1,4 +1,5 @@
-import mongoose, { Types } from "mongoose";
+
+import mongoose, { Document, Types } from "mongoose";
 
 export enum SlotDuration {
   HALF_HOUR = 30,
@@ -6,26 +7,28 @@ export enum SlotDuration {
 }
 
 export interface Slots {
-  _id: string;
-  time: string; 
-  duration: SlotDuration; 
-  price: number; 
+  _id?: Types.ObjectId;
+  time: string;
+  duration: SlotDuration;
+  price: number;
   availability: boolean;
   bookedBy: Types.ObjectId | null;
 }
 
-export interface TutorSlot {
+
+export interface TutorSlot extends Document {
+  _id: Types.ObjectId;
   tutorId: Types.ObjectId;
   date: Date;
   slots: Slots[];
-  halfHourPrice: number; 
-  oneHourPrice: number; 
+  halfHourPrice: number;
+  oneHourPrice: number;
   active: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const TutorSlotsSchema = new mongoose.Schema(
+const TutorSlotsSchema = new mongoose.Schema<TutorSlot>(
   {
     tutorId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -47,7 +50,7 @@ const TutorSlotsSchema = new mongoose.Schema(
     slots: [
       {
         time: {
-          type: String, 
+          type: String,
           required: true,
         },
         duration: {
@@ -56,7 +59,7 @@ const TutorSlotsSchema = new mongoose.Schema(
           required: true,
         },
         price: {
-          type: Number, 
+          type: Number,
           required: true,
         },
         availability: {
@@ -80,5 +83,8 @@ const TutorSlotsSchema = new mongoose.Schema(
   }
 );
 
-const TutorSlotsModel = mongoose.model<TutorSlot>("TutorSlot", TutorSlotsSchema);
+const TutorSlotsModel = mongoose.model<TutorSlot>(
+  "TutorSlot",
+  TutorSlotsSchema
+);
 export default TutorSlotsModel;
