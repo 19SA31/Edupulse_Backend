@@ -6,6 +6,7 @@ import connectDB from "./config/db";
 import { createServer } from "http";
 import routes from "./routes/route";
 import morgan = require("morgan");
+import { errorMiddleware } from "./middlewares/errorMiddleware";
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.use(
 );
 
 app.use(cookieParser());
+app.use(errorMiddleware);
 connectDB();
 const server = createServer(app);
 

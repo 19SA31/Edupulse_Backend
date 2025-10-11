@@ -1,8 +1,8 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import EnrollmentService from "../../services/enrollment/enrollmentService";
-import { ResponseModel } from "../../models/ResponseModel";
 import HTTP_statusCode from "../../enums/HttpStatusCode";
-import { ValidationError } from "../../errors/ValidationError";
+import { AppError } from "../../errors/AppError";
+import { sendSuccess, sendError } from "../../helper/responseHelper";
 import {
   CreateEnrollmentDTO,
   VerifyPaymentDTO,
@@ -25,23 +25,59 @@ interface AuthRequest extends Request {
 class EnrollmentController {
   constructor(private enrollmentService: EnrollmentService) {}
 
-  createPayment = async (req: AuthRequest, res: Response): Promise<void> => {
-    try {
-      const { courseId, tutorId, categoryId, price } = req.body;
-      const userId = req.user?.id;
+  private getUserId(req: AuthRequest): string {
+    if (!req.user?.id) {
+      throw new AppError("User authentication required", HTTP_statusCode.Unauthorized);
+    }
+    return req.user.id;
+  }
 
-      if (!userId) {
-        res
-          .status(HTTP_statusCode.Unauthorized)
-          .json(new ResponseModel(false, "User authentication required", null));
-        return;
-      }
+  private validatePagination(page?: number, limit?: number) {
+    return {
+      page: !page || page < 1 ? 1 : page,
+      limit: !limit || limit < 1 ? 10 : limit,
+    };
+  }
+
+  private async sendNotificationEmails(paymentId: string): Promise<void> {
+    const purchaseData = await this.enrollmentService.getPaymentData(paymentId);
+
+    if (!purchaseData) {
+      throw new AppError("Payment data not found", HTTP_statusCode.NotFound);
+    }
+
+    const emailSent = await sendCoursePurchaseEmail(
+      purchaseData.userEmail,
+      purchaseData.userName,
+      purchaseData.courseTitle,
+      purchaseData.tutorName,
+      purchaseData.price.toString()
+    );
+
+    if (!emailSent) {
+      throw new AppError("Purchase email sending failed", HTTP_statusCode.TaskFailed);
+    }
+
+    const tutorMailSent = await tutorNotificationEmail(
+      purchaseData.userEmail,
+      purchaseData.userName,
+      purchaseData.courseTitle,
+      purchaseData.tutorName,
+      purchaseData.tutorEmail
+    );
+
+    if (!tutorMailSent) {
+      throw new AppError("Tutor notification email failed", HTTP_statusCode.TaskFailed);
+    }
+  }
+
+  createPayment = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = this.getUserId(req);
+      const { courseId, tutorId, categoryId, price } = req.body;
 
       if (!courseId || !tutorId || !categoryId || !price) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, "Missing required fields", null));
-        return;
+        throw new AppError("Missing required fields", HTTP_statusCode.BadRequest);
       }
 
       const createEnrollmentDTO: CreateEnrollmentDTO = {
@@ -52,387 +88,158 @@ class EnrollmentController {
         price: Number(price),
       };
 
-      const result = await this.enrollmentService.createEnrollment(
-        createEnrollmentDTO
-      );
+      const result = await this.enrollmentService.createEnrollment(createEnrollmentDTO);
 
       if (!result) {
-        res
-          .status(HTTP_statusCode.TaskFailed)
-          .json(new ResponseModel(false, "payment session failed", null));
+        throw new AppError("Payment session failed", HTTP_statusCode.TaskFailed);
       }
 
-      res.status(HTTP_statusCode.OK).json({
-        success: true,
-        data: {
+      sendSuccess(
+        res,
+        "Payment session created successfully",
+        {
           sessionId: result.sessionId,
           enrollmentId: result.enrollment.id,
           checkoutUrl: `https://checkout.stripe.com/pay/${result.sessionId}`,
-        },
-        message: "Payment session created successfully",
-      });
-    } catch (error: unknown) {
-      console.error("Create payment error:", error);
-
-      if (error instanceof ValidationError || error instanceof Error) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, (error as Error).message, null));
-      } else {
-        res
-          .status(HTTP_statusCode.InternalServerError)
-          .json(
-            new ResponseModel(false, "Failed to create payment session", null)
-          );
-      }
+        }
+      );
+    } catch (error) {
+      next(error);
     }
   };
 
-  verifyPayment = async (req: AuthRequest, res: Response): Promise<void> => {
+  verifyPayment = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const userId = this.getUserId(req);
       const { sessionId } = req.body;
-      const userId = req.user?.id;
-
-      if (!userId) {
-        res
-          .status(HTTP_statusCode.Unauthorized)
-          .json(new ResponseModel(false, "User authentication required", null));
-        return;
-      }
 
       if (!sessionId) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, "Session ID is required", null));
-        return;
+        throw new AppError("Session ID is required", HTTP_statusCode.BadRequest);
       }
 
-      const verifyPaymentDTO: VerifyPaymentDTO = {
-        sessionId,
-      };
-
-      const result = await this.enrollmentService.verifyPaymentAndUpdateStatus(
-        verifyPaymentDTO
-      );
-
-      if (!result.enrollment?.paymentId) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, "Payment ID is missing", null));
-        return;
-      }
-
-      const purchaseData = await this.enrollmentService.getPaymentData(
-        result.enrollment?.paymentId
-      );
-
-      if (!purchaseData) {
-        res
-          .status(HTTP_statusCode.NotFound)
-          .json(
-            new ResponseModel(
-              false,
-              result.message || "Enrollment not found",
-              null
-            )
-          );
-        return;
-      }
-
-      const emailSend = await sendCoursePurchaseEmail(
-        purchaseData.userEmail,
-        purchaseData.userName,
-        purchaseData.courseTitle,
-        purchaseData.tutorName,
-        purchaseData.price.toString()
-      );
-
-      if (!emailSend) {
-        res
-          .status(HTTP_statusCode.TaskFailed)
-          .json(new ResponseModel(false, "Purchase mail sending failed", null));
-      }
-
-      const tutorMail = await tutorNotificationEmail(
-        purchaseData.userEmail,
-        purchaseData.userName,
-        purchaseData.courseTitle,
-        purchaseData.tutorName,
-        purchaseData.tutorEmail
-      );
-
-      if (!tutorMail) {
-        res
-          .status(HTTP_statusCode.TaskFailed)
-          .json(
-            new ResponseModel(false, "Failed Tutor notification mail ", null)
-          );
-      }
+      const verifyPaymentDTO: VerifyPaymentDTO = { sessionId };
+      const result = await this.enrollmentService.verifyPaymentAndUpdateStatus(verifyPaymentDTO);
 
       if (!result.enrollment) {
-        res
-          .status(HTTP_statusCode.NotFound)
-          .json(
-            new ResponseModel(
-              false,
-              result.message || "Enrollment not found",
-              null
-            )
-          );
-        return;
+        throw new AppError(result.message || "Enrollment not found", HTTP_statusCode.NotFound);
       }
 
-      res.status(HTTP_statusCode.OK).json(
-        new ResponseModel(
-          true,
-          result.message || "Payment verification completed",
-          {
-            enrollment: result.enrollment,
-            paymentStatus: result.paymentStatus,
-          }
-        )
+      if (!result.enrollment.paymentId) {
+        throw new AppError("Payment ID is missing", HTTP_statusCode.BadRequest);
+      }
+
+      await this.sendNotificationEmails(result.enrollment.paymentId);
+
+      sendSuccess(
+        res,
+        result.message || "Payment verification completed",
+        {
+          enrollment: result.enrollment,
+          paymentStatus: result.paymentStatus,
+        }
       );
-    } catch (error: unknown) {
-      console.error("Verify payment error:", error);
-
-      if (error instanceof ValidationError || error instanceof Error) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, (error as Error).message, null));
-      } else {
-        res
-          .status(HTTP_statusCode.InternalServerError)
-          .json(new ResponseModel(false, "Failed to verify payment", null));
-      }
+    } catch (error) {
+      next(error);
     }
   };
 
-  getUserEnrollments = async (
-    req: AuthRequest,
-    res: Response
-  ): Promise<void> => {
+  getUserEnrollments = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userId = req.user?.id;
+      const userId = this.getUserId(req);
       const { page, limit, search } = req.query;
 
-      if (!userId) {
-        res
-          .status(HTTP_statusCode.Unauthorized)
-          .json(new ResponseModel(false, "User authentication required", null));
-        return;
-      }
+      const pagination = this.validatePagination(
+        parseInt(page as string, 10),
+        parseInt(limit as string, 10)
+      );
+
       const getUserEnrollmentsDTO: GetUserEnrollmentsDTO = {
         userId,
-
-        page: page ? parseInt(page as string, 10) : 1,
-        limit: limit ? parseInt(limit as string, 10) : 10,
+        page: pagination.page,
+        limit: pagination.limit,
         search: search as string,
       };
 
-      if (isNaN(getUserEnrollmentsDTO.page) || getUserEnrollmentsDTO.page < 1) {
-        getUserEnrollmentsDTO.page = 1;
-      }
-      if (
-        isNaN(getUserEnrollmentsDTO.limit) ||
-        getUserEnrollmentsDTO.limit < 1
-      ) {
-        getUserEnrollmentsDTO.limit = 10;
-      }
-
-      const result = await this.enrollmentService.getUserEnrollments(
-        getUserEnrollmentsDTO
-      );
-      const response = new ResponseModel(
-        true,
-        "User enrollments fetched successfully",
-        result
-      );
-
-      res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: unknown) {
-      console.error("Get user enrollments error", error);
-
-      if (error instanceof ValidationError || error instanceof Error) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, (error as Error).message, null));
-      } else {
-        res
-          .status(HTTP_statusCode.InternalServerError)
-          .json(
-            new ResponseModel(false, "Failed to fetch user enrollments", null)
-          );
-      }
+      const result = await this.enrollmentService.getUserEnrollments(getUserEnrollmentsDTO);
+      sendSuccess(res, "User enrollments fetched successfully", result);
+    } catch (error) {
+      next(error);
     }
   };
 
-  verifyEnrollment = async (req: AuthRequest, res: Response): Promise<void> => {
+  verifyEnrollment = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const userId = this.getUserId(req);
       const { courseId } = req.params;
-      const userId = req.user?.id;
-
-      if (!userId) {
-        res
-          .status(HTTP_statusCode.Unauthorized)
-          .json(new ResponseModel(false, "User authentication required", null));
-        return;
-      }
 
       if (!courseId) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, "Course ID is required", null));
-        return;
+        throw new AppError("Course ID is required", HTTP_statusCode.BadRequest);
       }
 
-      const verifyUserEnrollmentDTO: VerifyUserEnrollmentDTO = {
-        userId,
-        courseId,
-      };
-
-      const result = await this.enrollmentService.verifyUserEnrollment(
-        verifyUserEnrollmentDTO
-      );
+      const verifyUserEnrollmentDTO: VerifyUserEnrollmentDTO = { userId, courseId };
+      const result = await this.enrollmentService.verifyUserEnrollment(verifyUserEnrollmentDTO);
 
       if (!result.isEnrolled) {
-        res
-          .status(HTTP_statusCode.NotFound)
-          .json(
-            new ResponseModel(
-              false,
-              "User is not enrolled in this course",
-              null
-            )
-          );
-        return;
+        throw new AppError("User is not enrolled in this course", HTTP_statusCode.NotFound);
       }
 
-      res.status(HTTP_statusCode.OK).json(
-        new ResponseModel(true, "User enrollment verified", {
-          isEnrolled: result.isEnrolled,
-          enrollmentId: result.enrollmentId,
-        })
-      );
-    } catch (error: unknown) {
-      console.error("Verify enrollment error:", error);
-
-      if (error instanceof ValidationError || error instanceof Error) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, (error as Error).message, null));
-      } else {
-        res
-          .status(HTTP_statusCode.InternalServerError)
-          .json(new ResponseModel(false, "Failed to verify enrollment", null));
-      }
+      sendSuccess(res, "User enrollment verified", {
+        isEnrolled: result.isEnrolled,
+        enrollmentId: result.enrollmentId,
+      });
+    } catch (error) {
+      next(error);
     }
   };
 
-  getEnrollmentByPayment = async (
-    req: AuthRequest,
-    res: Response
-  ): Promise<void> => {
+  getEnrollmentByPayment = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
+      this.getUserId(req);
       const { paymentId } = req.params;
-      const userId = req.user?.id;
-
-      if (!userId) {
-        res
-          .status(HTTP_statusCode.Unauthorized)
-          .json(new ResponseModel(false, "User authentication required", null));
-        return;
-      }
 
       if (!paymentId) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, "Payment ID is required", null));
-        return;
+        throw new AppError("Payment ID is required", HTTP_statusCode.BadRequest);
       }
 
-      const result = await this.enrollmentService.getEnrollmentByPaymentId({
-        paymentId,
-      });
+      const result = await this.enrollmentService.getEnrollmentByPaymentId({ paymentId });
 
       if (!result) {
-        res
-          .status(HTTP_statusCode.NotFound)
-          .json(new ResponseModel(false, "Enrollment not found", null));
-        return;
+        throw new AppError("Enrollment not found", HTTP_statusCode.NotFound);
       }
 
-      res
-        .status(HTTP_statusCode.OK)
-        .json(new ResponseModel(true, "Enrollment found", result));
-    } catch (error: unknown) {
-      console.error("Get enrollment by payment error:", error);
-
-      if (error instanceof ValidationError || error instanceof Error) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, (error as Error).message, null));
-      } else {
-        res
-          .status(HTTP_statusCode.InternalServerError)
-          .json(new ResponseModel(false, "Failed to get enrollment", null));
-      }
+      sendSuccess(res, "Enrollment found", result);
+    } catch (error) {
+      next(error);
     }
   };
 
-  getEnrolledCourses = async (
-    req: AuthRequest,
-    res: Response
-  ): Promise<void> => {
+  getEnrolledCourses = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userId = req.user?.id;
+      const userId = this.getUserId(req);
+      const enrolledCourses = await this.enrollmentService.getEnrolledCourses(userId);
 
-      if (!userId) {
-        res
-          .status(HTTP_statusCode.Unauthorized)
-          .json(new ResponseModel(false, "User authentication required", null));
-        return;
-      }
-      const enrolledCourses = await this.enrollmentService.getEnrolledCourses(
-        userId
-      );
       if (!enrolledCourses) {
-        res
-          .status(HTTP_statusCode.NotFound)
-          .json(new ResponseModel(false, "No enrolled courses", null));
+        throw new AppError("No enrolled courses", HTTP_statusCode.NotFound);
       }
-      res
-        .status(HTTP_statusCode.OK)
-        .json(
-          new ResponseModel(true, "fetched enrolled courses", enrolledCourses)
-        );
-    } catch (error: unknown) {
-      console.error("Get enrolled courses error:", error);
 
-      if (error instanceof ValidationError || error instanceof Error) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, (error as Error).message, null));
-      } else {
-        res
-          .status(HTTP_statusCode.InternalServerError)
-          .json(
-            new ResponseModel(false, "Failed to get enrolled courses", null)
-          );
-      }
+      sendSuccess(res, "Fetched enrolled courses", enrolledCourses);
+    } catch (error) {
+      next(error);
     }
   };
 
-  getAllEnrollments = async (
-    req: AuthRequest,
-    res: Response
-  ): Promise<void> => {
+  getAllEnrollments = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { page, limit, search, status, startDate, endDate, sortBy } =
-        req.query;
+      const { page, limit, search, status, startDate, endDate, sortBy } = req.query;
+
+      const pagination = this.validatePagination(
+        parseInt(page as string, 10),
+        parseInt(limit as string, 10)
+      );
 
       const getAllEnrollmentsDTO = {
-        page: page ? parseInt(page as string, 10) : 1,
-        limit: limit ? parseInt(limit as string, 10) : 10,
+        page: pagination.page,
+        limit: pagination.limit,
         search: search as string,
         status: status as string,
         startDate: startDate as string,
@@ -440,38 +247,10 @@ class EnrollmentController {
         sortBy: sortBy as string,
       };
 
-      if (isNaN(getAllEnrollmentsDTO.page) || getAllEnrollmentsDTO.page < 1) {
-        getAllEnrollmentsDTO.page = 1;
-      }
-      if (isNaN(getAllEnrollmentsDTO.limit) || getAllEnrollmentsDTO.limit < 1) {
-        getAllEnrollmentsDTO.limit = 10;
-      }
-
-      const result = await this.enrollmentService.getAllEnrollments(
-        getAllEnrollmentsDTO
-      );
-
-      res
-        .status(HTTP_statusCode.OK)
-        .json(
-          new ResponseModel(
-            true,
-            "All enrollments fetched successfully",
-            result
-          )
-        );
-    } catch (error: unknown) {
-      console.error("Get all enrollments error:", error);
-
-      if (error instanceof ValidationError || error instanceof Error) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, (error as Error).message, null));
-      } else {
-        res
-          .status(HTTP_statusCode.InternalServerError)
-          .json(new ResponseModel(false, "Failed to fetch enrollments", null));
-      }
+      const result = await this.enrollmentService.getAllEnrollments(getAllEnrollmentsDTO);
+      sendSuccess(res, "All enrollments fetched successfully", result);
+    } catch (error) {
+      next(error);
     }
   };
 }

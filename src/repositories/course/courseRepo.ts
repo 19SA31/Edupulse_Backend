@@ -8,7 +8,7 @@ import {
   CourseReject,
   FilterConditions,
   SortOptions,
-  PopulateOption
+  PopulateOption,
 } from "../../interfaces/course/courseInterface";
 import { Course } from "../../interfaces/course/courseInterface";
 import { Tutor } from "../../interfaces/adminInterface/adminInterface";
@@ -113,8 +113,10 @@ export class CourseRepository
       filter,
       skip,
       limit,
-      populateOptions
+      populateOptions,
+      { createdAt: -1 }
     );
+
     const totalCount = await this.countDocuments(filter);
     const totalPages = Math.ceil(totalCount / limit);
 

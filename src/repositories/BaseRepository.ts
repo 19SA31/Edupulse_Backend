@@ -1,4 +1,4 @@
-import { Model, Document, PopulateOptions } from "mongoose";
+import { Model, Document, PopulateOptions, SortOrder } from "mongoose";
 class BaseRepository<T extends Document> {
   private _model: Model<T>;
   constructor(model: Model<T>) {
@@ -28,7 +28,8 @@ class BaseRepository<T extends Document> {
     filter: object,
     skip: number,
     limit: number,
-    populateOptions?: PopulateOptions[]
+    populateOptions?: PopulateOptions[],
+    sortOptions?: string | { [key: string]: SortOrder } | [string, SortOrder][]
   ): Promise<T[]> {
     let query = this._model.find(filter).skip(skip).limit(limit);
 
@@ -36,6 +37,10 @@ class BaseRepository<T extends Document> {
       for (const pop of populateOptions) {
         query = query.populate(pop);
       }
+    }
+
+    if (sortOptions) {
+      query = query.sort(sortOptions);
     }
 
     return query.exec();
