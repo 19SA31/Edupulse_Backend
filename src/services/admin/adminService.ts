@@ -374,6 +374,7 @@ export class AdminService implements IAdminService {
     tutorEmail?: string;
     tutorName?: string;
     rejectionReason?: string;
+    rejectionCount?: Number
   }> {
     try {
       const result = await this._adminRepository.rejectTutor(tutorId, reason);
@@ -385,11 +386,18 @@ export class AdminService implements IAdminService {
         };
       }
 
+      const rejectionLimit: Number=3
+
+      if(result.rejectionCount===rejectionLimit){
+        await this._adminRepository.removeTutor(tutorId)
+      }
+
       return {
         success: true,
         tutorEmail: result.tutorEmail,
         tutorName: result.tutorName,
         rejectionReason: reason,
+        rejectionCount: result.rejectionCount
       };
     } catch (error: any) {
       console.error("Error in AdminService rejectTutor:", error.message);

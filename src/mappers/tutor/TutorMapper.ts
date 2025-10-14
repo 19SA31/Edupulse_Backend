@@ -133,6 +133,7 @@ export class TutorMapper {
       submittedAt: docs.submittedAt,
       reviewedAt: docs.reviewedAt,
       rejectionReason: docs.rejectionReason,
+      rejectionCount:docs.rejectionCount
     };
   }
 
@@ -160,7 +161,8 @@ export class TutorMapper {
     aadharFront?: string,
     aadharBack?: string,
     verificationStatus?: "pending" | "approved" | "rejected",
-    rejectionReason?: string
+    rejectionReason?: string,
+    rejectionCount?: Number
   ): UpdateVerificationDocsDTO {
     const updateData: UpdateVerificationDocsDTO = {};
 
@@ -170,6 +172,7 @@ export class TutorMapper {
     if (aadharBack) updateData.aadharBack = aadharBack;
     if (verificationStatus) updateData.verificationStatus = verificationStatus;
     if (rejectionReason) updateData.rejectionReason = rejectionReason;
+    if (rejectionCount) updateData.rejectionCount = rejectionCount
 
     updateData.submittedAt = new Date();
 

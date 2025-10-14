@@ -91,17 +91,53 @@ export class TutorService implements ITutorService {
       if (!tutorDTO) {
         return {
           success: false,
-          message: "Tutor not found. Please register first.",
+          message: "Tutor not found.",
         };
       }
 
       const existingDocs =
         await this._tutorRepository.findVerificationDocsByTutorId(tutorDTO._id);
 
-      if (existingDocs && existingDocs.verificationStatus === "approved") {
+      if (existingDocs && existingDocs.verificationStatus === "rejected") {
+        await this.deleteOldFiles(existingDocs);
+
+        const uploadedDocuments = await this.uploadVerificationDocuments(
+          tutorDTO._id,
+          requestDTO
+        );
+
+
+        const updateDTO = TutorMapper.mapToUpdateVerificationDocsDTO(
+          uploadedDocuments.avatarS3Key,
+          uploadedDocuments.degreeS3Key,
+          uploadedDocuments.aadharFrontS3Key,
+          uploadedDocuments.aadharBackS3Key,
+          "pending"
+        );
+
+        const result = await this._tutorRepository.updateVerificationDocs(
+          existingDocs._id,
+          updateDTO
+        );
+
+        if (!result) {
+          return {
+            success: false,
+            message: "Failed to update verification documents",
+          };
+        }
+
+        const responseData =
+          TutorMapper.mapToSubmitVerificationDocumentsResponse({
+            verificationId: result._id,
+            status: result.verificationStatus,
+            submittedAt: result.submittedAt,
+          });
+
         return {
-          success: false,
-          message: "Verification documents already approved.",
+          success: true,
+          message: "Verification documents resubmitted successfully",
+          data: responseData,
         };
       }
 
@@ -481,7 +517,7 @@ export class TutorService implements ITutorService {
         requestDTO.date
       );
 
-      console.log(existingSlots)
+      console.log(existingSlots);
 
       if (existingSlots) {
         return {

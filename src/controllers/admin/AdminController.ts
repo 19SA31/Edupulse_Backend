@@ -176,7 +176,8 @@ export class AdminController {
       const emailSent = await sendRejectionEmail(
         result.tutorEmail!,
         result.tutorName!,
-        reason
+        reason,
+        result.rejectionCount
       );
 
       if (!emailSent) {

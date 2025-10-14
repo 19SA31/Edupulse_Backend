@@ -33,8 +33,8 @@ export interface IAdminRepositoryInterface {
   rejectTutor(
     tutorId: string,
     reason: string
-  ): Promise<{ tutorEmail: string; tutorName: string } | null>;
-
+  ): Promise<{ tutorEmail: string; tutorName: string; rejectionCount: Number} | null>;
+  removeTutor(tutorId:string): Promise<void>;
   addCategory(data: Category): Promise<Category>;
   findCategoryByName(name: string): Promise<Category | null>;
   getAllCategories(

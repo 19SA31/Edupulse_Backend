@@ -12,6 +12,7 @@ export interface TutorDocsDto {
   submittedAt: string;
   reviewedAt?: string;
   rejectionReason?: string;
+  rejectionCount?: Number
 }
 
 export interface TutorVerificationDto{

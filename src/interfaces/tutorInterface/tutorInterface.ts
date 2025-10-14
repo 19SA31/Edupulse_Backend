@@ -137,6 +137,7 @@ export interface TutorDocs extends Document {
   rejectionReason?: string;
   submittedAt: Date;
   reviewedAt?: Date;
+  rejectionCount?: number
 }
 
 export interface DocumentFiles {
@@ -166,6 +167,7 @@ export interface TutorVerificationData {
 export interface UpdateVerificationStatus {
   verificationStatus: "approved" | "rejected";
   rejectionReason?: string;
+  rejectionCount?: Number
 }
 
 export interface ServiceResponse<T = any> {
@@ -180,6 +182,7 @@ export interface VerificationStatusData {
   submittedAt?: Date;
   reviewedAt?: Date;
   rejectionReason?: string;
+  rejectionCount?: Number
 }
 
 export interface VerificationDocumentsData {
@@ -195,6 +198,7 @@ export interface VerificationDocumentsData {
   submittedAt: Date;
   reviewedAt?: Date;
   rejectionReason?: string;
+  rejectionCount?: Number
 }
 
 export interface VerificationSubmissionData {

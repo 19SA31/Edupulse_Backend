@@ -18,6 +18,7 @@ export class TutorDocsMapper {
       submittedAt: tutorDocs.submittedAt.toISOString(),
       reviewedAt: tutorDocs.reviewedAt?.toISOString(),
       rejectionReason: tutorDocs.rejectionReason,
+      rejectionCount: tutorDocs.rejectionCount
     };
   }
 

@@ -68,6 +68,7 @@ export interface VerificationDocsServiceDTO {
   submittedAt: Date;
   reviewedAt?: Date;
   rejectionReason?: string;
+  rejectionCount?: Number
 }
 
 export interface CreateVerificationDocsDTO {
@@ -89,6 +90,7 @@ export interface UpdateVerificationDocsDTO {
   submittedAt?: Date;
   reviewedAt?: Date;
   rejectionReason?: string;
+  rejectionCount?: Number
 }
 
 export interface ListedTutorDTO {

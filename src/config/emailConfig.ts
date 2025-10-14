@@ -47,7 +47,8 @@ const sendMail = async (
 export const sendRejectionEmail = async (
   email: string,
   tutorName: string,
-  reason: string
+  reason: string,
+  rejectionCount?: Number
 ): Promise<boolean> => {
   return new Promise((resolve) => {
     const transporter = nodemailer.createTransport({
@@ -62,7 +63,7 @@ export const sendRejectionEmail = async (
       from: process.env.EMAIL as string,
       to: email,
       subject: "Tutor Application Rejected - Edupulse",
-      html: rejectionEmailTemplate(tutorName, reason),
+      html: rejectionEmailTemplate(tutorName, reason, rejectionCount),
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
