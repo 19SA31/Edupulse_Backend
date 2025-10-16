@@ -38,6 +38,7 @@ export interface Course {
   enrollmentCount: number;
   createdAt: Date;
   updatedAt: Date;
+  rejectionCount: Number
 }
 export interface CourseReject{
   course:Course,
@@ -114,6 +115,7 @@ export interface RawCourse {
   chapters?: RawChapter[];
   createdAt?: Date | { $date: string | { $numberLong: string } };
   updatedAt?: Date | { $date: string | { $numberLong: string } };
+  rejectionCount: Number
 }
 
 export interface RawChapter {

@@ -15,6 +15,7 @@ export interface ICourseRepoInterface {
   }>;
   publishCourse(courseId: string): Promise<Course>;
   rejectCourse(courseId: string): Promise<CourseReject>;
+  removeCourse(courseId:string):Promise<void>
   getPublishedCoursesWithDetails(
     skip: number,
     limit: number,

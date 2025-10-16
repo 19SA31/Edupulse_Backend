@@ -237,6 +237,10 @@ export class CourseService implements ICourseService {
   async rejectCourse(courseId: string): Promise<CourseRejectDto> {
     try {
       const { course, tutor } = await this._courseRepo.rejectCourse(courseId);
+      const rejectionLimit:Number =3;
+      if(course.rejectionCount===rejectionLimit){
+        await this._courseRepo.removeCourse(courseId)
+      }
       return CourseMapper.toCourseRejectDto(
         course,
         tutor as unknown as RawTutor
@@ -469,7 +473,6 @@ export class CourseService implements ICourseService {
     try {
       const { courses: tutorCourses, total } =
         await this._courseRepo.getTutorCourses(id, page, limit, search);
-
       const courseDtos = await Promise.all(
         tutorCourses.map((course) =>
           CourseMapper.toCourseDetailsDto(course, this._s3Service)
@@ -537,6 +540,7 @@ export class CourseService implements ICourseService {
         thumbnailImage: thumbnailUrl,
         chapters: processedChapters,
         updatedAt: new Date(),
+        isPublished:"draft"
       };
 
       const updatedCourse = await this._courseRepo.updateCourse(

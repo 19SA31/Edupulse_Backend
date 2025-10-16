@@ -98,6 +98,10 @@ const courseSchema = new Schema<Course>({
     type: Date,
     default: Date.now,
   },
+  rejectionCount:{
+    type: Number,
+    default: 0
+  }
 });
 
 const courseModel = model<Course>("Course", courseSchema);

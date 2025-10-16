@@ -95,6 +95,7 @@ export class CourseMapper {
       enrollmentCount: this.extractNumber(rawCourse.enrollmentCount),
       createdAt: this.extractDate(rawCourse.createdAt),
       updatedAt: this.extractDate(rawCourse.updatedAt),
+      rejectionCount: rawCourse.rejectionCount
     };
   }
 
@@ -130,6 +131,7 @@ export class CourseMapper {
           enrollmentCount: this.extractNumber(course.enrollmentCount),
           createdAt: this.extractDate(course.createdAt),
           updatedAt: this.extractDate(course.updatedAt),
+          rejectionCount: course.rejectionCount,
           chapters: await this.mapChaptersForReview(
             course.chapters || [],
             s3Service
@@ -253,6 +255,7 @@ export class CourseMapper {
       enrollmentCount: course.enrollmentCount,
       createdAt: course.createdAt,
       updatedAt: course.updatedAt,
+      rejectionCount: course.rejectionCount
     };
   }
 
@@ -272,6 +275,7 @@ export class CourseMapper {
       enrollmentCount: course.enrollmentCount,
       createdAt: course.createdAt,
       updatedAt: course.updatedAt,
+      rejectionCount: course.rejectionCount
     };
   }
 
@@ -346,7 +350,7 @@ export class CourseMapper {
         course.chapters || [],
         s3Service
       ),
-      isPublished: isPublished,
+      isPublished: course.isPublished,
       isListed: course.isListed || false,
       enrollmentCount: this.extractNumber(course.enrollmentCount),
       createdAt: this.extractDate(course.createdAt),

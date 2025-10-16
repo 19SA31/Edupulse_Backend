@@ -517,7 +517,6 @@ export class TutorService implements ITutorService {
         requestDTO.date
       );
 
-      console.log(existingSlots);
 
       if (existingSlots) {
         return {

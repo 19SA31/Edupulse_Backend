@@ -55,7 +55,7 @@ export interface CourseDetailsDto {
   price: number;
   thumbnailImage: string;
   chapters: ChapterDetailsDto[];
-  isPublished: boolean;
+  isPublished: string;
   isListed: boolean;
   enrollmentCount: number;
   createdAt: Date;
@@ -153,6 +153,7 @@ export interface PublishedCourseDto {
   enrollmentCount: number;
   createdAt: Date;
   updatedAt: Date;
+  rejectionCount: Number;
 }
 
 export interface RejectedCourseDto {
@@ -170,6 +171,7 @@ export interface RejectedCourseDto {
   enrollmentCount: number;
   createdAt: Date;
   updatedAt: Date;
+  rejectionCount: Number
 }
 
 export interface TutorBasicDto {

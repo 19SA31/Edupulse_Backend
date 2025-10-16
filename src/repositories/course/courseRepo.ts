@@ -88,9 +88,13 @@ export class CourseRepository
       throw new Error("Tutor not found");
     }
     course.isPublished = "rejected";
+    course.rejectionCount= course.rejectionCount+1
     const updatedCourse = await course.save();
 
     return { course: updatedCourse, tutor };
+  }
+  async removeCourse(courseId: string): Promise<void> {
+    await this.delete(courseId)
   }
   async getPublishedCoursesWithDetails(
     skip: number,
