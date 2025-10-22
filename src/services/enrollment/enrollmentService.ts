@@ -19,7 +19,6 @@ import {
 } from "../../dto/enrollment/enrollmentDTO";
 import { EnrollmentMapper } from "../../mappers/enrollment/enrollmentMapper";
 import { ICourseRepoInterface } from "../../interfaces/course/ICourseRepoInterface";
-import { error } from "console";
 
 class EnrollmentService {
   constructor(
@@ -35,9 +34,6 @@ class EnrollmentService {
       if (!validation.isValid) {
         throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
       }
-
-      
-
       const domainData = EnrollmentMapper.toDomainModel(dto);
 
       const existingEnrollment =
@@ -82,12 +78,19 @@ class EnrollmentService {
         },
       });
 
+      const adminPercentage: number = 5;
+      const adminCommission: number = Math.floor(domainData.price*adminPercentage/100)
+      const tutorRevenue: number = Math.floor(domainData.price-adminCommission)
+
       const enrollment = await this.enrollmentRepository.create({
         userId: new mongoose.Types.ObjectId(domainData.userId),
         tutorId: new mongoose.Types.ObjectId(domainData.tutorId),
         courseId: new mongoose.Types.ObjectId(domainData.courseId),
         categoryId: new mongoose.Types.ObjectId(domainData.categoryId),
         price: domainData.price,
+        platformFee: adminCommission,
+        platformFeePercentage: adminPercentage,
+        tutorEarnings: tutorRevenue,
         paymentId: session.id,
         paymentMethod: "stripe",
         status: "pending",

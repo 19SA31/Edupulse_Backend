@@ -27,7 +27,10 @@ class EnrollmentController {
 
   private getUserId(req: AuthRequest): string {
     if (!req.user?.id) {
-      throw new AppError("User authentication required", HTTP_statusCode.Unauthorized);
+      throw new AppError(
+        "User authentication required",
+        HTTP_statusCode.Unauthorized
+      );
     }
     return req.user.id;
   }
@@ -55,7 +58,10 @@ class EnrollmentController {
     );
 
     if (!emailSent) {
-      throw new AppError("Purchase email sending failed", HTTP_statusCode.TaskFailed);
+      throw new AppError(
+        "Purchase email sending failed",
+        HTTP_statusCode.TaskFailed
+      );
     }
 
     const tutorMailSent = await tutorNotificationEmail(
@@ -67,17 +73,27 @@ class EnrollmentController {
     );
 
     if (!tutorMailSent) {
-      throw new AppError("Tutor notification email failed", HTTP_statusCode.TaskFailed);
+      throw new AppError(
+        "Tutor notification email failed",
+        HTTP_statusCode.TaskFailed
+      );
     }
   }
 
-  createPayment = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  createPayment = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const userId = this.getUserId(req);
       const { courseId, tutorId, categoryId, price } = req.body;
 
       if (!courseId || !tutorId || !categoryId || !price) {
-        throw new AppError("Missing required fields", HTTP_statusCode.BadRequest);
+        throw new AppError(
+          "Missing required fields",
+          HTTP_statusCode.BadRequest
+        );
       }
 
       const createEnrollmentDTO: CreateEnrollmentDTO = {
@@ -88,40 +104,53 @@ class EnrollmentController {
         price: Number(price),
       };
 
-      const result = await this.enrollmentService.createEnrollment(createEnrollmentDTO);
+      const result = await this.enrollmentService.createEnrollment(
+        createEnrollmentDTO
+      );
 
       if (!result) {
-        throw new AppError("Payment session failed", HTTP_statusCode.TaskFailed);
+        throw new AppError(
+          "Payment session failed",
+          HTTP_statusCode.TaskFailed
+        );
       }
 
-      sendSuccess(
-        res,
-        "Payment session created successfully",
-        {
-          sessionId: result.sessionId,
-          enrollmentId: result.enrollment.id,
-          checkoutUrl: `https://checkout.stripe.com/pay/${result.sessionId}`,
-        }
-      );
+      sendSuccess(res, "Payment session created successfully", {
+        sessionId: result.sessionId,
+        enrollmentId: result.enrollment.id,
+        checkoutUrl: `https://checkout.stripe.com/pay/${result.sessionId}`,
+      });
     } catch (error) {
       next(error);
     }
   };
 
-  verifyPayment = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  verifyPayment = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const userId = this.getUserId(req);
       const { sessionId } = req.body;
 
       if (!sessionId) {
-        throw new AppError("Session ID is required", HTTP_statusCode.BadRequest);
+        throw new AppError(
+          "Session ID is required",
+          HTTP_statusCode.BadRequest
+        );
       }
 
       const verifyPaymentDTO: VerifyPaymentDTO = { sessionId };
-      const result = await this.enrollmentService.verifyPaymentAndUpdateStatus(verifyPaymentDTO);
+      const result = await this.enrollmentService.verifyPaymentAndUpdateStatus(
+        verifyPaymentDTO
+      );
 
       if (!result.enrollment) {
-        throw new AppError(result.message || "Enrollment not found", HTTP_statusCode.NotFound);
+        throw new AppError(
+          result.message || "Enrollment not found",
+          HTTP_statusCode.NotFound
+        );
       }
 
       if (!result.enrollment.paymentId) {
@@ -130,20 +159,20 @@ class EnrollmentController {
 
       await this.sendNotificationEmails(result.enrollment.paymentId);
 
-      sendSuccess(
-        res,
-        result.message || "Payment verification completed",
-        {
-          enrollment: result.enrollment,
-          paymentStatus: result.paymentStatus,
-        }
-      );
+      sendSuccess(res, result.message || "Payment verification completed", {
+        enrollment: result.enrollment,
+        paymentStatus: result.paymentStatus,
+      });
     } catch (error) {
       next(error);
     }
   };
 
-  getUserEnrollments = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  getUserEnrollments = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const userId = this.getUserId(req);
       const { page, limit, search } = req.query;
@@ -160,14 +189,20 @@ class EnrollmentController {
         search: search as string,
       };
 
-      const result = await this.enrollmentService.getUserEnrollments(getUserEnrollmentsDTO);
+      const result = await this.enrollmentService.getUserEnrollments(
+        getUserEnrollmentsDTO
+      );
       sendSuccess(res, "User enrollments fetched successfully", result);
     } catch (error) {
       next(error);
     }
   };
 
-  verifyEnrollment = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  verifyEnrollment = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const userId = this.getUserId(req);
       const { courseId } = req.params;
@@ -176,11 +211,19 @@ class EnrollmentController {
         throw new AppError("Course ID is required", HTTP_statusCode.BadRequest);
       }
 
-      const verifyUserEnrollmentDTO: VerifyUserEnrollmentDTO = { userId, courseId };
-      const result = await this.enrollmentService.verifyUserEnrollment(verifyUserEnrollmentDTO);
+      const verifyUserEnrollmentDTO: VerifyUserEnrollmentDTO = {
+        userId,
+        courseId,
+      };
+      const result = await this.enrollmentService.verifyUserEnrollment(
+        verifyUserEnrollmentDTO
+      );
 
       if (!result.isEnrolled) {
-        throw new AppError("User is not enrolled in this course", HTTP_statusCode.NotFound);
+        throw new AppError(
+          "User is not enrolled in this course",
+          HTTP_statusCode.NotFound
+        );
       }
 
       sendSuccess(res, "User enrollment verified", {
@@ -192,16 +235,25 @@ class EnrollmentController {
     }
   };
 
-  getEnrollmentByPayment = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  getEnrollmentByPayment = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       this.getUserId(req);
       const { paymentId } = req.params;
 
       if (!paymentId) {
-        throw new AppError("Payment ID is required", HTTP_statusCode.BadRequest);
+        throw new AppError(
+          "Payment ID is required",
+          HTTP_statusCode.BadRequest
+        );
       }
 
-      const result = await this.enrollmentService.getEnrollmentByPaymentId({ paymentId });
+      const result = await this.enrollmentService.getEnrollmentByPaymentId({
+        paymentId,
+      });
 
       if (!result) {
         throw new AppError("Enrollment not found", HTTP_statusCode.NotFound);
@@ -213,10 +265,16 @@ class EnrollmentController {
     }
   };
 
-  getEnrolledCourses = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  getEnrolledCourses = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const userId = this.getUserId(req);
-      const enrolledCourses = await this.enrollmentService.getEnrolledCourses(userId);
+      const enrolledCourses = await this.enrollmentService.getEnrolledCourses(
+        userId
+      );
 
       if (!enrolledCourses) {
         throw new AppError("No enrolled courses", HTTP_statusCode.NotFound);
@@ -228,9 +286,14 @@ class EnrollmentController {
     }
   };
 
-  getAllEnrollments = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  getAllEnrollments = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      const { page, limit, search, status, startDate, endDate, sortBy } = req.query;
+      const { page, limit, search, status, startDate, endDate, sortBy } =
+        req.query;
 
       const pagination = this.validatePagination(
         parseInt(page as string, 10),
@@ -247,7 +310,9 @@ class EnrollmentController {
         sortBy: sortBy as string,
       };
 
-      const result = await this.enrollmentService.getAllEnrollments(getAllEnrollmentsDTO);
+      const result = await this.enrollmentService.getAllEnrollments(
+        getAllEnrollmentsDTO
+      );
       sendSuccess(res, "All enrollments fetched successfully", result);
     } catch (error) {
       next(error);

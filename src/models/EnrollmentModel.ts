@@ -6,6 +6,9 @@ export interface IEnrollment extends Document {
   courseId: mongoose.Types.ObjectId;
   categoryId: mongoose.Types.ObjectId;
   price: number;
+  platformFee: number;
+  platformFeePercentage: number;
+  tutorEarnings: number;
   paymentId: string;
   paymentMethod?: "stripe";
   status: "pending" | "paid" | "failed";
@@ -35,6 +38,18 @@ const enrollmentSchema = new Schema<IEnrollment>(
       required: true,
     },
     price: {
+      type: Number,
+      required: true,
+    },
+    platformFee: {
+      type: Number,
+      required: true,
+    },
+    platformFeePercentage: {
+      type: Number,
+      default: 5,
+    },
+    tutorEarnings: {
       type: Number,
       required: true,
     },

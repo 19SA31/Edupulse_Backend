@@ -4,6 +4,9 @@ export interface CreateEnrollmentDTO {
   courseId: string;
   categoryId: string;
   price: number;
+  platformFee?: number;
+  platformFeePercentage?: number;
+  tutorEarnings?: number;
 }
 
 export interface VerifyPaymentDTO {
@@ -33,6 +36,9 @@ export interface EnrollmentResponseDTO {
   courseId: string;
   categoryId: string;
   price: number;
+  platformFee: number;
+  platformFeePercentage: number;
+  tutorEarnings: number;
   paymentId: string;
   paymentMethod: string;
   status: "pending" | "paid" | "failed";
@@ -56,6 +62,9 @@ export interface PopulatedEnrollmentResponseDTO {
     name: string;
   };
   price: number;
+  platformFee: number;
+  platformFeePercentage: number;
+  tutorEarnings: number;
   paymentId: string;
   paymentMethod: string;
   status: string;
