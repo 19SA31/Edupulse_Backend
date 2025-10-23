@@ -22,6 +22,7 @@ import { AuthAdminRepository } from "../../repositories/admin/authAdminRepo";
 import { CourseRepository } from "../../repositories/course/courseRepo";
 import { CourseService } from "../../services/course/courseService";
 import { CourseController } from "../../controllers/course/CourseController";
+import EnrollmentController from "../../controllers/enrollment/enrollemntController";
 import EnrollmentService from "../../services/enrollment/enrollmentService";
 import EnrollmentRepository from "../../repositories/enrollment/enrollmentRepo";
 
@@ -55,8 +56,11 @@ const enrollmentRepository = new EnrollmentRepository();
 const courseRepository = new CourseRepository();
 const enrollmentService = new EnrollmentService(
   enrollmentRepository,
-  courseRepository
+  courseRepository,
+  tutorRepository,
+  s3Service
 );
+const enrollmentController = new EnrollmentController(enrollmentService);
 
 const courseService = new CourseService(
   courseRepository,
@@ -172,6 +176,20 @@ tutorRoute.get(
   verifyToken("tutor"),
   authMiddleware,
   tutorController.getTutorSlots.bind(tutorController)
+);
+
+tutorRoute.get(
+  "/tutor-revenue",
+  verifyToken("tutor"),
+  authMiddleware,
+  enrollmentController.getTutorRevenue.bind(enrollmentController)
+);
+
+tutorRoute.get(
+  "/course-enrollments/:courseId",
+  verifyToken("tutor"),
+  authMiddleware,
+  enrollmentController.getCourseEnrollments.bind(enrollmentController)
 );
 
 export default tutorRoute;

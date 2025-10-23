@@ -108,7 +108,7 @@ export interface EnrollmentVerificationResponseDTO {
   enrollmentId?: string;
 }
 
-export interface EnrollmentErrorDTO<T = unknown>{
+export interface EnrollmentErrorDTO<T = unknown> {
   code: string;
   message: string;
   details?: Record<string, T>;
@@ -135,6 +135,76 @@ export interface GetAllEnrollmentsDTO {
 
 export interface AllEnrollmentsResponseDTO {
   enrollments: PopulatedEnrollmentResponseDTO[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalCount: number;
+    limit: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+}
+
+export interface GetTutorRevenueDTO {
+  tutorId: string;
+}
+
+export interface GetCourseEnrollmentsDTO {
+  courseId: string;
+  page: number;
+  limit: number;
+  search?: string;
+}
+
+export interface CourseRevenueDetail {
+  courseId: string;
+  courseTitle: string;
+  courseThumbnail: string;
+  coursePrice: number;
+  enrollmentCount: number;
+  totalRevenue: number;
+  tutorEarnings: number;
+  platformFee: number;
+}
+
+export interface TutorRevenueResponseDTO {
+  tutorId: string;
+  tutorName: string;
+  totalRevenue: number;
+  totalTutorEarnings: number;
+  totalPlatformFee: number;
+  totalEnrollments: number;
+  courses: CourseRevenueDetail[];
+}
+
+export interface EnrolledUserDetail {
+  _id: string;
+  userId: {
+    _id: string;
+    name: string;
+    email: string;
+    phone?: string;
+  };
+  price: number;
+  paymentMethod: string;
+  status: string;
+  dateOfEnrollment: Date;
+  paymentId: string;
+  progress: number;
+  platformFee: number;
+  tutorEarnings: number;
+}
+
+export interface CourseEnrollmentsResponseDTO {
+  courseId: string;
+  courseTitle: string;
+  courseThumbnail: string;
+  coursePrice: number;
+  totalRevenue: number;
+  totalTutorEarnings: number;
+  totalPlatformFee: number;
+  enrollmentCount: number;
+  enrolledUsers: EnrolledUserDetail[];
   pagination: {
     currentPage: number;
     totalPages: number;

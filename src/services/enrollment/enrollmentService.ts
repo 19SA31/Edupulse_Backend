@@ -16,14 +16,22 @@ import {
   PurchaseEmailDTO,
   GetAllEnrollmentsDTO,
   AllEnrollmentsResponseDTO,
+  GetTutorRevenueDTO,
+  GetCourseEnrollmentsDTO,
+  TutorRevenueResponseDTO,
+  CourseEnrollmentsResponseDTO,
 } from "../../dto/enrollment/enrollmentDTO";
 import { EnrollmentMapper } from "../../mappers/enrollment/enrollmentMapper";
 import { ICourseRepoInterface } from "../../interfaces/course/ICourseRepoInterface";
+import { ITutorRepository } from "../../interfaces/tutor/ITutorRepository";
+import { S3Service } from "../../utils/s3";
 
 class EnrollmentService {
   constructor(
     private enrollmentRepository: IEnrollmentRepository,
-    private courseRepository: ICourseRepoInterface
+    private courseRepository: ICourseRepoInterface,
+    private tutorRepository: ITutorRepository,
+    private s3Service: S3Service
   ) {}
 
   async createEnrollment(
@@ -79,8 +87,12 @@ class EnrollmentService {
       });
 
       const adminPercentage: number = 5;
-      const adminCommission: number = Math.floor(domainData.price*adminPercentage/100)
-      const tutorRevenue: number = Math.floor(domainData.price-adminCommission)
+      const adminCommission: number = Math.floor(
+        (domainData.price * adminPercentage) / 100
+      );
+      const tutorRevenue: number = Math.floor(
+        domainData.price - adminCommission
+      );
 
       const enrollment = await this.enrollmentRepository.create({
         userId: new mongoose.Types.ObjectId(domainData.userId),
@@ -186,6 +198,9 @@ class EnrollmentService {
           limit,
           dto.search
         );
+
+      // Process thumbnails with S3 signed URLs
+      await this.processThumbnailUrls(result.enrollments);
 
       return EnrollmentMapper.toUserEnrollmentsResponse(
         result.enrollments,
@@ -294,6 +309,9 @@ class EnrollmentService {
           dto.sortBy
         );
 
+      // Process thumbnails with S3 signed URLs
+      await this.processThumbnailUrls(result.enrollments);
+
       return EnrollmentMapper.toAllEnrollmentsResponse(
         result.enrollments,
         result.totalPages,
@@ -308,6 +326,127 @@ class EnrollmentService {
       );
       throw error;
     }
+  }
+
+  async getTutorRevenue(
+    dto: GetTutorRevenueDTO
+  ): Promise<TutorRevenueResponseDTO> {
+    try {
+      const validation = EnrollmentMapper.validateGetTutorRevenueDTO(
+        dto.tutorId
+      );
+      if (!validation.isValid) {
+        throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
+      }
+
+      const tutor = await this.tutorRepository.findById(dto.tutorId);
+      if (!tutor) {
+        throw new Error("Tutor not found");
+      }
+
+      const revenueData = await this.enrollmentRepository.getTutorRevenueData(
+        dto.tutorId
+      );
+
+      // Process thumbnails for revenue data
+      await Promise.all(
+        revenueData.map(async (course: any) => {
+          if (course.courseThumbnail) {
+            try {
+              course.courseThumbnail = await this.s3Service.getFile(
+                course.courseThumbnail
+              );
+            } catch (error) {
+              console.error(
+                `Error getting thumbnail for course ${course._id}:`,
+                error
+              );
+            }
+          }
+        })
+      );
+
+      return EnrollmentMapper.toTutorRevenueResponse(
+        dto.tutorId,
+        tutor.name,
+        revenueData
+      );
+    } catch (error: any) {
+      console.error("Error in getTutorRevenue:", error.message);
+      throw error;
+    }
+  }
+
+  async getCourseEnrollments(
+    dto: GetCourseEnrollmentsDTO
+  ): Promise<CourseEnrollmentsResponseDTO> {
+    try {
+      const validation = EnrollmentMapper.validateGetCourseEnrollmentsDTO(dto);
+      if (!validation.isValid) {
+        throw new Error(`Validation failed: ${validation.errors.join(", ")}`);
+      }
+
+      const { skip, limit, page } = EnrollmentMapper.mapCoursePaginationParams(
+        dto.page,
+        dto.limit
+      );
+
+      const result = await this.enrollmentRepository.getCourseEnrollmentsData(
+        dto.courseId,
+        skip,
+        limit,
+        dto.search
+      );
+
+      if (!result.courseStats) {
+        throw new Error("Course not found or has no enrollments");
+      }
+
+      // Process thumbnail for course stats
+      if (result.courseStats.courseThumbnail) {
+        try {
+          result.courseStats.courseThumbnail = await this.s3Service.getFile(
+            result.courseStats.courseThumbnail
+          );
+        } catch (error) {
+          console.error(
+            `Error getting thumbnail for course ${dto.courseId}:`,
+            error
+          );
+        }
+      }
+
+      return EnrollmentMapper.toCourseEnrollmentsResponse(
+        result.courseStats,
+        result.enrolledUsers,
+        result.totalPages,
+        result.totalCount,
+        page,
+        limit
+      );
+    } catch (error: any) {
+      console.error("Error in getCourseEnrollments:", error.message);
+      throw error;
+    }
+  }
+
+  private async processThumbnailUrls(enrollments: any[]): Promise<void> {
+    await Promise.all(
+      enrollments.map(async (enrollment) => {
+        if (enrollment.courseId?.thumbnailImage) {
+          try {
+            enrollment.courseId.thumbnailImage = await this.s3Service.getFile(
+              enrollment.courseId.thumbnailImage
+            );
+          } catch (error) {
+            console.error(
+              `Error getting thumbnail for course ${enrollment.courseId._id}:`,
+              error
+            );
+          }
+        }
+      })
+    );
   }
 }
 

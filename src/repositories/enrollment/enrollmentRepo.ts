@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import BaseRepository from "../BaseRepository";
 import Enrollment, { IEnrollment } from "../../models/EnrollmentModel";
 import { IEnrollmentRepository } from "../../interfaces/enrollment/IEnrollmentRepository";
@@ -148,7 +149,6 @@ class EnrollmentRepository
       filter.status = status;
     }
 
-    
     if (startDate || endDate) {
       filter.dateOfEnrollment = {};
 
@@ -184,7 +184,6 @@ class EnrollmentRepository
       },
     ];
 
-    
     let sortObject: any = {};
     if (sortBy && sortBy.trim()) {
       switch (sortBy) {
@@ -213,10 +212,10 @@ class EnrollmentRepository
           sortObject = { dateOfEnrollment: -1 };
           break;
         default:
-          sortObject = { dateOfEnrollment: -1 }; 
+          sortObject = { dateOfEnrollment: -1 };
       }
     } else {
-      sortObject = { dateOfEnrollment: -1 }; 
+      sortObject = { dateOfEnrollment: -1 };
     }
 
     let allEnrollments = await this.findWithConditionPopulateAndSort(
@@ -225,7 +224,6 @@ class EnrollmentRepository
       sortObject
     );
 
-    
     if (search && search.trim()) {
       const searchRegex = new RegExp(search.trim(), "i");
 
@@ -264,6 +262,181 @@ class EnrollmentRepository
     tutorId: string
   ): Promise<IEnrollment[] | null> {
     return await this.findWithCondition({ userId, tutorId });
+  }
+
+  async getTutorRevenueData(tutorId: string): Promise<any[]> {
+    try {
+      const pipeline = [
+        {
+          $match: {
+            tutorId: new mongoose.Types.ObjectId(tutorId),
+            status: "paid",
+          },
+        },
+        {
+          $lookup: {
+            from: "courses",
+            localField: "courseId",
+            foreignField: "_id",
+            as: "courseDetails",
+          },
+        },
+        {
+          $unwind: "$courseDetails",
+        },
+        {
+          $group: {
+            _id: "$courseId",
+            courseTitle: { $first: "$courseDetails.title" },
+            courseThumbnail: { $first: "$courseDetails.thumbnailImage" },
+            coursePrice: { $first: "$courseDetails.price" },
+            enrollmentCount: { $sum: 1 },
+            totalRevenue: { $sum: "$price" },
+            tutorEarnings: { $sum: "$tutorEarnings" },
+            platformFee: { $sum: "$platformFee" },
+          },
+        },
+        {
+          $sort: { totalRevenue: -1 },
+        },
+      ];
+
+      return await this.aggregate(pipeline);
+    } catch (error: any) {
+      console.error("Error in getTutorRevenueData:", error.message);
+      throw error;
+    }
+  }
+
+  async getCourseEnrollmentsData(
+    courseId: string,
+    skip: number,
+    limit: number,
+    search?: string
+  ): Promise<{
+    courseStats: any;
+    enrolledUsers: any[];
+    totalCount: number;
+    totalPages: number;
+  }> {
+    try {
+      const courseObjectId = new mongoose.Types.ObjectId(courseId);
+
+      const statsAggregate = await this.aggregate([
+        {
+          $match: {
+            courseId: courseObjectId,
+            status: "paid",
+          },
+        },
+        {
+          $lookup: {
+            from: "courses",
+            localField: "courseId",
+            foreignField: "_id",
+            as: "courseDetails",
+          },
+        },
+        {
+          $unwind: "$courseDetails",
+        },
+        {
+          $group: {
+            _id: "$courseId",
+            courseTitle: { $first: "$courseDetails.title" },
+            courseThumbnail: { $first: "$courseDetails.thumbnailImage" },
+            coursePrice: { $first: "$courseDetails.price" },
+            totalRevenue: { $sum: "$price" },
+            totalTutorEarnings: { $sum: "$tutorEarnings" },
+            totalPlatformFee: { $sum: "$platformFee" },
+            enrollmentCount: { $sum: 1 },
+          },
+        },
+      ]);
+
+      if (!statsAggregate || statsAggregate.length === 0) {
+        return {
+          courseStats: null,
+          enrolledUsers: [],
+          totalCount: 0,
+          totalPages: 0,
+        };
+      }
+
+      const courseStats = {
+        courseId: statsAggregate[0]._id.toString(),
+        courseTitle: statsAggregate[0].courseTitle,
+        courseThumbnail: statsAggregate[0].courseThumbnail,
+        coursePrice: statsAggregate[0].coursePrice,
+        totalRevenue: statsAggregate[0].totalRevenue,
+        totalTutorEarnings: statsAggregate[0].totalTutorEarnings,
+        totalPlatformFee: statsAggregate[0].totalPlatformFee,
+      };
+
+      const filter: any = {
+        courseId: courseObjectId,
+        status: "paid",
+      };
+
+      const populateOptions: PopulateOptions[] = [
+        {
+          path: "userId",
+          select: "name email phone",
+        },
+      ];
+
+      let enrolledUsers: any[] = [];
+      let totalCount = 0;
+
+      if (search && search.trim()) {
+        const searchRegex = new RegExp(search.trim(), "i");
+        const populateWithSearch: PopulateOptions[] = [
+          {
+            path: "userId",
+            select: "name email phone",
+            match: {
+              $or: [
+                { name: { $regex: searchRegex } },
+                { email: { $regex: searchRegex } },
+              ],
+            },
+          },
+        ];
+
+        const allEnrollments = await this.findWithConditionAndPopulate(
+          filter,
+          populateWithSearch
+        );
+
+        const filteredEnrollments = allEnrollments.filter(
+          (enrollment: any) => enrollment.userId
+        );
+
+        totalCount = filteredEnrollments.length;
+        enrolledUsers = filteredEnrollments.slice(skip, skip + limit);
+      } else {
+        enrolledUsers = await this.findWithPagination(
+          filter,
+          skip,
+          limit,
+          populateOptions,
+          { dateOfEnrollment: -1 }
+        );
+        totalCount = await this.countDocuments(filter);
+      }
+
+      const totalPages = Math.ceil(totalCount / limit);
+
+      return {
+        courseStats,
+        enrolledUsers,
+        totalCount,
+        totalPages,
+      };
+    } catch (error: any) {
+      console.error("Error in getCourseEnrollmentsData:", error.message);
+      throw error;
+    }
   }
 }
 

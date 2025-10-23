@@ -8,6 +8,8 @@ import {
   VerifyPaymentDTO,
   GetUserEnrollmentsDTO,
   VerifyUserEnrollmentDTO,
+  GetTutorRevenueDTO,
+  GetCourseEnrollmentsDTO,
 } from "../../dto/enrollment/enrollmentDTO";
 import {
   sendCoursePurchaseEmail,
@@ -314,6 +316,67 @@ class EnrollmentController {
         getAllEnrollmentsDTO
       );
       sendSuccess(res, "All enrollments fetched successfully", result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getTutorRevenue = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const tutorId = req.user?.id || req.params.tutorId;
+
+      if (!tutorId) {
+        throw new AppError("Tutor ID is required", HTTP_statusCode.BadRequest);
+      }
+
+      const getTutorRevenueDTO: GetTutorRevenueDTO = {
+        tutorId,
+      };
+
+      const result = await this.enrollmentService.getTutorRevenue(
+        getTutorRevenueDTO
+      );
+
+      sendSuccess(res, "Tutor revenue fetched successfully", result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getCourseEnrollments = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { courseId } = req.params;
+      const { page, limit, search } = req.query;
+
+      if (!courseId) {
+        throw new AppError("Course ID is required", HTTP_statusCode.BadRequest);
+      }
+
+      const pagination = this.validatePagination(
+        parseInt(page as string, 10),
+        parseInt(limit as string, 10)
+      );
+
+      const getCourseEnrollmentsDTO: GetCourseEnrollmentsDTO = {
+        courseId,
+        page: pagination.page,
+        limit: pagination.limit,
+        search: search as string,
+      };
+
+      const result = await this.enrollmentService.getCourseEnrollments(
+        getCourseEnrollmentsDTO
+      );
+
+      sendSuccess(res, "Course enrollments fetched successfully", result);
     } catch (error) {
       next(error);
     }

@@ -12,6 +12,11 @@ import {
   EnrolledCoursesDTO,
   PurchaseEmailDTO,
   AllEnrollmentsResponseDTO,
+  TutorRevenueResponseDTO,
+  CourseRevenueDetail,
+  CourseEnrollmentsResponseDTO,
+  EnrolledUserDetail,
+  GetCourseEnrollmentsDTO,
 } from "../../dto/enrollment/enrollmentDTO";
 import { PopulatedEnrollment } from "../../interfaces/enrollment/enrollmentInterface";
 
@@ -306,5 +311,154 @@ export class EnrollmentMapper {
     return enrollments.map((enrollment) =>
       this.toPopulatedWithUserDTO(enrollment)
     );
+  }
+
+  static mapCoursePaginationParams(
+    page: number,
+    limit: number
+  ): {
+    skip: number;
+    limit: number;
+    page: number;
+  } {
+    let validLimit = limit || 10;
+    let validPage = page || 1;
+
+    if (isNaN(validLimit) || validLimit <= 0) validLimit = 10;
+    if (isNaN(validPage) || validPage <= 0) validPage = 1;
+
+    validLimit = Math.min(validLimit, 100);
+    validPage = Math.max(validPage, 1);
+
+    const skip = (validPage - 1) * validLimit;
+    return { skip, limit: validLimit, page: validPage };
+  }
+
+  static toTutorRevenueResponse(
+    tutorId: string,
+    tutorName: string,
+    aggregatedData: any[]
+  ): TutorRevenueResponseDTO {
+    const courses: CourseRevenueDetail[] = aggregatedData.map((course) => ({
+      courseId: course._id.toString(),
+      courseTitle: course.courseTitle,
+      courseThumbnail: course.courseThumbnail,
+      coursePrice: course.coursePrice,
+      enrollmentCount: course.enrollmentCount,
+      totalRevenue: course.totalRevenue,
+      tutorEarnings: course.tutorEarnings,
+      platformFee: course.platformFee,
+    }));
+
+    const totalRevenue = courses.reduce((sum, c) => sum + c.totalRevenue, 0);
+    const totalTutorEarnings = courses.reduce(
+      (sum, c) => sum + c.tutorEarnings,
+      0
+    );
+    const totalPlatformFee = courses.reduce((sum, c) => sum + c.platformFee, 0);
+    const totalEnrollments = courses.reduce(
+      (sum, c) => sum + c.enrollmentCount,
+      0
+    );
+
+    return {
+      tutorId,
+      tutorName,
+      totalRevenue,
+      totalTutorEarnings,
+      totalPlatformFee,
+      totalEnrollments,
+      courses,
+    };
+  }
+
+  static toCourseEnrollmentsResponse(
+    courseData: any,
+    enrolledUsers: any[],
+    totalPages: number,
+    totalCount: number,
+    currentPage: number,
+    limit: number
+  ): CourseEnrollmentsResponseDTO {
+    const users: EnrolledUserDetail[] = enrolledUsers.map((enrollment) => ({
+      _id: enrollment._id.toString(),
+      userId: {
+        _id: enrollment.userId._id.toString(),
+        name: enrollment.userId.name,
+        email: enrollment.userId.email,
+        phone: enrollment.userId.phone,
+      },
+      price: enrollment.price,
+      paymentMethod: enrollment.paymentMethod || "stripe",
+      status: enrollment.status,
+      dateOfEnrollment: enrollment.dateOfEnrollment,
+      paymentId: enrollment.paymentId,
+      progress: enrollment.progress || 0,
+      platformFee: enrollment.platformFee,
+      tutorEarnings: enrollment.tutorEarnings,
+    }));
+
+    return {
+      courseId: courseData.courseId,
+      courseTitle: courseData.courseTitle,
+      courseThumbnail: courseData.courseThumbnail,
+      coursePrice: courseData.coursePrice,
+      totalRevenue: courseData.totalRevenue,
+      totalTutorEarnings: courseData.totalTutorEarnings,
+      totalPlatformFee: courseData.totalPlatformFee,
+      enrollmentCount: totalCount,
+      enrolledUsers: users,
+      pagination: {
+        currentPage,
+        totalPages,
+        totalCount,
+        limit,
+        hasNextPage: currentPage < totalPages,
+        hasPreviousPage: currentPage > 1,
+      },
+    };
+  }
+
+  static validateGetTutorRevenueDTO(tutorId: string): {
+    isValid: boolean;
+    errors: string[];
+  } {
+    const errors: string[] = [];
+
+    if (!tutorId?.trim()) {
+      errors.push("Tutor ID is required");
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  }
+
+  static validateGetCourseEnrollmentsDTO(dto: GetCourseEnrollmentsDTO): {
+    isValid: boolean;
+    errors: string[];
+  } {
+    const errors: string[] = [];
+
+    if (!dto.courseId?.trim()) {
+      errors.push("Course ID is required");
+    }
+
+    if (dto.page !== undefined && (isNaN(dto.page) || dto.page < 1)) {
+      errors.push("Page must be a positive number");
+    }
+
+    if (
+      dto.limit !== undefined &&
+      (isNaN(dto.limit) || dto.limit < 1 || dto.limit > 100)
+    ) {
+      errors.push("Limit must be between 1 and 100");
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
   }
 }

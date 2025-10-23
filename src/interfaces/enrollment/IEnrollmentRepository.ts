@@ -39,11 +39,26 @@ export interface IEnrollmentRepository {
     status?: string,
     startDate?: string,
     endDate?: string,
-    sortBy?:string
+    sortBy?: string
   ): Promise<{
     enrollments: IEnrollment[];
     totalPages: number;
     totalCount: number;
   }>;
-  findCourseCountsTutor(userId: string,tutorId: string): Promise<IEnrollment[]|null>
+  findCourseCountsTutor(
+    userId: string,
+    tutorId: string
+  ): Promise<IEnrollment[] | null>;
+  getTutorRevenueData(tutorId: string): Promise<any[]>;
+  getCourseEnrollmentsData(
+    courseId: string,
+    skip: number,
+    limit: number,
+    search?: string
+  ): Promise<{
+    courseStats: any;
+    enrolledUsers: any[];
+    totalCount: number;
+    totalPages: number;
+  }>;
 }

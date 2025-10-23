@@ -71,11 +71,14 @@ const userController = new UserController(userService);
 const authMiddleware = createAuthMiddleware("user", userService);
 
 const courseRepository = new CourseRepository();
+const tutorRepository = new TutorRepository();
 
 const enrollmentRepository = new EnrollmentRepository();
 const enrollmentService = new EnrollmentService(
   enrollmentRepository,
-  courseRepository
+  courseRepository,
+  tutorRepository,
+  s3Service
 );
 
 const courseService = new CourseService(
@@ -85,7 +88,7 @@ const courseService = new CourseService(
 );
 const courseController = new CourseController(courseService);
 
-const tutorRepository = new TutorRepository();
+
 const tutorService = new TutorService(tutorRepository, s3Service);
 const tutorController = new TutorController(tutorService);
 

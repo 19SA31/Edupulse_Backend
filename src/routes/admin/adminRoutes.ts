@@ -18,6 +18,8 @@ import { CourseController } from "../../controllers/course/CourseController";
 import EnrollmentService from "../../services/enrollment/enrollmentService";
 import EnrollmentRepository from "../../repositories/enrollment/enrollmentRepo";
 
+import { TutorRepository } from "../../repositories/tutor/tutorRepo";
+
 import { verifyToken } from "../../utils/jwt";
 import EnrollmentController from "../../controllers/enrollment/enrollemntController";
 
@@ -46,11 +48,15 @@ const AuthenticationControllerInstance = new AuthenticationController(
 
 const AdminControllerInstance = new AdminController(AdminServiceInstance);
 
+const tutorRepository = new TutorRepository();
+
 const enrollmentRepository = new EnrollmentRepository();
 const courseRepository = new CourseRepository();
 const enrollmentService = new EnrollmentService(
   enrollmentRepository,
-  courseRepository
+  courseRepository,
+  tutorRepository,
+  s3Service
 );
 
 const courseService = new CourseService(
