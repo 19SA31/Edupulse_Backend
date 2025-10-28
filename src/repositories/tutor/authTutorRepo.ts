@@ -141,4 +141,50 @@ export class AuthTutorRepository
       throw new Error("Error in checking verification status");
     }
   }
+
+  async findTutorByEmail(email: string): Promise<TutorProfile | null> {
+    try {
+      const tutorData = await this.findOne({ email });
+
+      if (!tutorData) {
+        return null;
+      }
+
+      const doc = await this.checkVerificationStatus(tutorData._id.toString());
+
+      let verificationStatus:
+        | "not_submitted"
+        | "pending"
+        | "approved"
+        | "rejected" = "not_submitted";
+
+      if (doc) {
+        verificationStatus = doc.verificationStatus as
+          | "not_submitted"
+          | "pending"
+          | "approved"
+          | "rejected";
+      }
+
+      return {
+        _id: tutorData._id.toString(),
+        name: tutorData.name,
+        email: tutorData.email,
+        phone: tutorData.phone,
+        password: tutorData.password,
+        DOB: tutorData.DOB,
+        gender: tutorData.gender,
+        avatar: tutorData.avatar,
+        isBlocked: tutorData.isBlocked,
+        designation: tutorData.designation,
+        about: tutorData.about,
+        isVerified: tutorData.isVerified || false,
+        verificationStatus: verificationStatus,
+        createdAt: tutorData.createdAt,
+      };
+    } catch (error) {
+      console.error("Error finding tutor by email:", error);
+      throw new Error("Error finding tutor");
+    }
+  }
 }

@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { S3Service } from "../../utils/s3";
-import { ITutorAuthInterface } from "../../interfaces/tutor/ITutorAuthInterface";
+import { ITutorAuthInterface } from "../../interfaces/tutor/ITutorAuthService";
 import { ITutorAuthRepository } from "../../interfaces/tutor/ITutorAuthRepository";
 import sendMail from "../../config/emailConfig";
 import dotenv from "dotenv";
@@ -8,6 +8,7 @@ import jwt from "jsonwebtoken";
 import {
   CreateTutorType,
   GetTutorDataLogin,
+  TutorProfile,
 } from "../../interfaces/tutorInterface/tutorInterface";
 import {
   SignUpServiceDTO,
@@ -15,7 +16,7 @@ import {
   LoginServiceDTO,
   LoginServiceResponseDTO,
   ResetPasswordServiceDTO,
-  TutorDataDTO,
+  GoogleTutorData,
 } from "../../dto/tutor/TutorAuthDTO";
 import { TutorAuthMapper } from "../../mappers/tutor/TutorAuthMapper";
 
@@ -205,5 +206,67 @@ export class AuthTutorService implements ITutorAuthInterface {
     );
 
     await this._AuthRepository.resetPassword(tutorData.email, hashedPassword);
+  }
+
+  async findTutorByEmail(email: string): Promise<TutorProfile | null> {
+    return await this._AuthRepository.findTutorByEmail(email);
+  }
+
+  async createGoogleTutor(tutorData: GoogleTutorData): Promise<TutorProfile> {
+    const newTutorData: CreateTutorType = {
+      name: tutorData.name,
+      email: tutorData.email,
+      phone: "",
+      password: "",
+      createdAt: new Date(),
+      googleId: tutorData.googleId,
+      avatar: tutorData.avatar,
+      isEmailVerified: tutorData.isEmailVerified,
+    };
+
+    const createdTutor = await this._AuthRepository.createTutor(newTutorData);
+
+    const tutorObject = createdTutor.toObject
+      ? createdTutor.toObject()
+      : createdTutor;
+
+    if (!createdTutor._id) {
+      throw new Error("Tutor not found");
+    }
+
+    const doc = await this._AuthRepository.checkVerificationStatus(
+      createdTutor._id.toString()
+    );
+
+    let verificationStatus:
+      | "not_submitted"
+      | "pending"
+      | "approved"
+      | "rejected" = "not_submitted";
+
+    if (doc) {
+      verificationStatus = doc.verificationStatus as
+        | "not_submitted"
+        | "pending"
+        | "approved"
+        | "rejected";
+    }
+
+    return {
+      _id: createdTutor._id.toString(),
+      name: tutorObject.name,
+      email: tutorObject.email,
+      phone: tutorObject.phone || "",
+      password: tutorObject.password || "",
+      DOB: tutorObject.DOB,
+      gender: tutorObject.gender,
+      avatar: tutorObject.avatar || null,
+      isBlocked: tutorObject.isBlocked || false,
+      designation: tutorObject.designation,
+      about: tutorObject.about,
+      isVerified: tutorObject.isVerified || false,
+      verificationStatus: verificationStatus,
+      createdAt: tutorObject.createdAt || new Date(),
+    };
   }
 }

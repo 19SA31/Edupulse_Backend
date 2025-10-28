@@ -28,13 +28,17 @@ export class AuthUserRepository
       phone ? this.findOne({ phone }) : Promise.resolve(null),
     ]);
 
-    return AuthMapper.mapToUserExistence(!!emailExist, phone ? !!phoneExist : false);
+    return AuthMapper.mapToUserExistence(
+      !!emailExist,
+      phone ? !!phoneExist : false
+    );
   }
 
   async createUser(
     userData: CreateUserType
   ): Promise<Document<unknown, any, any> & User> {
-    const user = (await this.create(userData)) as Document<unknown, any, any> & User;
+    const user = (await this.create(userData)) as Document<unknown, any, any> &
+      User;
     return user;
   }
 
@@ -85,5 +89,24 @@ export class AuthUserRepository
     }
 
     await this.update(userData._id.toString(), { password });
+  }
+
+  async findUserByEmail(email: string): Promise<UserProfileData | null> {
+    const userData = await this.findOne({ email });
+
+    if (!userData) {
+      return null;
+    }
+
+    return {
+      _id: userData._id.toString(),
+      name: userData.name,
+      email: userData.email,
+      phone: userData.phone,
+      DOB: userData.DOB,
+      gender: userData.gender,
+      avatar: userData.avatar,
+      isBlocked: userData.isBlocked,
+    };
   }
 }

@@ -91,6 +91,13 @@ tutorRoute.post(
 );
 
 tutorRoute.post(
+  "/google-auth",
+  AuthenticationControllerInstance.googleTutorAuth.bind(
+    AuthenticationControllerInstance
+  )
+);
+
+tutorRoute.post(
   "/logout",
   AuthenticationControllerInstance.logoutTutor.bind(
     AuthenticationControllerInstance

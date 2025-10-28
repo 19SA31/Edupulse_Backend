@@ -25,6 +25,9 @@ export interface ResetPasswordRequestDto {
   password: string;
 }
 
+export interface GoogleAuthRequestDto {
+  credential: string;
+}
 
 export interface SignUpResponseDto {
   success: boolean;
@@ -66,6 +69,32 @@ export interface UserProfileResponseDto {
   avatar?: string;
 }
 
+export interface GoogleUserData {
+  name: string;
+  email: string;
+  phone?: string;
+  avatar?: string;
+  googleId: string;
+  isEmailVerified: boolean;
+}
+
+export interface GoogleAuthUserResponseDto {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  avatar?: string;
+  isBlocked: boolean;
+}
+
+export interface GoogleAuthResponseDto {
+  success: boolean;
+  message: string;
+  data?: {
+    user: GoogleAuthUserResponseDto;
+    accessToken: string;
+  };
+}
 
 export interface LoginServiceResultDto {
   accessToken: string;

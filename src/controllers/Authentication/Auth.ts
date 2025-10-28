@@ -1,10 +1,12 @@
 import { IAuthService } from "../../interfaces/user/IAuthService";
-import { ITutorAuthInterface } from "../../interfaces/tutor/ITutorAuthInterface";
+import { ITutorAuthInterface } from "../../interfaces/tutor/ITutorAuthService";
 import { IAdminAuthServiceInterface } from "../../interfaces/admin/IAdminAuthServiceInterface";
 import HTTP_statusCode from "../../enums/HttpStatusCode";
 import { Request, Response, NextFunction } from "express";
 import { sendSuccess, sendError } from "../../helper/responseHelper";
 import { AppError } from "../../errors/AppError";
+import { verifyGoogleToken } from "../../utils/googleAuth";
+import { createToken } from "../../utils/jwt";
 
 export class AuthenticationController {
   private userAuthService: IAuthService;
@@ -49,7 +51,10 @@ export class AuthenticationController {
       const { email, otp, password, isForgot } = req.body;
 
       if (!email || !otp) {
-        throw new AppError("Email and OTP are required", HTTP_statusCode.BadRequest);
+        throw new AppError(
+          "Email and OTP are required",
+          HTTP_statusCode.BadRequest
+        );
       }
 
       if (!isForgot && !password) {
@@ -62,7 +67,10 @@ export class AuthenticationController {
       const isVerified = await this.userAuthService.otpCheck(req.body);
 
       if (!isVerified) {
-        throw new AppError("OTP verification failed", HTTP_statusCode.BadRequest);
+        throw new AppError(
+          "OTP verification failed",
+          HTTP_statusCode.BadRequest
+        );
       }
 
       sendSuccess(res, "OTP verified successfully");
@@ -272,6 +280,173 @@ export class AuthenticationController {
     }
   }
 
+  googleUserAuth = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { credential } = req.body;
+
+
+      if (!credential) {
+        throw new AppError(
+          "Google credential is required",
+          HTTP_statusCode.BadRequest
+        );
+      }
+
+      const googleUser = await verifyGoogleToken(credential);
+
+      console.log("00",googleUser)
+
+      if (!googleUser.email_verified) {
+        throw new AppError(
+          "Email not verified by Google",
+          HTTP_statusCode.BadRequest
+        );
+      }
+
+      let user = await this.userAuthService.findUserByEmail(googleUser.email);
+
+      if (user) {
+        if (user.isBlocked) {
+          throw new AppError(
+            "Your account has been blocked",
+            HTTP_statusCode.NoAccess
+          );
+        }
+        const accessToken = createToken(user._id, user.email, "user");
+        const refreshToken = createToken(user._id, user.email, "user");
+
+        this.setAuthCookies(res, accessToken, refreshToken);
+
+        sendSuccess(res, "Login successful", {
+          user: {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            avatar: user.avatar,
+            isBlocked: user.isBlocked,
+          },
+          accessToken,
+        });
+      } else {
+        const newUser = await this.userAuthService.createGoogleUser({
+          name: googleUser.name,
+          email: googleUser.email,
+          phone:"",
+          avatar: googleUser.picture,
+          googleId: googleUser.sub,
+          isEmailVerified: true,
+        });
+
+        const accessToken = createToken(newUser._id, newUser.email, "user");
+        const refreshToken = createToken(newUser._id, newUser.email, "user");
+
+        this.setAuthCookies(res, accessToken, refreshToken);
+
+        sendSuccess(res, "Account created successfully", {
+          user: {
+            _id: newUser._id,
+            name: newUser.name,
+            email: newUser.email,
+            avatar: newUser.avatar,
+          },
+          accessToken,
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  googleTutorAuth = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { credential } = req.body;
+
+      if (!credential) {
+        throw new AppError(
+          "Google credential is required",
+          HTTP_statusCode.BadRequest
+        );
+      }
+
+      const googleUser = await verifyGoogleToken(credential);
+
+      if (!googleUser.email_verified) {
+        throw new AppError(
+          "Email not verified by Google",
+          HTTP_statusCode.BadRequest
+        );
+      }
+
+      let tutor = await this.tutorAuthService.findTutorByEmail(
+        googleUser.email
+      );
+
+      if (tutor) {
+        if (tutor.isBlocked) {
+          throw new AppError(
+            "Your account has been blocked",
+            HTTP_statusCode.NoAccess
+          );
+        }
+
+        const accessToken = createToken(tutor._id, tutor.email, "tutor");
+        const refreshToken = createToken(tutor._id, tutor.email, "tutor");
+
+        this.setAuthCookies(res, accessToken, refreshToken);
+
+        sendSuccess(res, "Login successful", {
+          tutor: {
+            _id: tutor._id,
+            name: tutor.name,
+            email: tutor.email,
+            phone: tutor.phone,
+            avatar: tutor.avatar,
+            isVerified: tutor.isVerified,
+            verificationStatus: tutor.verificationStatus,
+            isBlocked: tutor.isBlocked,
+          },
+          accessToken,
+        });
+      } else {
+        const newTutor = await this.tutorAuthService.createGoogleTutor({
+          name: googleUser.name,
+          email: googleUser.email,
+          avatar: googleUser.picture,
+          googleId: googleUser.sub,
+          isEmailVerified: true,
+        });
+
+        const accessToken = createToken(newTutor._id, newTutor.email, "tutor");
+        const refreshToken = createToken(newTutor._id, newTutor.email, "tutor");
+
+        this.setAuthCookies(res, accessToken, refreshToken);
+
+        sendSuccess(res, "Account created successfully", {
+          tutor: {
+            _id: newTutor._id,
+            name: newTutor.name,
+            email: newTutor.email,
+            avatar: newTutor.avatar,
+            isVerified: newTutor.isVerified,
+            verificationStatus: newTutor.verificationStatus,
+          },
+          accessToken,
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  };
+
   private setAuthCookies(
     res: Response,
     accessToken: string,
@@ -306,18 +481,26 @@ export class AuthenticationController {
     });
   }
 
-  // Error mapping methods
   private mapUserOtpError(error: unknown): Error {
     if (error instanceof Error) {
       switch (error.message) {
         case "Email already in use":
           return new AppError("Email already in use", HTTP_statusCode.Conflict);
         case "Phone already in use":
-          return new AppError("Phone number already in use", HTTP_statusCode.Conflict);
+          return new AppError(
+            "Phone number already in use",
+            HTTP_statusCode.Conflict
+          );
         case "Otp not send":
-          return new AppError("OTP not sent", HTTP_statusCode.InternalServerError);
+          return new AppError(
+            "OTP not sent",
+            HTTP_statusCode.InternalServerError
+          );
         case "Email not found":
-          return new AppError("Email address not found", HTTP_statusCode.BadRequest);
+          return new AppError(
+            "Email address not found",
+            HTTP_statusCode.BadRequest
+          );
       }
     }
     return new AppError(
@@ -330,7 +513,10 @@ export class AuthenticationController {
     if (error instanceof Error) {
       switch (error.message) {
         case "OTP not found":
-          return new AppError("OTP not found or expired", HTTP_statusCode.BadRequest);
+          return new AppError(
+            "OTP not found or expired",
+            HTTP_statusCode.BadRequest
+          );
         case "Password is required for new user registration":
           return new AppError(
             "Password is required for registration",
@@ -338,28 +524,46 @@ export class AuthenticationController {
           );
       }
     }
-    return new AppError("Server error occurred", HTTP_statusCode.InternalServerError);
+    return new AppError(
+      "Server error occurred",
+      HTTP_statusCode.InternalServerError
+    );
   }
 
   private mapUserLoginError(error: unknown): Error {
     if (error instanceof Error) {
       switch (error.message) {
         case "Invalid email":
-          return new AppError("Invalid email address", HTTP_statusCode.BadRequest);
+          return new AppError(
+            "Invalid email address",
+            HTTP_statusCode.BadRequest
+          );
         case "Invalid password":
           return new AppError("Invalid password", HTTP_statusCode.BadRequest);
         case "User blocked":
-          return new AppError("Your account has been blocked", HTTP_statusCode.NoAccess);
+          return new AppError(
+            "Your account has been blocked",
+            HTTP_statusCode.NoAccess
+          );
       }
     }
-    return new AppError("Internal Server Error", HTTP_statusCode.InternalServerError);
+    return new AppError(
+      "Internal Server Error",
+      HTTP_statusCode.InternalServerError
+    );
   }
 
   private mapUserResetPasswordError(error: unknown): Error {
     if (error instanceof Error && error.message === "Invalid email") {
-      return new AppError("Email address not found", HTTP_statusCode.BadRequest);
+      return new AppError(
+        "Email address not found",
+        HTTP_statusCode.BadRequest
+      );
     }
-    return new AppError("Internal Server Error", HTTP_statusCode.InternalServerError);
+    return new AppError(
+      "Internal Server Error",
+      HTTP_statusCode.InternalServerError
+    );
   }
 
   private mapTutorOtpError(error: unknown): Error {
@@ -368,11 +572,17 @@ export class AuthenticationController {
         case "Email already in use":
           return new AppError("Email already in use", HTTP_statusCode.Conflict);
         case "Phone already in use":
-          return new AppError("Phone number already in use", HTTP_statusCode.Conflict);
+          return new AppError(
+            "Phone number already in use",
+            HTTP_statusCode.Conflict
+          );
         case "Email not found":
           return new AppError("Email not found", HTTP_statusCode.NotFound);
         case "Failed to send OTP email":
-          return new AppError("OTP not sent", HTTP_statusCode.InternalServerError);
+          return new AppError(
+            "OTP not sent",
+            HTTP_statusCode.InternalServerError
+          );
       }
     }
     return new AppError(
@@ -387,7 +597,10 @@ export class AuthenticationController {
         case "Invalid OTP":
           return new AppError("Invalid OTP", HTTP_statusCode.BadRequest);
         case "Password is required for new tutor registration":
-          return new AppError("Password is required", HTTP_statusCode.BadRequest);
+          return new AppError(
+            "Password is required",
+            HTTP_statusCode.BadRequest
+          );
       }
     }
     return new AppError("Server error", HTTP_statusCode.InternalServerError);
@@ -397,25 +610,46 @@ export class AuthenticationController {
     if (error instanceof Error) {
       switch (error.message) {
         case "Invalid email or password":
-          return new AppError("Invalid email or password", HTTP_statusCode.BadRequest);
+          return new AppError(
+            "Invalid email or password",
+            HTTP_statusCode.BadRequest
+          );
         case "Tutor account is blocked":
-          return new AppError("Tutor account is blocked", HTTP_statusCode.NoAccess);
+          return new AppError(
+            "Tutor account is blocked",
+            HTTP_statusCode.NoAccess
+          );
       }
     }
-    return new AppError("Internal Server Error", HTTP_statusCode.InternalServerError);
+    return new AppError(
+      "Internal Server Error",
+      HTTP_statusCode.InternalServerError
+    );
   }
 
   private mapTutorResetPasswordError(error: unknown): Error {
     if (error instanceof Error && error.message === "Email not found") {
       return new AppError("Email not found", HTTP_statusCode.NotFound);
     }
-    return new AppError("Internal Server Error", HTTP_statusCode.InternalServerError);
+    return new AppError(
+      "Internal Server Error",
+      HTTP_statusCode.InternalServerError
+    );
   }
 
   private mapAdminLoginError(error: unknown): Error {
-    if (error instanceof Error && error.message === "Invalid email or password") {
-      return new AppError("Invalid email or password", HTTP_statusCode.BadRequest);
+    if (
+      error instanceof Error &&
+      error.message === "Invalid email or password"
+    ) {
+      return new AppError(
+        "Invalid email or password",
+        HTTP_statusCode.BadRequest
+      );
     }
-    return new AppError("Internal Server Error", HTTP_statusCode.InternalServerError);
+    return new AppError(
+      "Internal Server Error",
+      HTTP_statusCode.InternalServerError
+    );
   }
 }

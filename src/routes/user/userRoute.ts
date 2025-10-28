@@ -88,7 +88,6 @@ const courseService = new CourseService(
 );
 const courseController = new CourseController(courseService);
 
-
 const tutorService = new TutorService(tutorRepository, s3Service);
 const tutorController = new TutorController(tutorService);
 
@@ -111,6 +110,13 @@ userRoute.post(
 userRoute.post(
   "/login",
   AuthenticationControllerInstance.userLogin.bind(
+    AuthenticationControllerInstance
+  )
+);
+
+userRoute.post(
+  "/google-auth",
+  AuthenticationControllerInstance.googleUserAuth.bind(
     AuthenticationControllerInstance
   )
 );

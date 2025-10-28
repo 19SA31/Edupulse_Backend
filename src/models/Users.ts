@@ -14,9 +14,18 @@ const userSchema = new Schema<IUser>({
     type: String,
     required: true,
   },
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true,
+  },
   password: {
     type: String,
-    required: true,
+    required: false,
+  },
+  isEmailVerified: {
+    type: Boolean,
+    default: false
   },
   DOB: {
     type: Date,

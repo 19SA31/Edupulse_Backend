@@ -4,11 +4,6 @@ export interface SendOtpRequestDTO {
   isForgot?: boolean;
 }
 
-export interface SendOtpResponseDTO {
-  success: boolean;
-  message: string;
-}
-
 export interface VerifyOtpRequestDTO {
   name?: string;
   email: string;
@@ -18,44 +13,52 @@ export interface VerifyOtpRequestDTO {
   isForgot?: boolean;
 }
 
-export interface VerifyOtpResponseDTO {
-  success: boolean;
-  message: string;
-}
-
 export interface TutorLoginRequestDTO {
   email: string;
   password: string;
 }
 
+export interface ResetPasswordRequestDTO {
+  email: string;
+  password: string;
+}
+
+export interface GoogleAuthTutorRequestDto {
+  credential: string;
+}
+
+export interface SendOtpResponseDTO {
+  success: boolean;
+  message: string;
+}
+
+export interface VerifyOtpResponseDTO {
+  success: boolean;
+  message: string;
+}
 
 export interface TutorDataDTO {
   id: string;
   name: string;
   email: string;
-  phone: string; 
-  DOB: Date;
-  gender?: 'male' | 'female' | 'other';
-  avatar?: string | null; 
+  phone: string;
+  DOB?: Date;
+  gender?: "male" | "female" | "other";
+  avatar?: string | null;
   designation?: string;
   about?: string;
   isVerified: boolean;
-  verificationStatus: 'not_submitted'|'pending' | 'approved' | 'rejected';
+  verificationStatus: "not_submitted" | "pending" | "approved" | "rejected";
 }
 
 export interface TutorLoginResponseDTO {
   success: boolean;
   message: string;
-  data: {
+  data?: {
     accessToken: string;
     refreshToken: string;
     tutor: TutorDataDTO;
   };
-}
-
-export interface ResetPasswordRequestDTO {
-  email: string;
-  password: string;
 }
 
 export interface ResetPasswordResponseDTO {
@@ -66,6 +69,25 @@ export interface ResetPasswordResponseDTO {
 export interface LogoutResponseDTO {
   success: boolean;
   message: string;
+}
+
+export interface GoogleTutorData {
+  name: string;
+  email: string;
+  avatar?: string;
+  googleId: string;
+  isEmailVerified: boolean;
+}
+
+export interface GoogleAuthTutorResponseDto {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  avatar?: string;
+  isVerified: boolean;
+  verificationStatus: "not_submitted" | "pending" | "approved" | "rejected";
+  isBlocked: boolean;
 }
 
 export interface SignUpServiceDTO {

@@ -5,13 +5,17 @@ import { IAuthRepository } from "../../interfaces/user/IAuthRepository";
 import sendMail from "../../config/emailConfig";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
-import { CreateUserType } from "../../interfaces/userInterface/userInterface";
-import { 
-  SignUpRequestDto, 
-  VerifyOtpRequestDto, 
-  LoginRequestDto, 
+import {
+  CreateUserType,
+  UserProfileData,
+} from "../../interfaces/userInterface/userInterface";
+import {
+  SignUpRequestDto,
+  VerifyOtpRequestDto,
+  LoginRequestDto,
   ResetPasswordRequestDto,
   LoginServiceResultDto,
+  GoogleUserData,
 } from "../../dto/user/UserAuthDTO";
 import { AuthMapper } from "../../mappers/user/UserAuthMapper";
 
@@ -81,12 +85,10 @@ export class AuthService implements IAuthService {
       return false;
     }
 
-    
     if (userData.isForgot) {
       return true;
     }
 
-    
     if (!userData.password) {
       throw new Error("Password is required for new user registration");
     }
@@ -108,7 +110,9 @@ export class AuthService implements IAuthService {
     return true;
   }
 
-  async loginService(userData: LoginRequestDto): Promise<LoginServiceResultDto> {
+  async loginService(
+    userData: LoginRequestDto
+  ): Promise<LoginServiceResultDto> {
     const loggedUser = await this._AuthRepository.verifyUser(
       userData.email,
       userData.password
@@ -147,7 +151,11 @@ export class AuthService implements IAuthService {
       avatar: avatarUrl,
     });
 
-    return AuthMapper.mapToLoginServiceResult(accessToken, refreshToken, userProfile);
+    return AuthMapper.mapToLoginServiceResult(
+      accessToken,
+      refreshToken,
+      userProfile
+    );
   }
 
   async resetPasswordService(userData: ResetPasswordRequestDto): Promise<void> {
@@ -157,5 +165,35 @@ export class AuthService implements IAuthService {
     );
 
     await this._AuthRepository.resetPassword(userData.email, hashedPassword);
+  }
+
+  async findUserByEmail(email: string): Promise<UserProfileData | null> {
+    return await this._AuthRepository.findUserByEmail(email);
+  }
+
+  async createGoogleUser(userData: GoogleUserData): Promise<UserProfileData> {
+    const newUserData: CreateUserType = {
+      name: userData.name,
+      email: userData.email,
+      phone: "",
+      password: "",
+      createdAt: new Date(),
+      googleId: userData.googleId,
+      avatar: userData.avatar,
+      isEmailVerified: userData.isEmailVerified,
+    };
+
+    const createdUser = await this._AuthRepository.createUser(newUserData);
+
+    return {
+      _id: createdUser._id.toString(),
+      name: createdUser.name,
+      email: createdUser.email,
+      phone: createdUser.phone,
+      DOB: createdUser.DOB,
+      gender: createdUser.gender,
+      avatar: createdUser.avatar,
+      isBlocked: createdUser.isBlocked,
+    };
   }
 }

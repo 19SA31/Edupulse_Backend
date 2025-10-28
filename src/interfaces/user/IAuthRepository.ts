@@ -13,4 +13,5 @@ export interface IAuthRepository {
   verifyOtp(email: string, otp: string): Promise<boolean>;
   verifyUser(email: string, password: string): Promise<UserProfileData>;
   resetPassword(email: string, password: string): Promise<void>;
+  findUserByEmail(email: string): Promise<UserProfileData | null>
 }

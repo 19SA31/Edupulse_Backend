@@ -1,32 +1,9 @@
-
 import mongoose, { Document, Types } from "mongoose";
-
-export enum SlotDuration {
-  HALF_HOUR = 30,
-  ONE_HOUR = 60,
-}
-
-export interface Slots {
-  _id?: Types.ObjectId;
-  time: string;
-  duration: SlotDuration;
-  price: number;
-  availability: boolean;
-  bookedBy: Types.ObjectId | null;
-}
-
-
-export interface TutorSlot extends Document {
-  _id: Types.ObjectId;
-  tutorId: Types.ObjectId;
-  date: Date;
-  slots: Slots[];
-  halfHourPrice: number;
-  oneHourPrice: number;
-  active: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import {
+  TutorSlot,
+  Slots,
+  SlotDuration,
+} from "../interfaces/tutorInterface/tutorInterface";
 
 const TutorSlotsSchema = new mongoose.Schema<TutorSlot>(
   {

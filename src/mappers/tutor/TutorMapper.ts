@@ -1,5 +1,3 @@
-// /src/mappers/tutor/TutorMapper.ts
-
 import { Request } from "express";
 import {
   Tutor,
@@ -133,7 +131,7 @@ export class TutorMapper {
       submittedAt: docs.submittedAt,
       reviewedAt: docs.reviewedAt,
       rejectionReason: docs.rejectionReason,
-      rejectionCount:docs.rejectionCount
+      rejectionCount: docs.rejectionCount,
     };
   }
 
@@ -172,7 +170,7 @@ export class TutorMapper {
     if (aadharBack) updateData.aadharBack = aadharBack;
     if (verificationStatus) updateData.verificationStatus = verificationStatus;
     if (rejectionReason) updateData.rejectionReason = rejectionReason;
-    if (rejectionCount) updateData.rejectionCount = rejectionCount
+    if (rejectionCount) updateData.rejectionCount = rejectionCount;
 
     updateData.submittedAt = new Date();
 
@@ -241,7 +239,7 @@ export class TutorMapper {
   }
 
   static mapToGetTutorSlotsResponse(
-    slotDoc: TutorSlot 
+    slotDoc: TutorSlot
   ): GetTutorSlotsResponseDTO {
     return {
       slotId: slotDoc._id!.toString(),
