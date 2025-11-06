@@ -3,6 +3,7 @@ import { Course, FilterConditions, SortOptions } from "./courseInterface";
 
 export interface ICourseRepoInterface {
   getCategories(): Promise<Category[]>;
+  getCategoryByName(categoryName: string): Promise<Category | null>
   createCourse(courseData: Partial<Course>): Promise<Course>;
   checkSameTutor(tutorId: string): Promise<Course>;
   unpublishedCourses(
@@ -43,4 +44,5 @@ export interface ICourseRepoInterface {
     search: string
   ): Promise<{ courses: Course[]; total: number }>;
   updateCourse(courseId: string, courseData: Partial<Course>): Promise<Course>;
+  countDocuments(filter: FilterConditions): Promise<number> 
 }

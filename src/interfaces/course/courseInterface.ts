@@ -1,6 +1,7 @@
 // interfaces/course/courseInterface.ts
 import { Types } from 'mongoose';
 import { Tutor } from '../adminInterface/adminInterface';
+import { ListedCourseDTO } from '../../dto/course/CourseDTO';
 
 export interface IFile {
   fileName: string;
@@ -46,6 +47,7 @@ export interface CourseReject{
 }
 
 export interface Category{
+  _id?: any; 
   id:string;
   name:string;
   description:string;
@@ -96,6 +98,15 @@ export interface PopulateOption {
   path: string;
   select: string;
 }
+
+export interface PaginatedCoursesResponse {
+  courses: ListedCourseDTO[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 
 
 

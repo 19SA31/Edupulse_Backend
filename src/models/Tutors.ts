@@ -9,10 +9,13 @@ const tutorSchema = new Schema<Tutor>({
   email: {
     type: String,
     required: true,
+    unique: true,
   },
   phone: {
     type: String,
-    required: true,
+    required: function (this: Tutor) {
+      return !this.googleId;
+    },
   },
   googleId: {
     type: String,
@@ -21,11 +24,13 @@ const tutorSchema = new Schema<Tutor>({
   },
   password: {
     type: String,
-    required: false,
+    required: function (this: Tutor) {
+      return !this.googleId;
+    },
   },
   isEmailVerified: {
     type: Boolean,
-    default: false
+    default: false,
   },
   DOB: {
     type: Date,
@@ -44,11 +49,11 @@ const tutorSchema = new Schema<Tutor>({
   },
   designation: {
     type: String,
-    default: null
+    default: null,
   },
   about: {
     type: String,
-    default: null
+    default: null,
   },
   createdAt: {
     type: Date,
@@ -56,7 +61,8 @@ const tutorSchema = new Schema<Tutor>({
   },
   lastLogin: {
     type: Date,
-  },isVerified: {
+  },
+  isVerified: {
     type: Boolean,
     default: false,
   },

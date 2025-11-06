@@ -27,6 +27,18 @@ export class CourseRepository
     return await this._categoryRepository.findWithCondition({ isListed: true });
   }
 
+  async getCategoryByName(categoryName: string): Promise<Category | null> {
+    try {
+      const category = await this._categoryRepository.findOne({
+        name: categoryName,
+      });
+      return category || null;
+    } catch (error) {
+      console.error("Error fetching category by name:", error);
+      throw error;
+    }
+  }
+
   async createCourse(courseData: Partial<Course>): Promise<Course> {
     return this.create(courseData as Course);
   }
@@ -88,13 +100,13 @@ export class CourseRepository
       throw new Error("Tutor not found");
     }
     course.isPublished = "rejected";
-    course.rejectionCount= course.rejectionCount+1
+    course.rejectionCount = course.rejectionCount + 1;
     const updatedCourse = await course.save();
 
     return { course: updatedCourse, tutor };
   }
   async removeCourse(courseId: string): Promise<void> {
-    await this.delete(courseId)
+    await this.delete(courseId);
   }
   async getPublishedCoursesWithDetails(
     skip: number,

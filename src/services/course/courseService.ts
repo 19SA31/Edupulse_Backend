@@ -9,7 +9,8 @@ import {
   CourseFilters,
   FilterConditions,
   SortOptions,
-  RawTutor
+  RawTutor,
+  PaginatedCoursesResponse
 } from "../../interfaces/course/courseInterface";
 import {
   CourseForReview,
@@ -237,9 +238,9 @@ export class CourseService implements ICourseService {
   async rejectCourse(courseId: string): Promise<CourseRejectDto> {
     try {
       const { course, tutor } = await this._courseRepo.rejectCourse(courseId);
-      const rejectionLimit:Number =3;
-      if(course.rejectionCount===rejectionLimit){
-        await this._courseRepo.removeCourse(courseId)
+      const rejectionLimit: Number = 3;
+      if (course.rejectionCount === rejectionLimit) {
+        await this._courseRepo.removeCourse(courseId);
       }
       return CourseMapper.toCourseRejectDto(
         course,
@@ -322,7 +323,7 @@ export class CourseService implements ICourseService {
   async getAllListedCourses(
     filters: CourseFilters,
     userId?: string
-  ): Promise<ListedCourseDTO[]> {
+  ): Promise<PaginatedCoursesResponse> {
     try {
       let userEnrolledCourseIds: string[] = [];
       if (userId) {
@@ -408,7 +409,32 @@ export class CourseService implements ICourseService {
       }
 
       const page = filters.page || 1;
-      const limit = filters.limit || 50;
+      const limit = filters.limit || 6;
+
+      let countFilterConditions = { ...filterConditions };
+      if (filterConditions.categoryName) {
+        const category = await this._courseRepo.getCategoryByName(
+          filterConditions.categoryName as string
+        );
+        if (category) {
+          countFilterConditions = { ...filterConditions };
+          delete countFilterConditions.categoryName;
+          countFilterConditions.categoryId = category._id;
+        } else {
+
+          return {
+            courses: [],
+            total: 0,
+            page,
+            limit,
+            totalPages: 0,
+          };
+        }
+      }
+
+      const total = await this._courseRepo.countDocuments(
+        countFilterConditions
+      );
 
       const courses = await this._courseRepo.findAllListedCoursesWithFilters(
         filterConditions,
@@ -434,7 +460,15 @@ export class CourseService implements ICourseService {
         })
       );
 
-      return CourseMapper.toListedCourseDTOArray(courses);
+      const totalPages = Math.ceil(total / limit);
+
+      return {
+        courses: CourseMapper.toListedCourseDTOArray(courses),
+        total,
+        page,
+        limit,
+        totalPages,
+      };
     } catch (error) {
       throw new Error(`Failed to fetch listed courses: ${error}`);
     }
@@ -540,7 +574,7 @@ export class CourseService implements ICourseService {
         thumbnailImage: thumbnailUrl,
         chapters: processedChapters,
         updatedAt: new Date(),
-        isPublished:"draft"
+        isPublished: "draft",
       };
 
       const updatedCourse = await this._courseRepo.updateCourse(

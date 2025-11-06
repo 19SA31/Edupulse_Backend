@@ -9,10 +9,13 @@ const userSchema = new Schema<IUser>({
   email: {
     type: String,
     required: true,
+    unique: true,
   },
   phone: {
     type: String,
-    required: true,
+    required: function (this: IUser) {
+      return !this.googleId;
+    },
   },
   googleId: {
     type: String,
@@ -21,11 +24,13 @@ const userSchema = new Schema<IUser>({
   },
   password: {
     type: String,
-    required: false,
+    required: function (this: IUser) {
+      return !this.googleId;
+    },
   },
   isEmailVerified: {
     type: Boolean,
-    default: false
+    default: false,
   },
   DOB: {
     type: Date,

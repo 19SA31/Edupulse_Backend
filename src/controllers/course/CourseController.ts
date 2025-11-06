@@ -251,7 +251,7 @@ export class CourseController {
         maxPrice,
         sortBy,
         page = 1,
-        limit = 50,
+        limit = 6,
       } = req.query;
 
       const filters: CourseFilters = {
@@ -266,11 +266,12 @@ export class CourseController {
 
       this.validatePriceFilters(filters);
 
-      const courses = await this._courseService.getAllListedCourses(
+      const result = await this._courseService.getAllListedCourses(
         filters,
         userId
       );
-      sendSuccess(res, "Successfully fetched all listed courses", courses);
+
+      sendSuccess(res, "Successfully fetched all listed courses", result);
     } catch (error) {
       next(error);
     }
