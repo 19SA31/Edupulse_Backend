@@ -212,6 +212,65 @@ export class AuthTutorService implements ITutorAuthInterface {
     return await this._AuthRepository.findTutorByEmail(email);
   }
 
+  async getCompleteTutorProfile(email: string): Promise<TutorProfile | null> {
+    try {
+      const rawTutor = await this._AuthRepository.findTutorByEmail(email);
+
+      if (!rawTutor) {
+        return null;
+      }
+
+      let avatarUrl = null;
+      if (rawTutor.avatar) {
+        try {
+          avatarUrl = await this._s3Service.getFile(rawTutor.avatar);
+        } catch (error) {
+          console.error("Failed to fetch avatar from S3:", error);
+          avatarUrl = rawTutor.avatar; 
+        }
+      }
+
+      let verificationStatus:
+        | "not_submitted"
+        | "pending"
+        | "approved"
+        | "rejected" = "not_submitted";
+
+      if (rawTutor._id) {
+        const doc = await this._AuthRepository.checkVerificationStatus(
+          rawTutor._id.toString()
+        );
+        if (doc) {
+          verificationStatus = doc.verificationStatus as
+            | "not_submitted"
+            | "pending"
+            | "approved"
+            | "rejected";
+        }
+      }
+
+      return {
+        _id: rawTutor._id?.toString() || "",
+        name: rawTutor.name,
+        email: rawTutor.email,
+        phone: rawTutor.phone || "",
+        password: rawTutor.password || "",
+        DOB: rawTutor.DOB,
+        gender: rawTutor.gender,
+        avatar: avatarUrl,
+        isBlocked: rawTutor.isBlocked || false,
+        designation: rawTutor.designation,
+        about: rawTutor.about,
+        isVerified: rawTutor.isVerified || false,
+        verificationStatus: verificationStatus,
+        createdAt: rawTutor.createdAt || new Date(),
+      };
+    } catch (error) {
+      console.error("Error fetching complete tutor profile:", error);
+      throw error;
+    }
+  }
+
   async createGoogleTutor(tutorData: GoogleTutorData): Promise<TutorProfile> {
     const newTutorData: CreateTutorType = {
       name: tutorData.name,

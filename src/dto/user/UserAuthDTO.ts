@@ -59,13 +59,15 @@ export interface LogoutResponseDto {
   message: string;
 }
 
+export type Gender = "male" | "female" | "other";
+
 export interface UserProfileResponseDto {
   _id: string;
   name: string;
   email: string;
   phone: string;
   DOB?: Date;
-  gender?: string;
+  gender?: Gender;
   avatar?: string;
 }
 

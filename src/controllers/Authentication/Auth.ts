@@ -288,7 +288,6 @@ export class AuthenticationController {
     try {
       const { credential } = req.body;
 
-
       if (!credential) {
         throw new AppError(
           "Google credential is required",
@@ -298,8 +297,6 @@ export class AuthenticationController {
 
       const googleUser = await verifyGoogleToken(credential);
 
-      console.log("00",googleUser)
-
       if (!googleUser.email_verified) {
         throw new AppError(
           "Email not verified by Google",
@@ -307,36 +304,36 @@ export class AuthenticationController {
         );
       }
 
-      let user = await this.userAuthService.findUserByEmail(googleUser.email);
+      let checkUser = await this.userAuthService.findUserByEmail(
+        googleUser.email
+      );
 
-      if (user) {
-        if (user.isBlocked) {
+      if (checkUser) {
+        if (checkUser.isBlocked) {
           throw new AppError(
             "Your account has been blocked",
             HTTP_statusCode.NoAccess
           );
         }
+        let user = await this.userAuthService.getCompleteUserProfile(
+          googleUser.email
+        );
+        if (!user) {
+          throw new AppError("No user found", HTTP_statusCode.NoAccess);
+        }
         const accessToken = createToken(user._id, user.email, "user");
         const refreshToken = createToken(user._id, user.email, "user");
 
         this.setAuthCookies(res, accessToken, refreshToken);
-
         sendSuccess(res, "Login successful", {
-          user: {
-            _id: user._id,
-            name: user.name,
-            email: user.email,
-            phone: user.phone,
-            avatar: user.avatar,
-            isBlocked: user.isBlocked,
-          },
+          user,
           accessToken,
         });
       } else {
         const newUser = await this.userAuthService.createGoogleUser({
           name: googleUser.name,
           email: googleUser.email,
-          phone:"",
+          phone: "",
           avatar: googleUser.picture,
           googleId: googleUser.sub,
           isEmailVerified: true,
@@ -386,34 +383,30 @@ export class AuthenticationController {
         );
       }
 
-      let tutor = await this.tutorAuthService.findTutorByEmail(
+      let checkTutor = await this.tutorAuthService.findTutorByEmail(
         googleUser.email
       );
 
-      if (tutor) {
-        if (tutor.isBlocked) {
+      if (checkTutor) {
+        if (checkTutor.isBlocked) {
           throw new AppError(
             "Your account has been blocked",
             HTTP_statusCode.NoAccess
           );
         }
-
+        let tutor = await this.tutorAuthService.getCompleteTutorProfile(
+          googleUser.email
+        );
+        if (!tutor) {
+          throw new AppError("No tutor found", HTTP_statusCode.NoAccess);
+        }
         const accessToken = createToken(tutor._id, tutor.email, "tutor");
         const refreshToken = createToken(tutor._id, tutor.email, "tutor");
 
         this.setAuthCookies(res, accessToken, refreshToken);
 
         sendSuccess(res, "Login successful", {
-          tutor: {
-            _id: tutor._id,
-            name: tutor.name,
-            email: tutor.email,
-            phone: tutor.phone,
-            avatar: tutor.avatar,
-            isVerified: tutor.isVerified,
-            verificationStatus: tutor.verificationStatus,
-            isBlocked: tutor.isBlocked,
-          },
+          tutor,
           accessToken,
         });
       } else {

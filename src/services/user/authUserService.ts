@@ -171,6 +171,25 @@ export class AuthService implements IAuthService {
     return await this._AuthRepository.findUserByEmail(email);
   }
 
+  async getCompleteUserProfile(email: string): Promise<UserProfileData | null> {
+    const rawUser = await this._AuthRepository.findUserByEmail(email);
+    if (!rawUser) return null;
+
+    let avatarUrl = null;
+    if (rawUser.avatar) {
+      try {
+        avatarUrl = await this._s3Service.getFile(rawUser.avatar);
+      } catch (error) {
+        avatarUrl = rawUser.avatar;
+      }
+    }
+    
+    return AuthMapper.mapToUserProfileResponse({
+      ...rawUser,
+      avatar: avatarUrl,
+    });
+  }
+
   async createGoogleUser(userData: GoogleUserData): Promise<UserProfileData> {
     const newUserData: CreateUserType = {
       name: userData.name,

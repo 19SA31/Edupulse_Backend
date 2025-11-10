@@ -134,7 +134,7 @@ class EnrollmentController {
   ): Promise<void> => {
     try {
       const userId = this.getUserId(req);
-      const { sessionId } = req.body;
+      const { sessionId } = req.body; 
 
       if (!sessionId) {
         throw new AppError(

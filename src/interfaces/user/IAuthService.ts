@@ -17,4 +17,5 @@ export interface IAuthService {
   resetPasswordService(userData: ResetPasswordRequestDto): Promise<void>;
   findUserByEmail(email: string): Promise<UserProfileData | null>;
   createGoogleUser(userData: GoogleUserData): Promise<UserProfileData>;
+  getCompleteUserProfile(email: string): Promise<UserProfileData | null> 
 }
