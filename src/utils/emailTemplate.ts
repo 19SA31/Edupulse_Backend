@@ -1,4 +1,4 @@
-export const otpTemplate = (otp:string) => `
+export const otpTemplate = (otp: string) => `
   <div style="font-family: Arial, sans-serif; background: #f4f4f9; padding: 30px; text-align: center;">
     <div style="background-color: #ffffff; max-width: 600px; margin: 0 auto; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);">
       <h1 style="font-size: 24px; font-weight: bold; color: #333;">Edupulse</h1>
@@ -16,50 +16,197 @@ export const otpTemplate = (otp:string) => `
   </div>
 `;
 
-export const rejectionEmailTemplate = (tutorName: string, reason: string) => `
+export const rejectionEmailTemplate = (
+  tutorName: string,
+  reason: string,
+  rejectionCount?: Number
+) => {
+  const isTerminated = (rejectionCount = 3);
+
+  return `
   <div style="font-family: Arial, sans-serif; background: #f4f4f9; padding: 30px; text-align: center;">
     <div style="background-color: #ffffff; max-width: 600px; margin: 0 auto; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);">
       <h1 style="font-size: 24px; font-weight: bold; color: #333;">Edupulse</h1>
       <p style="font-size: 16px; color: #555;">Hi ${tutorName},</p>
-      <p style="font-size: 16px; color: #555;">We regret to inform you that your tutor application has been rejected.</p>
+
+      ${
+        isTerminated
+          ? `
+          <p style="font-size: 16px; color: #555;">
+            We regret to inform you that your tutor profile has been <strong>terminated</strong> due to multiple application rejections.
+          </p>
+          <div style="margin: 20px auto; display: inline-block; padding: 15px 20px; background-color: #000; color: #fff; border-radius: 8px; font-size: 18px; font-weight: bold;">
+            Account Terminated
+          </div>
+          `
+          : `
+          <p style="font-size: 16px; color: #555;">
+            We regret to inform you that your tutor application has been rejected.
+          </p>
+          <div style="margin: 20px auto; display: inline-block; padding: 15px 20px; background-color: #dc3545; color: #fff; border-radius: 8px; font-size: 18px; font-weight: bold;">
+            Application Rejected
+          </div>
+          `
+      }
+
+      <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: left;">
+        <h3 style="color: #495057; margin-top: 0;">Reason for ${
+          isTerminated ? "Termination" : "Rejection"
+        }:</h3>
+        <p style="color: #6c757d; font-size: 14px; line-height: 1.5; margin-bottom: 0;">${reason}</p>
+      </div>
+
+      ${
+        isTerminated
+          ? `
+          <p style="font-size: 14px; color: #777;">
+            As your rejection count has reached <strong>3</strong>, your Edupulse tutor account has been permanently terminated.
+          </p>
+          <p style="font-size: 14px; color: #777;">
+            All your submitted documents have been removed from our system. You will no longer be able to access your tutor dashboard.
+          </p>
+          `
+          : `
+          <p style="font-size: 14px; color: #777;">
+            You may reapply after addressing the issues mentioned above. Please ensure all documents meet our requirements.
+          </p>
+          <p style="font-size: 14px; color: #dc3545; font-weight: bold;">
+            Warning: Once your rejection count reaches 3, your tutor ID will be permanently terminated, and all your documents will be removed.
+          </p>
+          <p style="font-size: 14px; color: #555;">
+            Current Rejection Count: <strong>${rejectionCount}</strong> / 3
+          </p>
+          `
+      }
+
+      <p style="font-size: 14px; color: #777;">For any questions, please contact our support team.</p>
+      <p style="font-size: 14px; color: #777;">Best regards,<br>Edupulse Team</p>
+    </div>
+    <footer style="margin-top: 20px; font-size: 12px; color: #999;">&copy; 2025 Edupulse. All rights reserved.</footer>
+  </div>
+  `;
+};
+
+export const courseRejectionEmailTemplate = (
+  tutorName: string,
+  courseTitle: string,
+  rejectionCount: Number,
+  reason: string
+) => {
+  const isTerminated = rejectionCount === 3;
+
+  return `
+    <div style="font-family: Arial, sans-serif; background: #f4f4f9; padding: 30px; text-align: center;">
+      <div style="background-color: #ffffff; max-width: 600px; margin: 0 auto; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);">
+        <h1 style="font-size: 24px; font-weight: bold; color: #333;">Edupulse</h1>
+        <p style="font-size: 16px; color: #555;">Hi ${tutorName},</p>
+        ${
+          isTerminated
+            ? `
+            <p style="font-size: 16px; color: #555;">
+              We regret to inform you that your course submission titled "<strong>${courseTitle}</strong>" has been <strong>permanently rejected</strong> due to repeated rejections.
+            </p>
+            <div style="margin: 20px auto; display: inline-block; padding: 15px 20px; background-color: #000; color: #fff; border-radius: 8px; font-size: 18px; font-weight: bold;">
+              Course Permanently Rejected
+            </div>
+            `
+            : `
+            <p style="font-size: 16px; color: #555;">
+              We regret to inform you that your course submission titled "<strong>${courseTitle}</strong>" has been rejected.
+            </p>
+            <div style="margin: 20px auto; display: inline-block; padding: 15px 20px; background-color: #dc3545; color: #fff; border-radius: 8px; font-size: 18px; font-weight: bold;">
+              Course Rejected
+            </div>
+            `
+        }
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: left;">
+          <h3 style="color: #495057; margin-top: 0;">Reason for rejection</h3>
+          <p style="color: #6c757d; font-size: 14px; line-height: 1.5; margin-bottom: 0;">${reason}</p>
+        </div>
+        ${
+          isTerminated
+            ? `
+            <p style="font-size: 14px; color: #777;">
+              As your course submission has been rejected <strong>3</strong> times, all data related to this course, including documents and resources, will be permanently deleted from our system. You will no longer be able to resubmit this course.
+            </p>
+            `
+            : `
+            <p style="font-size: 14px; color: #777;">
+              You may resubmit your course after addressing the issues mentioned above. Please ensure your content meets our quality standards.
+            </p>
+            <p style="font-size: 14px; color: #dc3545; font-weight: bold;">
+              Warning: Once your rejection count reaches 3, your course data will be permanently deleted and you will not be able to resubmit this course.
+            </p>
+            <p style="font-size: 14px; color: #555;">
+              Current Rejection Count: <strong>${rejectionCount}</strong> / 3
+            </p>
+            `
+        }
+        <p style="font-size: 14px; color: #777;">For any questions, please contact our support team.</p>
+        <p style="font-size: 14px; color: #777;">Best regards,<br>Edupulse Team</p>
+      </div>
+      <footer style="margin-top: 20px; font-size: 12px; color: #999;">&copy; 2025 Edupulse. All rights reserved.</footer>
+    </div>
+  `;
+};
+
+export const coursePurchaseEmailTemplate = (
+  userName: string,
+  courseTitle: string,
+  tutorName: string,
+  price: string
+) => `
+  <div style="font-family: Arial, sans-serif; background: #f4f4f9; padding: 30px; text-align: center;">
+    <div style="background-color: #ffffff; max-width: 600px; margin: 0 auto; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);">
+      <h1 style="font-size: 24px; font-weight: bold; color: #333;">Edupulse</h1>
+      <p style="font-size: 16px; color: #555;">Hi ${userName},</p>
+      <p style="font-size: 16px; color: #555;">Thank you for your purchase! 🎉</p>
       
-      <div style="margin: 20px auto; display: inline-block; padding: 15px 20px; background-color: #dc3545; color: #fff; border-radius: 8px; font-size: 18px; font-weight: bold;">
-        Application Rejected
+      <div style="margin: 20px auto; display: inline-block; padding: 15px 20px; background-color: #28a745; color: #fff; border-radius: 8px; font-size: 18px; font-weight: bold;">
+        Purchase Confirmed
       </div>
       
       <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: left;">
-        <h3 style="color: #495057; margin-top: 0;">Reason for Rejection:</h3>
-        <p style="color: #6c757d; font-size: 14px; line-height: 1.5; margin-bottom: 0;">${reason}</p>
+        <h3 style="color: #495057; margin-top: 0;">Course Title:</h3>
+        <p style="color: #6c757d; font-size: 14px; line-height: 1.5; margin-bottom: 15px;">${courseTitle}</p>
+        <h3 style="color: #495057; margin-top: 0;">Tutor:</h3>
+        <p style="color: #6c757d; font-size: 14px; line-height: 1.5; margin-bottom: 15px;">${tutorName}</p>
+        <h3 style="color: #495057; margin-top: 0;">Price Paid:</h3>
+        <p style="color: #6c757d; font-size: 14px; line-height: 1.5; margin-bottom: 0;">${price}</p>
       </div>
       
-      <p style="font-size: 14px; color: #777;">You may reapply after addressing the issues mentioned above. Please ensure all documents meet our requirements.</p>
-      <p style="font-size: 14px; color: #777;">For any questions, please contact our support team.</p>
+      <p style="font-size: 14px; color: #777;">You now have full access to your course. Start learning anytime from your dashboard.</p>
+      <p style="font-size: 14px; color: #777;">If you have any questions, feel free to contact our support team.</p>
       <p style="font-size: 14px; color: #777;">Best regards,<br>Edupulse Team</p>
     </div>
     <footer style="margin-top: 20px; font-size: 12px; color: #999;">&copy; 2025 Edupulse. All rights reserved.</footer>
   </div>
 `;
 
-export const courseRejectionEmailTemplate = (tutorName: string, courseTitle: string, reason: string) => `
+export const tutorNotificationEmailTemplate = (
+  tutorName: string,
+  courseTitle: string,
+  userName: string,
+  userEmail: string
+) => `
   <div style="font-family: Arial, sans-serif; background: #f4f4f9; padding: 30px; text-align: center;">
     <div style="background-color: #ffffff; max-width: 600px; margin: 0 auto; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);">
       <h1 style="font-size: 24px; font-weight: bold; color: #333;">Edupulse</h1>
       <p style="font-size: 16px; color: #555;">Hi ${tutorName},</p>
-      <p style="font-size: 16px; color: #555;">We regret to inform you that your course submission has been rejected.</p>
+      <p style="font-size: 16px; color: #555;">Good news! 🎉</p>
       
-      <div style="margin: 20px auto; display: inline-block; padding: 15px 20px; background-color: #dc3545; color: #fff; border-radius: 8px; font-size: 18px; font-weight: bold;">
-        Course Rejected
+      <div style="margin: 20px auto; display: inline-block; padding: 15px 20px; background-color: #007bff; color: #fff; border-radius: 8px; font-size: 18px; font-weight: bold;">
+        New Student Enrolled
       </div>
       
       <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: left;">
-        <h3 style="color: #495057; margin-top: 0;">Course Title:</h3>
-        <p style="color: #6c757d; font-size: 14px; line-height: 1.5; margin-bottom: 15px;">${courseTitle}</p>
-        <h3 style="color: #495057; margin-top: 0;">Reason for Rejection:</h3>
-        <p style="color: #6c757d; font-size: 14px; line-height: 1.5; margin-bottom: 0;">${reason}</p>
+        <h3 style="color: #495057; margin-top: 0;">Course:</h3>
+        <p style="color: #6c757d; font-size: 14px; margin-bottom: 15px;">${courseTitle}</p>
+        <h3 style="color: #495057; margin-top: 0;">Student:</h3>
+        <p style="color: #6c757d; font-size: 14px; margin-bottom: 15px;">${userName} (${userEmail})</p>
       </div>
       
-      <p style="font-size: 14px; color: #777;">You may resubmit your course after addressing the issues mentioned above. Please ensure your content meets our quality standards.</p>
-      <p style="font-size: 14px; color: #777;">For any questions, please contact our support team.</p>
+      <p style="font-size: 14px; color: #777;">You can view all enrolled students in your dashboard.</p>
       <p style="font-size: 14px; color: #777;">Best regards,<br>Edupulse Team</p>
     </div>
     <footer style="margin-top: 20px; font-size: 12px; color: #999;">&copy; 2025 Edupulse. All rights reserved.</footer>

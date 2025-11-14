@@ -7,10 +7,11 @@ import {
   CourseListingDto,
   ListedCourseDTO,
   CourseDetailsDto,
+  EditCourseDto,
 } from "../../dto/course/CourseDTO";
 import { ListedTutorDTO } from "../../dto/tutor/TutorDTO";
 import { ListedCategoryDTO } from "../../dto/course/CategoryDTO";
-import { Course } from "./courseInterface";
+import { Course,PaginatedCoursesResponse, CourseFilters } from "./courseInterface";
 
 export interface ICourseService {
   getAllCategories(): Promise<CategoryDTOArr>;
@@ -40,15 +41,28 @@ export interface ICourseService {
     totalCount: number;
   }>;
   listUnlistCourseService(id: string): Promise<void>;
-  getAllListedCourses(filters: {
-    search?: string;
-    category?: string;
-    minPrice?: number;
-    maxPrice?: number;
-    sortBy?: string;
-    page?: number;
-    limit?: number;
-  }): Promise<ListedCourseDTO[]>;
+  getAllCourses(): Promise<ListedCourseDTO[]>;
+  getAllListedCourses(
+    filters: CourseFilters,
+    userId?: string
+  ): Promise<PaginatedCoursesResponse>;
   getAllListedCategories(): Promise<ListedCategoryDTO[]>;
   getCourseDetails(id: string): Promise<CourseDetailsDto>;
+  getTutorCourses(
+    id: string,
+    page: number,
+    limit: number,
+    search: string
+  ): Promise<{
+    courses: CourseDetailsDto[];
+    total: number;
+    totalPages: number;
+  }>;
+  editCourse(
+    courseId: string,
+    courseDto: EditCourseDto,
+    files: { [fieldname: string]: Express.Multer.File[] },
+    thumbnailFile?: Express.Multer.File,
+    existingThumbnailUrl?: string
+  ): Promise<Course>;
 }

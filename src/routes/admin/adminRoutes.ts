@@ -15,8 +15,13 @@ import { AdminRepository } from "../../repositories/admin/adminRepo";
 import { CourseRepository } from "../../repositories/course/courseRepo";
 import { CourseService } from "../../services/course/courseService";
 import { CourseController } from "../../controllers/course/CourseController";
+import EnrollmentService from "../../services/enrollment/enrollmentService";
+import EnrollmentRepository from "../../repositories/enrollment/enrollmentRepo";
+
+import { TutorRepository } from "../../repositories/tutor/tutorRepo";
 
 import { verifyToken } from "../../utils/jwt";
+import EnrollmentController from "../../controllers/enrollment/enrollemntController";
 
 const adminRoutes = express.Router();
 
@@ -43,9 +48,24 @@ const AuthenticationControllerInstance = new AuthenticationController(
 
 const AdminControllerInstance = new AdminController(AdminServiceInstance);
 
+const tutorRepository = new TutorRepository();
+
+const enrollmentRepository = new EnrollmentRepository();
 const courseRepository = new CourseRepository();
-const courseService = new CourseService(courseRepository, s3Service);
+const enrollmentService = new EnrollmentService(
+  enrollmentRepository,
+  courseRepository,
+  tutorRepository,
+  s3Service
+);
+
+const courseService = new CourseService(
+  courseRepository,
+  s3Service,
+  enrollmentService
+);
 const courseController = new CourseController(courseService);
+const enrollemntController = new EnrollmentController(enrollmentService);
 
 adminRoutes.post(
   "/login",
@@ -157,4 +177,9 @@ adminRoutes.put(
   courseController.listUnlistCourse.bind(courseController)
 );
 
+adminRoutes.get(
+  "/enrollments",
+  verifyToken("admin"),
+  enrollemntController.getAllEnrollments.bind(enrollemntController)
+);
 export default adminRoutes;

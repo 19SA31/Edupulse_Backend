@@ -9,14 +9,28 @@ const userSchema = new Schema<IUser>({
   email: {
     type: String,
     required: true,
+    unique: true,
   },
   phone: {
     type: String,
-    required: true,
+    required: function (this: IUser) {
+      return !this.googleId;
+    },
+  },
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true,
   },
   password: {
     type: String,
-    required: true,
+    required: function (this: IUser) {
+      return !this.googleId;
+    },
+  },
+  isEmailVerified: {
+    type: Boolean,
+    default: false,
   },
   DOB: {
     type: Date,

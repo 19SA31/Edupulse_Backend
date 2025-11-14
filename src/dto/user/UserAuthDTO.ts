@@ -25,6 +25,9 @@ export interface ResetPasswordRequestDto {
   password: string;
 }
 
+export interface GoogleAuthRequestDto {
+  credential: string;
+}
 
 export interface SignUpResponseDto {
   success: boolean;
@@ -56,16 +59,44 @@ export interface LogoutResponseDto {
   message: string;
 }
 
+export type Gender = "male" | "female" | "other";
+
 export interface UserProfileResponseDto {
   _id: string;
   name: string;
   email: string;
   phone: string;
   DOB?: Date;
-  gender?: string;
+  gender?: Gender;
   avatar?: string;
 }
 
+export interface GoogleUserData {
+  name: string;
+  email: string;
+  phone?: string;
+  avatar?: string;
+  googleId: string;
+  isEmailVerified: boolean;
+}
+
+export interface GoogleAuthUserResponseDto {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  avatar?: string;
+  isBlocked: boolean;
+}
+
+export interface GoogleAuthResponseDto {
+  success: boolean;
+  message: string;
+  data?: {
+    user: GoogleAuthUserResponseDto;
+    accessToken: string;
+  };
+}
 
 export interface LoginServiceResultDto {
   accessToken: string;

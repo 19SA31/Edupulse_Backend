@@ -1,11 +1,14 @@
 import BaseRepository from "../BaseRepository";
-import { ICourseRepoInterface } from "../../interfaces/course/courseRepoInterface";
+import { ICourseRepoInterface } from "../../interfaces/course/ICourseRepoInterface";
 import courseModel from "../../models/CourseModel";
 import tutorModel from "../../models/Tutors";
 import categoryModel from "../../models/CategoryModel";
 import {
   Category,
   CourseReject,
+  FilterConditions,
+  SortOptions,
+  PopulateOption,
 } from "../../interfaces/course/courseInterface";
 import { Course } from "../../interfaces/course/courseInterface";
 import { Tutor } from "../../interfaces/adminInterface/adminInterface";
@@ -22,6 +25,18 @@ export class CourseRepository
 
   async getCategories(): Promise<Category[]> {
     return await this._categoryRepository.findWithCondition({ isListed: true });
+  }
+
+  async getCategoryByName(categoryName: string): Promise<Category | null> {
+    try {
+      const category = await this._categoryRepository.findOne({
+        name: categoryName,
+      });
+      return category || null;
+    } catch (error) {
+      console.error("Error fetching category by name:", error);
+      throw error;
+    }
   }
 
   async createCourse(courseData: Partial<Course>): Promise<Course> {
@@ -72,7 +87,7 @@ export class CourseRepository
   }
   async rejectCourse(courseId: string): Promise<CourseReject> {
     const course = await this.findOne({ _id: courseId });
-    console.log("rejectCourse", course);
+
     if (!course) {
       throw new Error("Course not found");
     }
@@ -80,14 +95,18 @@ export class CourseRepository
     const tutor = await this._tutorRepository.findOne({
       _id: course.tutorId,
     });
-    console.log("inside cour reject repo", tutor);
+
     if (!tutor) {
       throw new Error("Tutor not found");
     }
     course.isPublished = "rejected";
+    course.rejectionCount = course.rejectionCount + 1;
     const updatedCourse = await course.save();
 
     return { course: updatedCourse, tutor };
+  }
+  async removeCourse(courseId: string): Promise<void> {
+    await this.delete(courseId);
   }
   async getPublishedCoursesWithDetails(
     skip: number,
@@ -110,8 +129,10 @@ export class CourseRepository
       filter,
       skip,
       limit,
-      populateOptions
+      populateOptions,
+      { createdAt: -1 }
     );
+
     const totalCount = await this.countDocuments(filter);
     const totalPages = Math.ceil(totalCount / limit);
 
@@ -127,14 +148,30 @@ export class CourseRepository
     await course.save();
   }
 
+  async findAllListedCourses(): Promise<Course[]> {
+    try {
+      const populateOptions = [
+        { path: "categoryId", select: "name" },
+        { path: "tutorId", select: "name" },
+      ];
+
+      return await this.findWithConditionAndPopulate(
+        { isListed: true },
+        populateOptions
+      );
+    } catch (error) {
+      throw new Error(`Failed to find listed courses: ${error}`);
+    }
+  }
+
   async findAllListedCoursesWithFilters(
-    filterConditions: any,
-    sortOptions: any,
+    filterConditions: FilterConditions,
+    sortOptions: SortOptions,
     page = 1,
     limit = 50
   ): Promise<Course[]> {
     try {
-      const populateOptions = [
+      const populateOptions: PopulateOption[] = [
         { path: "categoryId", select: "name" },
         { path: "tutorId", select: "name" },
       ];
@@ -204,6 +241,72 @@ export class CourseRepository
     } catch (error) {
       console.error("Error in CourseRepository getCourseDetails:", error);
       throw new Error(`Failed to find course details: ${error}`);
+    }
+  }
+
+  async addEnrollment(id: string): Promise<void> {
+    const course = await this.findOne({ _id: id });
+    if (course) {
+      course.enrollmentCount = (course.enrollmentCount || 0) + 1;
+      course.save();
+    } else {
+      throw new Error("Course not found");
+    }
+  }
+
+  async getTutorCourses(
+    id: string,
+    page: number = 1,
+    limit: number = 10,
+    search: string = ""
+  ): Promise<{ courses: Course[]; total: number }> {
+    try {
+      const skip = (page - 1) * limit;
+
+      let filter: any = { tutorId: id };
+
+      if (search) {
+        filter.$or = [
+          { title: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } },
+        ];
+      }
+
+      const courses = await this.findWithFiltersAndSort(
+        filter,
+        skip,
+        limit,
+        { createdAt: -1 },
+        [
+          { path: "categoryId", select: "name" },
+          { path: "tutorId", select: "name avatar" },
+        ]
+      );
+
+      const total = await this.countDocuments(filter);
+
+      return { courses, total };
+    } catch (error) {
+      console.error("Error in getTutorCourses repository:", error);
+      throw error;
+    }
+  }
+
+  async updateCourse(
+    courseId: string,
+    courseData: Partial<Course>
+  ): Promise<Course> {
+    try {
+      const updatedCourse = await this.update(courseId, courseData);
+
+      if (!updatedCourse) {
+        throw new Error("Course not found");
+      }
+
+      return updatedCourse;
+    } catch (error) {
+      console.error("Error in CourseRepository.updateCourse:", error);
+      throw new Error(`Failed to update course: ${error}`);
     }
   }
 }

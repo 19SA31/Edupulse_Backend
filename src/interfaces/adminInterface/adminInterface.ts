@@ -6,7 +6,7 @@ export interface IAdmin{
 }
 
 export interface User {
-    _id: ObjectId|any;
+    _id: ObjectId|string;
     userId: string; 
     name: string;
     email: string;
@@ -18,7 +18,7 @@ export interface User {
   }
 
   export interface Tutor {
-    _id: ObjectId|any;
+    _id: ObjectId|string;
     userId: string; 
     name: string;
     email: string;

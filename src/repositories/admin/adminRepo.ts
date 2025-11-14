@@ -11,7 +11,7 @@ import {
   Tutor,
   User,
 } from "../../interfaces/adminInterface/adminInterface";
-import { IAdminRepositoryInterface } from "../../interfaces/admin/adminRepositoryInterface";
+import { IAdminRepositoryInterface } from "../../interfaces/admin/IAdminRepositoryInterface";
 
 export class AdminRepository
   extends BaseRepository<any>
@@ -351,7 +351,11 @@ export class AdminRepository
   async rejectTutor(
     tutorId: string,
     reason: string
-  ): Promise<{ tutorEmail: string; tutorName: string } | null> {
+  ): Promise<{
+    tutorEmail: string;
+    tutorName: string;
+    rejectionCount: Number;
+  } | null> {
     try {
       const tutorDocs = await this._tutorDocsRepository.findOne({
         tutorId: tutorId,
@@ -367,19 +371,35 @@ export class AdminRepository
         throw new Error("Tutor not found");
       }
 
-      await this._tutorDocsRepository.update(tutorDocs._id.toString(), {
-        verificationStatus: "rejected",
-        rejectionReason: reason,
-        reviewedAt: new Date(),
+      const updatedDoc = await this._tutorDocsRepository.update(
+        tutorDocs._id.toString(),
+        {
+          verificationStatus: "rejected",
+          rejectionReason: reason,
+          reviewedAt: new Date(),
+          rejectionCount: tutorDocs.rejectionCount + 1,
+        }
+      );
+
+      await this._tutorRepository.update(tutorId.toString(), {
+        isVerified: false,
       });
 
       return {
         tutorEmail: tutor.email,
         tutorName: tutor.name,
+        rejectionCount: updatedDoc.rejectionCount,
       };
     } catch (error: any) {
       console.error("Error in AdminRepository rejectTutor:", error.message);
       throw error;
     }
+  }
+  async removeTutor(tutorId: string): Promise<void> {
+    const tutorDocs = await this._tutorDocsRepository.findOne({ tutorId });
+    if (tutorDocs?._id) {
+      await this._tutorDocsRepository.delete(tutorDocs._id.toString());
+    }
+    await this._tutorRepository.delete(tutorId);
   }
 }

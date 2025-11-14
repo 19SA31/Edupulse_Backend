@@ -1,84 +1,80 @@
+// src/controllers/CourseController.ts
 import { Request, Response, NextFunction } from "express";
 import { AuthRequest } from "../../utils/jwt";
-import { ResponseModel } from "../../models/ResponseModel";
-import HTTP_statusCode from "../../enums/HttpStatusCode";
-import { ICourseService } from "../../interfaces/course/courseServiceInterface";
-import { CreateCourseDto } from "../../dto/course/CourseDTO";
-import { ValidationError } from "../../errors/ValidationError";
+import { ICourseService } from "../../interfaces/course/ICourseService";
+import {
+  CreateCourseDto,
+  EditCourseDto,
+  ChapterDto,
+} from "../../dto/course/CourseDTO";
 import { sendCourseRejectionEmail } from "../../config/emailConfig";
+import { CourseFilters } from "../../interfaces/course/courseInterface";
+import { sendSuccess, sendError } from "../../helper/responseHelper";
+import HTTP_statusCode from "../../enums/HttpStatusCode";
+import { AppError } from "../../errors/AppError";
 
 export class CourseController {
-  private _CourseService: ICourseService;
-  constructor(CourseServiceIsntance: ICourseService) {
-    this._CourseService = CourseServiceIsntance;
-  }
+  constructor(private readonly _courseService: ICourseService) {}
 
-  async getCategoryNames(
+  getCategoryNames = async (
     req: Request,
     res: Response,
     next: NextFunction
-  ): Promise<void> {
+  ): Promise<void> => {
     try {
-      const fetchCategroyNames = await this._CourseService.getAllCategories();
-      res
-        .status(HTTP_statusCode.OK)
-        .json(
-          new ResponseModel(true, "Categories fetched", fetchCategroyNames)
-        );
+      const categories = await this._courseService.getAllCategories();
+      sendSuccess(res, "Categories fetched", categories);
     } catch (error) {
-      console.error(error);
-      res
-        .status(HTTP_statusCode.InternalServerError)
-        .json(new ResponseModel(false, "failed to fetch categories"));
+      next(error);
     }
-  }
+  };
 
-  async getAllUnpublishedCourses(req: Request, res: Response): Promise<void> {
+  getAllUnpublishedCourses = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { page = 1, limit = 10, search } = req.query;
-
       const pageNumber = parseInt(page as string, 10);
       const pageLimit = parseInt(limit as string, 10);
       const skip = (pageNumber - 1) * pageLimit;
-
       const searchTerm = search ? (search as string).trim() : undefined;
 
-      const result = await this._CourseService.getUnpublishedCourses(
+      const result = await this._courseService.getUnpublishedCourses(
         skip,
         pageLimit,
         searchTerm
       );
 
-      console.log("fetched Courses", result);
-
-      res.status(HTTP_statusCode.OK).json(
-        new ResponseModel(true, "Courses fetched successfully", {
-          courses: result.courses,
-          pagination: {
-            currentPage: pageNumber,
-            totalPages: result.totalPages,
-            totalCount: result.totalCount,
-            limit: pageLimit,
-          },
-        })
-      );
-    } catch (error: unknown) {
-      console.error("Error in getAllUnpublishedCourses:", error);
-
-      if (error instanceof ValidationError || error instanceof Error) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, (error as Error).message, null));
-      } else {
-        res
-          .status(500)
-          .json(new ResponseModel(false, "Failed to fetch courses", null));
-      }
+      sendSuccess(res, "Courses fetched successfully", {
+        courses: result.courses,
+        pagination: {
+          currentPage: pageNumber,
+          totalPages: result.totalPages,
+          totalCount: result.totalCount,
+          limit: pageLimit,
+        },
+      });
+    } catch (error) {
+      next(error);
     }
-  }
+  };
 
-  async createCourse(req: Request, res: Response): Promise<void> {
+  createCourse = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
+      const tutorId = (req as AuthRequest).user?.id;
+      if (!tutorId) {
+        throw new AppError(
+          "Unauthorized: Tutor ID not found",
+          HTTP_statusCode.Unauthorized
+        );
+      }
+
       const {
         title,
         description,
@@ -88,39 +84,16 @@ export class CourseController {
         price,
         chapters,
       } = req.body;
-
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-      let parsedChapters;
-      try {
-        parsedChapters =
-          typeof chapters === "string" ? JSON.parse(chapters) : chapters;
-        parsedChapters.forEach((chapter: any, chapterIndex: number) => {
-          chapter.lessons?.forEach((lesson: any, lessonIndex: number) => {});
-        });
-      } catch (parseError) {
-        console.error("Error parsing chapters:", parseError);
-        res
-          .status(400)
-          .json(new ResponseModel(false, "Invalid chapters data format"));
-        return;
-      }
-
-      const tutorId = (req as AuthRequest).user?.id;
-
-      if (!tutorId) {
-        res
-          .status(401)
-          .json(new ResponseModel(false, "Unauthorized: Tutor ID not found"));
-        return;
-      }
-
-      if (!title || !description || !category || !price || !parsedChapters) {
-        res
-          .status(400)
-          .json(new ResponseModel(false, "Missing required fields"));
-        return;
-      }
+      const parsedChapters = this.parseChapters(chapters);
+      this.validateRequiredFields({
+        title,
+        description,
+        category,
+        price,
+        chapters: parsedChapters,
+      });
 
       const courseDto: CreateCourseDto = {
         title,
@@ -134,99 +107,70 @@ export class CourseController {
       };
 
       const thumbnailFile = files?.thumbnail?.[0];
-
-      const createdCourse = await this._CourseService.createCourse(
+      const createdCourse = await this._courseService.createCourse(
         courseDto,
         files,
         thumbnailFile
       );
 
-      res
-        .status(201)
-        .json(
-          new ResponseModel(true, "Course created successfully", createdCourse)
-        );
-    } catch (error: unknown) {
-      console.error("Error in CourseController.createCourse:", error);
-      if (error instanceof ValidationError) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, error.message, null));
-      } else if (error instanceof Error) {
-        res
-          .status(500)
-          .json(
-            new ResponseModel(false, "Failed to create course", error.message)
-          );
-      }
+      sendSuccess(res, "Course created successfully", createdCourse);
+    } catch (error) {
+      next(error);
     }
-  }
-  async publishCourse(req: Request, res: Response): Promise<void> {
+  };
+
+  publishCourse = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
-      console.log("inside publishcourse", id);
       if (!id) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, "Course id not available"));
-        return;
-      }
-      const publishResponse = await this._CourseService.publishCourse(id);
-      res
-        .status(HTTP_statusCode.OK)
-        .json(
-          new ResponseModel(
-            true,
-            "Course published successfully",
-            publishResponse
-          )
+        throw new AppError(
+          "Course id not available",
+          HTTP_statusCode.BadRequest
         );
-    } catch (error) {
-      console.error("Error in CourseController.createCourse:", error);
-      if (error instanceof ValidationError) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, error.message, null));
-      } else if (error instanceof Error) {
-        res
-          .status(500)
-          .json(
-            new ResponseModel(false, "Failed to publish course", error.message)
-          );
       }
+
+      const publishResponse = await this._courseService.publishCourse(id);
+      sendSuccess(res, "Course published successfully", publishResponse);
+    } catch (error) {
+      next(error);
     }
-  }
-  async rejectCourse(req: Request, res: Response): Promise<void> {
+  };
+
+  rejectCourse = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
       const { reason } = req.body;
-      console.log("inside rejectCourse", id, reason);
 
       if (!id) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, "Course id not available"));
-        return;
+        throw new AppError(
+          "Course id not available",
+          HTTP_statusCode.BadRequest
+        );
       }
 
-      const { course, tutor } = await this._CourseService.rejectCourse(id);
+      const { course, tutor } = await this._courseService.rejectCourse(id);
+
       if (!tutor) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, "Cannot find tutor"));
-        return;
+        throw new AppError("Cannot find tutor", HTTP_statusCode.BadRequest);
       }
 
       if (!course) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, "Cannot find course"));
-        return;
+        throw new AppError("Cannot find course", HTTP_statusCode.BadRequest);
       }
+
       const emailSent = await sendCourseRejectionEmail(
         tutor.email,
         tutor.name,
         course.title,
+        course.rejectionCount,
         reason || "No specific reason provided"
       );
 
@@ -234,88 +178,72 @@ export class CourseController {
         console.warn(`Failed to send rejection email to ${tutor.email}`);
       }
 
-      res
-        .status(HTTP_statusCode.OK)
-        .json(new ResponseModel(true, "Course rejected successfully", course));
+      sendSuccess(res, "Course rejected successfully", course);
     } catch (error) {
-      console.error("Error in CourseController.createCourse:", error);
-      if (error instanceof ValidationError) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, error.message, null));
-      } else if (error instanceof Error) {
-        res
-          .status(500)
-          .json(
-            new ResponseModel(false, "Failed to reject course", error.message)
-          );
-      }
+      next(error);
     }
-  }
+  };
 
-  async getPublishedCourses(req: Request, res: Response): Promise<void> {
+  getPublishedCourses = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { page = 1, limit = 7, search } = req.query;
-
       const pageNumber = parseInt(page as string, 10);
       const pageLimit = parseInt(limit as string, 10);
       const skip = (pageNumber - 1) * pageLimit;
 
-      const result = await this._CourseService.getPublishedCoursesForListing(
+      const result = await this._courseService.getPublishedCoursesForListing(
         skip,
         pageLimit,
         search
       );
-      console.log(result);
-      const response = new ResponseModel(
-        true,
-        "Courses fetched successfully",
-        result
-      );
-
-      res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: unknown) {
-      if (error instanceof ValidationError) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, error.message, null));
-      } else {
-        const response = new ResponseModel(
-          false,
-          "Error in getPublishedCourse controller",
-          null
-        );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
-      }
+      sendSuccess(res, "Courses fetched successfully", result);
+    } catch (error) {
+      next(error);
     }
-  }
+  };
 
-  async listUnlistCourse(req: Request, res: Response): Promise<void> {
+  listUnlistCourse = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const { id } = req.params;
-      console.log("listUnlistCourse", id);
-      await this._CourseService.listUnlistCourseService(id);
-      res
-        .status(HTTP_statusCode.OK)
-        .json(new ResponseModel(true, "Course listing changed successfully"));
+      await this._courseService.listUnlistCourseService(id);
+      sendSuccess(res, "Course listing changed successfully");
     } catch (error) {
-      if (error instanceof ValidationError) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, error.message, null));
-      } else {
-        const response = new ResponseModel(
-          false,
-          "Error in listUnlist Course",
-          null
-        );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
-      }
+      next(error);
     }
-  }
+  };
 
-  async getAllListedCourses(req: Request, res: Response): Promise<void> {
+  getAllCourses = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
+      const listedCourses = await this._courseService.getAllCourses();
+      sendSuccess(
+        res,
+        "Successfully fetched all listed courses",
+        listedCourses
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getAllListedCourses = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const userId = (req as AuthRequest).user?.id;
       const {
         search,
         category,
@@ -323,142 +251,215 @@ export class CourseController {
         maxPrice,
         sortBy,
         page = 1,
-        limit = 50,
+        limit = 6,
       } = req.query;
 
-      console.log("getAllListedCourses",search,
-        category,
-        minPrice,
-        maxPrice,
-        sortBy,)
-      const filters = {
+      const filters: CourseFilters = {
         search: search as string,
         category: category as string,
         minPrice: minPrice ? Number(minPrice) : undefined,
         maxPrice: maxPrice ? Number(maxPrice) : undefined,
         sortBy: sortBy as string,
+        page: page ? Number(page) : undefined,
+        limit: limit ? Number(limit) : undefined,
       };
 
-      if (
-        filters.minPrice !== undefined &&
-        filters.maxPrice !== undefined &&
-        filters.minPrice > filters.maxPrice
-      ) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(
-            new ResponseModel(
-              false,
-              "Minimum price cannot be greater than maximum price",
-              null
-            )
-          );
-        return;
-      }
+      this.validatePriceFilters(filters);
 
-      if (filters.minPrice !== undefined && filters.minPrice < 0) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(
-            new ResponseModel(false, "Minimum price cannot be negative", null)
-          );
-        return;
-      }
+      const result = await this._courseService.getAllListedCourses(
+        filters,
+        userId
+      );
 
-      if (filters.maxPrice !== undefined && filters.maxPrice < 0) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(
-            new ResponseModel(false, "Maximum price cannot be negative", null)
-          );
-        return;
-      }
-
-      const courses = await this._CourseService.getAllListedCourses(filters);
-      console.log("result  getAllListedCourses",courses)
-      res
-        .status(HTTP_statusCode.OK)
-        .json(
-          new ResponseModel(
-            true,
-            "Successfully fetched all listed courses",
-            courses
-          )
-        );
-    } catch (error: unknown) {
-      console.error("Error in getAllListedCourses:", error);
-
-      if (error instanceof ValidationError) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, error.message, null));
-      } else {
-        const response = new ResponseModel(
-          false,
-          "Error fetching listed courses",
-          null
-        );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
-      }
+      sendSuccess(res, "Successfully fetched all listed courses", result);
+    } catch (error) {
+      next(error);
     }
-  }
+  };
 
-  async getAllListedCategories(req: Request, res: Response): Promise<void> {
+  getAllListedCategories = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const listedCategories =
-        await this._CourseService.getAllListedCategories();
-      res
-        .status(HTTP_statusCode.OK)
-        .json(
-          new ResponseModel(
-            true,
-            "Successfully fetched listed categories",
-            listedCategories
-          )
+        await this._courseService.getAllListedCategories();
+      sendSuccess(
+        res,
+        "Successfully fetched listed categories",
+        listedCategories
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getCourseDetails = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const courseDetails = await this._courseService.getCourseDetails(id);
+      sendSuccess(res, "Successfully fetched course details", courseDetails);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getTutorCourses = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const tutorId = req.user?.id;
+      if (!tutorId) {
+        throw new AppError(
+          "Tutor authentication required",
+          HTTP_statusCode.Unauthorized
         );
-    } catch (error: unknown) {
-      if (error instanceof ValidationError) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, error.message, null));
-      } else {
-        const response = new ResponseModel(
-          false,
-          "Error fetching listed categories",
-          null
-        );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
       }
+
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const search = (req.query.search as string) || "";
+
+      const result = await this._courseService.getTutorCourses(
+        tutorId,
+        page,
+        limit,
+        search
+      );
+      sendSuccess(res, "Tutor courses fetched successfully", result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  editCourse = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const { courseId } = req.params;
+      const tutorId = (req as AuthRequest).user?.id;
+
+      if (!tutorId) {
+        throw new AppError(
+          "Unauthorized: Tutor ID not found",
+          HTTP_statusCode.Unauthorized
+        );
+      }
+
+      const existingCourse = await this._courseService.getCourseDetails(
+        courseId
+      );
+      if (!existingCourse || existingCourse.tutor._id !== tutorId) {
+        throw new AppError(
+          "You can only edit your own courses",
+          HTTP_statusCode.NoAccess
+        );
+      }
+
+      const {
+        title,
+        description,
+        benefits,
+        requirements,
+        category,
+        price,
+        chapters,
+        thumbnailUrl,
+      } = req.body;
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+      const parsedChapters = this.parseChapters(chapters);
+      this.validateRequiredFields({
+        title,
+        description,
+        category,
+        price,
+        chapters: parsedChapters,
+      });
+
+      const courseDto: EditCourseDto = {
+        title,
+        description,
+        benefits: benefits || "",
+        requirements: requirements || "",
+        category,
+        price: parseFloat(price),
+        chapters: parsedChapters,
+        thumbnailImage: {
+          preview: thumbnailUrl,
+          isExisting: !!thumbnailUrl && !files?.thumbnail,
+        },
+      };
+
+      const thumbnailFile = files?.thumbnail?.[0];
+      const updatedCourse = await this._courseService.editCourse(
+        courseId,
+        courseDto,
+        files,
+        thumbnailFile,
+        thumbnailUrl
+      );
+
+      sendSuccess(res, "Course updated successfully", updatedCourse);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  private parseChapters(chapters: any): ChapterDto[] {
+    try {
+      return typeof chapters === "string" ? JSON.parse(chapters) : chapters;
+    } catch (error) {
+      throw new AppError(
+        "Invalid chapters data format",
+        HTTP_statusCode.BadRequest
+      );
     }
   }
 
-  async getCourseDetails(req: Request, res: Response): Promise<void> {
-    try {
-      const { id } = req.params;
-      console.log("getCourseDetails", id);
-      const courseDetails = await this._CourseService.getCourseDetails(id);
-      res
-        .status(HTTP_statusCode.OK)
-        .json(
-          new ResponseModel(
-            true,
-            "Successfully fetched course details",
-            courseDetails
-          )
-        );
-    } catch (error: unknown) {
-      if (error instanceof ValidationError) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, error.message, null));
-      } else {
-        const response = new ResponseModel(
-          false,
-          "Error fetching course details",
-          null
-        );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
-      }
+  private validateRequiredFields(fields: Record<string, any>): void {
+    const missingFields = Object.entries(fields)
+      .filter(([_, value]) => !value)
+      .map(([key]) => key);
+
+    if (missingFields.length > 0) {
+      throw new AppError("Missing required fields", HTTP_statusCode.BadRequest);
+    }
+  }
+
+  private validatePriceFilters(filters: CourseFilters): void {
+    if (
+      filters.minPrice !== undefined &&
+      filters.maxPrice !== undefined &&
+      filters.minPrice > filters.maxPrice
+    ) {
+      throw new AppError(
+        "Minimum price cannot be greater than maximum price",
+        HTTP_statusCode.BadRequest
+      );
+    }
+
+    if (filters.minPrice !== undefined && filters.minPrice < 0) {
+      throw new AppError(
+        "Minimum price cannot be negative",
+        HTTP_statusCode.BadRequest
+      );
+    }
+
+    if (filters.maxPrice !== undefined && filters.maxPrice < 0) {
+      throw new AppError(
+        "Maximum price cannot be negative",
+        HTTP_statusCode.BadRequest
+      );
     }
   }
 }

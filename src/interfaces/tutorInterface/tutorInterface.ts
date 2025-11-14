@@ -1,11 +1,13 @@
-import mongoose, { Document, ObjectId } from "mongoose";
+import mongoose, { Document, ObjectId, Types } from "mongoose";
 
 export interface Tutor extends Document {
-  _id: string | ObjectId;
+  _id: string | ObjectId | Types.ObjectId;
   name: string;
   email: string;
   phone: string;
+  googleId: string;
   password: string;
+  isEmailVerified: boolean;
   DOB?: Date;
   gender?: "male" | "female" | "other";
   avatar?: string;
@@ -32,6 +34,9 @@ export interface CreateTutorType {
   phone: string;
   password: string;
   createdAt: Date;
+  googleId?: string;
+  avatar?: string;
+  isEmailVerified?: boolean;
 }
 
 export interface TutorProfile {
@@ -40,29 +45,29 @@ export interface TutorProfile {
   email: string;
   phone: string;
   password: string;
-  DOB: Date;
+  DOB?: Date;
+  gender?: "male" | "female" | "other";
+  avatar?: string | null;
+  isBlocked: boolean;
+  designation?: string;
+  about?: string;
+  isVerified: boolean;
+  verificationStatus: "not_submitted" | "pending" | "approved" | "rejected";
+  createdAt: Date;
+}
+
+export interface GetTutorDataLogin {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  DOB?: Date;
   gender?: "male" | "female" | "other";
   avatar?: string | null;
   designation?: string;
   about?: string;
-  isBlocked: boolean;
   isVerified: boolean;
-  createdAt: Date;
-  __v?: number;
-}
-
-export interface tutorProfileData {
-  _id: string | ObjectId;
-  userId: string;
-  name: string;
-  email: string;
-  phone: string;
-  password?: string;
-  createdAt?: string | Date;
-  DOB: string | Date;
-  address: string;
-  isBlocked: boolean;
-  __v?: number;
+  verificationStatus: "not_submitted" | "pending" | "approved" | "rejected";
 }
 
 export interface GetTutorData {
@@ -72,18 +77,21 @@ export interface GetTutorData {
   isVerified: boolean;
   verificationStatus: "not_submitted" | "pending" | "approved" | "rejected";
 }
-export interface GetTutorDataLogin {
-  id: string;
+
+export interface TutorProfileData {
+  _id: string;
   name: string;
   email: string;
-  phone: string;
-  DOB: Date;
-  gender?: "male" | "female" | "other";
-  avatar?: string | null;
+  phone?: string;
+  DOB?: Date;
   designation?: string;
   about?: string;
-  isVerified: boolean;
-  verificationStatus: "not_submitted" | "pending" | "approved" | "rejected";
+  gender?: "male" | "female" | "other";
+  avatar?: string | null;
+  isBlocked?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+  lastLogin?: Date;
 }
 
 export interface CropData {
@@ -104,28 +112,6 @@ export interface UpdateProfileData {
   cropData?: CropData | null;
 }
 
-export interface TutorProfileData {
-  _id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  DOB?: Date;
-  designation?: string;
-  about?: string;
-  gender?: "male" | "female" | "other";
-  avatar?: string | null;
-  isBlocked?: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-  lastLogin?: Date;
-}
-
-export interface OTPDocument {
-  email: string;
-  otp: string;
-  createdTime: Date;
-}
-
 export interface TutorDocs extends Document {
   _id: string | ObjectId;
   tutorId: string | ObjectId;
@@ -137,6 +123,7 @@ export interface TutorDocs extends Document {
   rejectionReason?: string;
   submittedAt: Date;
   reviewedAt?: Date;
+  rejectionCount?: number;
 }
 
 export interface DocumentFiles {
@@ -166,9 +153,10 @@ export interface TutorVerificationData {
 export interface UpdateVerificationStatus {
   verificationStatus: "approved" | "rejected";
   rejectionReason?: string;
+  rejectionCount?: number;
 }
 
-export interface ServiceResponse<T = any> {
+export interface ServiceResponse<T = unknown> {
   success: boolean;
   message: string;
   data?: T;
@@ -180,6 +168,7 @@ export interface VerificationStatusData {
   submittedAt?: Date;
   reviewedAt?: Date;
   rejectionReason?: string;
+  rejectionCount?: number;
 }
 
 export interface VerificationDocumentsData {
@@ -195,6 +184,7 @@ export interface VerificationDocumentsData {
   submittedAt: Date;
   reviewedAt?: Date;
   rejectionReason?: string;
+  rejectionCount?: number;
 }
 
 export interface VerificationSubmissionData {
@@ -209,4 +199,36 @@ export interface ListingTutor {
   email: string;
   avatar?: string;
   isVerified: boolean;
+}
+
+export interface OTPDocument {
+  email: string;
+  otp: string;
+  createdTime: Date;
+}
+
+export enum SlotDuration {
+  HALF_HOUR = 30,
+  ONE_HOUR = 60,
+}
+
+export interface Slots {
+  _id?: Types.ObjectId;
+  time: string;
+  duration: SlotDuration;
+  price: number;
+  availability: boolean;
+  bookedBy: Types.ObjectId | null;
+}
+
+export interface TutorSlot extends Document {
+  _id: Types.ObjectId;
+  tutorId: Types.ObjectId;
+  date: Date;
+  slots: Slots[];
+  halfHourPrice: number;
+  oneHourPrice: number;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }

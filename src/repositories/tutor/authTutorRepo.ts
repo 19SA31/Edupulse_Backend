@@ -10,7 +10,7 @@ import {
 } from "../../interfaces/tutorInterface/tutorInterface";
 import bcrypt from "bcrypt";
 import BaseRepository from "../BaseRepository";
-import { ITutorAuthRepository } from "../../interfaces/tutor/tutorAuthRepoInterface";
+import { ITutorAuthRepository } from "../../interfaces/tutor/ITutorAuthRepository";
 
 export class AuthTutorRepository
   extends BaseRepository<any>
@@ -51,7 +51,8 @@ export class AuthTutorRepository
         unknown,
         any,
         any
-      > & tutorType;
+      > &
+        tutorType;
 
       return user;
     } catch (error) {
@@ -62,7 +63,6 @@ export class AuthTutorRepository
 
   async saveOTP(email: string, OTP: string): Promise<void> {
     try {
-      console.log("INSIDE SAVEOTP, otp:", OTP);
       await this._otpRepository.create({ email, otp: OTP });
     } catch (error: any) {
       console.error("Error saving OTP:", error);
@@ -76,7 +76,7 @@ export class AuthTutorRepository
       if (!otpRecord) {
         return false;
       }
-      
+
       const isMatch = await bcrypt.compare(otp, otpRecord.otp);
       return isMatch;
     } catch (error: any) {
@@ -112,7 +112,7 @@ export class AuthTutorRepository
       return formattedUserData;
     } catch (error: any) {
       console.error("Error in tutor verification:", error);
-      throw error; 
+      throw error;
     }
   }
 
@@ -131,17 +131,60 @@ export class AuthTutorRepository
     }
   }
 
-  
   async checkVerificationStatus(id: string): Promise<TutorDocs | null> {
     try {
-      console.log("Checking verification status for tutor ID:", id);
       const status = await this._tutorDocRepo.findOne({ tutorId: id });
-      
-      
+
       return status;
     } catch (error) {
       console.error("Error in check verification status:", error);
       throw new Error("Error in checking verification status");
+    }
+  }
+
+  async findTutorByEmail(email: string): Promise<TutorProfile | null> {
+    try {
+      const tutorData = await this.findOne({ email });
+
+      if (!tutorData) {
+        return null;
+      }
+
+      const doc = await this.checkVerificationStatus(tutorData._id.toString());
+
+      let verificationStatus:
+        | "not_submitted"
+        | "pending"
+        | "approved"
+        | "rejected" = "not_submitted";
+
+      if (doc) {
+        verificationStatus = doc.verificationStatus as
+          | "not_submitted"
+          | "pending"
+          | "approved"
+          | "rejected";
+      }
+
+      return {
+        _id: tutorData._id.toString(),
+        name: tutorData.name,
+        email: tutorData.email,
+        phone: tutorData.phone,
+        password: tutorData.password,
+        DOB: tutorData.DOB,
+        gender: tutorData.gender,
+        avatar: tutorData.avatar,
+        isBlocked: tutorData.isBlocked,
+        designation: tutorData.designation,
+        about: tutorData.about,
+        isVerified: tutorData.isVerified || false,
+        verificationStatus: verificationStatus,
+        createdAt: tutorData.createdAt,
+      };
+    } catch (error) {
+      console.error("Error finding tutor by email:", error);
+      throw new Error("Error finding tutor");
     }
   }
 }

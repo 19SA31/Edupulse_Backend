@@ -1,5 +1,5 @@
-import { IAdminAuthServiceInterface } from "../../interfaces/admin/adminAuthServiceInterface";
-import { IAdminAuthRepository } from "../../interfaces/admin/adminAuthRepoInterface";
+import { IAdminAuthServiceInterface } from "../../interfaces/admin/IAdminAuthServiceInterface";
+import { IAdminAuthRepository } from "../../interfaces/admin/IAdminAuthRepository";
 import { AdminLoginRequestDTO, AdminLoginServiceResultDTO } from "../../dto/admin/AdminAuthDTO";
 import { AdminAuthMapper } from "../../mappers/admin/AdminAuthMapper";
 import dotenv from "dotenv";
@@ -16,14 +16,11 @@ export class AuthAdminService implements IAdminAuthServiceInterface {
 
   async loginService(adminData: AdminLoginRequestDTO): Promise<AdminLoginServiceResultDTO> {
     try {
-      console.log("Reached login service");
       
       const verificationResult = await this.AuthRepository.verifyAdmin(
         adminData.email, 
         adminData.password
       );
-      
-      console.log("verification result in service", verificationResult);
       
       if (!verificationResult.isValid) {
         return {

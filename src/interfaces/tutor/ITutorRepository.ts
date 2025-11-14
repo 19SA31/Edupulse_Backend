@@ -1,14 +1,14 @@
-import { Tutor } from "../tutorInterface/tutorInterface";
+import { Tutor, TutorSlot } from "../tutorInterface/tutorInterface";
 import {
   TutorServiceDTO,
   VerificationDocsServiceDTO,
   CreateVerificationDocsDTO,
   UpdateVerificationDocsDTO,
+  CreateTutorSlotsDTO,
 } from "../../dto/tutor/TutorDTO";
 import { UpdateProfileData } from "../tutorInterface/tutorInterface";
 
 export interface ITutorRepository {
-  
   findTutorByEmailOrPhone(
     email?: string,
     phone?: string
@@ -27,7 +27,6 @@ export interface ITutorRepository {
     excludeId: string
   ): Promise<TutorServiceDTO | null>;
 
-  
   findVerificationDocsByTutorId(
     tutorId: string
   ): Promise<VerificationDocsServiceDTO | null>;
@@ -39,7 +38,6 @@ export interface ITutorRepository {
     updateData: UpdateVerificationDocsDTO
   ): Promise<VerificationDocsServiceDTO | null>;
 
-
   findVerificationDocsByStatus(
     status: "pending" | "approved" | "rejected"
   ): Promise<VerificationDocsServiceDTO[]>;
@@ -47,22 +45,25 @@ export interface ITutorRepository {
     status: "pending" | "approved" | "rejected"
   ): Promise<number>;
 
-
   findVerificationDocsWithPagination(
     filter: object,
     skip: number,
     limit: number
   ): Promise<VerificationDocsServiceDTO[]>;
 
-
   updateVerificationStatus(
     docId: string,
     status: "pending" | "approved" | "rejected",
     rejectionReason?: string
   ): Promise<VerificationDocsServiceDTO | null>;
-
- 
   findVerificationDocsWithTutorInfo(tutorId: string): Promise<any>;
   findAllVerificationDocsWithTutorInfo(): Promise<any[]>;
   findAllListedTutors(): Promise<Tutor[]>;
+  findSlotsByTutorAndDate(
+    tutorId: string,
+    date: Date
+  ): Promise<TutorSlot | null>; 
+  createTutorSlots(slotData: CreateTutorSlotsDTO): Promise<TutorSlot>; 
+  countSlotsByTutor(tutorId: string): Promise<number>;
+  getTutorSlots(tutorId: string): Promise<TutorSlot[]>;
 }

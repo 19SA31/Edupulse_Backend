@@ -10,27 +10,24 @@ import {
 } from "../../dto/admin/CategoryDTO";
 
 export interface IAdminService {
-  
   getAllUsers(
     skip: number,
     limit: number,
-    search: any
+    search: string | null
   ): Promise<{ users: UserDto[]; totalPages: number; totalCount: number }>;
   listUnlistUser(id: string): Promise<UserDto>;
 
-  
   getAllTutors(
     skip: number,
     limit: number,
-    search: any
+    search: string | null
   ): Promise<{ tutors: TutorDto[]; totalPages: number; totalCount: number }>;
   listUnlistTutor(id: string): Promise<TutorDto>;
 
-  
   getAllTutorDocs(
     skip: number,
     limit: number,
-    search: any
+    search: string | null
   ): Promise<{
     tutorDocs: TutorDocsDto[];
     totalPages: number;
@@ -47,14 +44,15 @@ export interface IAdminService {
     message?: string;
     tutorEmail?: string;
     tutorName?: string;
+    rejectionReason?: string;
+    rejectionCount?: Number;
   }>;
 
- 
   addCourseCategory(data: CreateCategoryDto): Promise<CategoryDto>;
   getAllCategories(
     skip: number,
     limit: number,
-    search: any
+    search: string
   ): Promise<{
     categories: CategoryDto[];
     totalPages: number;

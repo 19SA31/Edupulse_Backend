@@ -6,6 +6,7 @@ import UserService from "../../services/user/userService";
 import UserRepository from "../../repositories/user/userRepo";
 import { verifyToken } from "../../utils/jwt";
 import { S3Service } from "../../utils/s3";
+import { createAuthMiddleware } from "../../middlewares/authMiddleware";
 
 import { CourseController } from "../../controllers/course/CourseController";
 import { TutorController } from "../../controllers/tutor/TutorController";
@@ -20,6 +21,10 @@ import { AuthTutorService } from "../../services/tutor/authTutorService";
 import { AuthTutorRepository } from "../../repositories/tutor/authTutorRepo";
 import { AuthAdminService } from "../../services/admin/authAdminService";
 import { AuthAdminRepository } from "../../repositories/admin/authAdminRepo";
+
+import EnrollmentController from "../../controllers/enrollment/enrollemntController";
+import EnrollmentService from "../../services/enrollment/enrollmentService";
+import EnrollmentRepository from "../../repositories/enrollment/enrollmentRepo";
 
 const userRoute = express.Router();
 const s3Service = new S3Service();
@@ -63,13 +68,30 @@ const userRepository = new UserRepository();
 const userService = new UserService(userRepository);
 const userController = new UserController(userService);
 
+const authMiddleware = createAuthMiddleware("user", userService);
+
 const courseRepository = new CourseRepository();
-const courseService = new CourseService(courseRepository, s3Service);
+const tutorRepository = new TutorRepository();
+
+const enrollmentRepository = new EnrollmentRepository();
+const enrollmentService = new EnrollmentService(
+  enrollmentRepository,
+  courseRepository,
+  tutorRepository,
+  s3Service
+);
+
+const courseService = new CourseService(
+  courseRepository,
+  s3Service,
+  enrollmentService
+);
 const courseController = new CourseController(courseService);
 
-const tutorRepository = new TutorRepository();
 const tutorService = new TutorService(tutorRepository, s3Service);
 const tutorController = new TutorController(tutorService);
+
+const enrollmentController = new EnrollmentController(enrollmentService);
 
 userRoute.post(
   "/send-otp",
@@ -93,6 +115,13 @@ userRoute.post(
 );
 
 userRoute.post(
+  "/google-auth",
+  AuthenticationControllerInstance.googleUserAuth.bind(
+    AuthenticationControllerInstance
+  )
+);
+
+userRoute.post(
   "/logout",
   AuthenticationControllerInstance.logoutUser.bind(
     AuthenticationControllerInstance
@@ -109,6 +138,7 @@ userRoute.patch(
 userRoute.put(
   "/profile/update-profile",
   verifyToken("user"),
+  authMiddleware,
   uploadAvatar,
   userController.updateProfile.bind(userController)
 );
@@ -116,6 +146,7 @@ userRoute.put(
 userRoute.get(
   "/profile",
   verifyToken("user"),
+  authMiddleware,
   userController.getUserProfile.bind(userController)
 );
 
@@ -125,7 +156,14 @@ userRoute.get(
 );
 
 userRoute.get(
+  "/all-courses",
+  courseController.getAllCourses.bind(courseController)
+);
+
+userRoute.get(
   "/listed-courses",
+  verifyToken("user"),
+  authMiddleware,
   courseController.getAllListedCourses.bind(courseController)
 );
 
@@ -136,6 +174,43 @@ userRoute.get(
 
 userRoute.get(
   "/course-details/:id",
+  verifyToken("user"),
+  authMiddleware,
   courseController.getCourseDetails.bind(courseController)
 );
+
+userRoute.post(
+  "/create-payment",
+  verifyToken("user"),
+  authMiddleware,
+  enrollmentController.createPayment.bind(enrollmentController)
+);
+
+userRoute.post(
+  "/verify-payment",
+  verifyToken("user"),
+  authMiddleware,
+  enrollmentController.verifyPayment.bind(enrollmentController)
+);
+
+userRoute.get(
+  "/verify-enrollment/:courseId",
+  verifyToken("user"),
+  authMiddleware,
+  enrollmentController.verifyEnrollment.bind(enrollmentController)
+);
+
+userRoute.get(
+  "/user-payments",
+  verifyToken("user"),
+  authMiddleware,
+  enrollmentController.getUserEnrollments.bind(enrollmentController)
+);
+
+userRoute.get(
+  "/courses-enrolled",
+  verifyToken("user"),
+  enrollmentController.getEnrolledCourses.bind(enrollmentController)
+);
+
 export default userRoute;

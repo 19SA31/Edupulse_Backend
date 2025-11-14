@@ -4,7 +4,7 @@ export interface SubmitVerificationDocumentsRequestDTO {
   email?: string;
   phone?: string;
   files: {
-    avatar: Express.Multer.File
+    avatar: Express.Multer.File;
     degree: Express.Multer.File;
     aadharFront: Express.Multer.File;
     aadharBack: Express.Multer.File;
@@ -13,7 +13,7 @@ export interface SubmitVerificationDocumentsRequestDTO {
 
 export interface SubmitVerificationDocumentsResponseDTO {
   verificationId: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: "pending" | "approved" | "rejected";
   submittedAt: Date;
 }
 
@@ -23,7 +23,7 @@ export interface GetVerificationStatusRequestDTO {
 }
 
 export interface GetVerificationStatusResponseDTO {
-  status: 'not_submitted' | 'pending' | 'approved' | 'rejected';
+  status: "not_submitted" | "pending" | "approved" | "rejected";
   tutorId: string;
   submittedAt?: Date;
   reviewedAt?: Date;
@@ -38,12 +38,12 @@ export interface GetVerificationDocumentsResponseDTO {
   verificationId: string;
   tutorId: string;
   documents: {
-    avatar:string,
+    avatar: string;
     degree: string;
     aadharFront: string;
     aadharBack: string;
   };
-  verificationStatus: 'pending' | 'approved' | 'rejected';
+  verificationStatus: "pending" | "approved" | "rejected";
   submittedAt: Date;
   reviewedAt?: Date;
   rejectionReason?: string;
@@ -64,10 +64,11 @@ export interface VerificationDocsServiceDTO {
   degree: string;
   aadharFront: string;
   aadharBack: string;
-  verificationStatus: 'not_submitted'|'pending' | 'approved' | 'rejected';
+  verificationStatus: "not_submitted" | "pending" | "approved" | "rejected";
   submittedAt: Date;
   reviewedAt?: Date;
   rejectionReason?: string;
+  rejectionCount?: Number
 }
 
 export interface CreateVerificationDocsDTO {
@@ -76,19 +77,20 @@ export interface CreateVerificationDocsDTO {
   degree: string;
   aadharFront: string;
   aadharBack: string;
-  verificationStatus: 'not_submitted'|'pending' | 'approved' | 'rejected';
+  verificationStatus: "not_submitted" | "pending" | "approved" | "rejected";
   submittedAt: Date;
 }
 
 export interface UpdateVerificationDocsDTO {
-  avatar?: string
+  avatar?: string;
   degree?: string;
   aadharFront?: string;
   aadharBack?: string;
-  verificationStatus?: 'not_submitted'|'pending' | 'approved' | 'rejected';
+  verificationStatus?: "not_submitted" | "pending" | "approved" | "rejected";
   submittedAt?: Date;
   reviewedAt?: Date;
   rejectionReason?: string;
+  rejectionCount?: Number
 }
 
 export interface ListedTutorDTO {
@@ -99,4 +101,74 @@ export interface ListedTutorDTO {
   designation?: string;
   about?: string;
   isVerified: boolean;
+}
+
+export interface SlotDTO {
+  time: string;
+  duration: 30 | 60;
+  price: number;
+  availability: boolean;
+  bookedBy: string | null;
+}
+
+export interface CreateSlotsRequestDTO {
+  tutorId: string;
+  date: Date;
+  halfHourPrice: number;
+  oneHourPrice: number;
+  slots: SlotDTO[];
+}
+
+export interface CreateSlotsResponseDTO {
+  slotId: string;
+  tutorId: string;
+  date: Date;
+  halfHourPrice: number;
+  oneHourPrice: number;
+  slotsCreated: number;
+  active: boolean;
+  createdAt: Date;
+}
+
+export interface CreateTutorSlotsDTO {
+  tutorId: string;
+  date: Date;
+  halfHourPrice: number;
+  oneHourPrice: number;
+  slots: SlotDTO[];
+  active: boolean;
+}
+
+export interface CreateSlotsServiceResponseDTO {
+  success: boolean;
+  message: string;
+  data: CreateSlotsResponseDTO | null;
+}
+
+export interface SlotValidationDTO {
+  isValid: boolean;
+  errors: string[];
+}
+
+export interface GetTutorSlotsRequestDTO {
+  tutorId: string;
+}
+
+export interface GetTutorSlotsResponseDTO {
+  slotId: string;
+  tutorId: string;
+  date: Date;
+  halfHourPrice: number;
+  oneHourPrice: number;
+  slots: {
+    slotId: string;
+    time: string;
+    duration: 30 | 60;
+    price: number;
+    availability: boolean;
+    bookedBy: string | null;
+  }[];
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }

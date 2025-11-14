@@ -1,6 +1,6 @@
 // src/services/admin/AdminService.ts
-import { IAdminService } from "../../interfaces/admin/adminServiceInterface";
-import { IAdminRepositoryInterface } from "../../interfaces/admin/adminRepositoryInterface";
+import { IAdminService } from "../../interfaces/admin/IAdminService";
+import { IAdminRepositoryInterface } from "../../interfaces/admin/IAdminRepositoryInterface";
 import { UserDto } from "../../dto/admin/UserDTO";
 import { TutorDto } from "../../dto/admin/TutorDTO";
 import { ValidationError } from "../../errors/ValidationError";
@@ -8,6 +8,7 @@ import {
   CategoryDto,
   CreateCategoryDto,
   UpdateCategoryDto,
+  
 } from "../../dto/admin/CategoryDTO";
 import { UserMapper } from "../../mappers/admin/UserMapper";
 import { TutorMapper } from "../../mappers/admin/TutorMapper";
@@ -66,8 +67,6 @@ export class AdminService implements IAdminService {
             ) * limit
           : 0;
 
-      console.log("result", usersWithAvatars);
-
       return {
         users: usersWithAvatars,
         totalPages: result.totalPages,
@@ -79,7 +78,7 @@ export class AdminService implements IAdminService {
     }
   }
 
-  async getAllTutors(
+  async getAllTutors( 
     skip: number,
     limit: number,
     search: any
@@ -119,8 +118,6 @@ export class AdminService implements IAdminService {
                 (result.tutors.length / Math.min(result.tutors.length, limit))
             ) * limit
           : 0;
-
-      console.log("result", tutorsWithAvatars);
 
       return {
         tutors: tutorsWithAvatars,
@@ -334,8 +331,6 @@ export class AdminService implements IAdminService {
             ) * limit
           : 0;
 
-      console.log("tutor docs result", tutorDocsWithUrls);
-
       return {
         tutorDocs: tutorDocsWithUrls,
         totalPages: result.totalPages,
@@ -379,6 +374,7 @@ export class AdminService implements IAdminService {
     tutorEmail?: string;
     tutorName?: string;
     rejectionReason?: string;
+    rejectionCount?: Number
   }> {
     try {
       const result = await this._adminRepository.rejectTutor(tutorId, reason);
@@ -390,11 +386,18 @@ export class AdminService implements IAdminService {
         };
       }
 
+      const rejectionLimit: Number=3
+
+      if(result.rejectionCount===rejectionLimit){
+        await this._adminRepository.removeTutor(tutorId)
+      }
+
       return {
         success: true,
         tutorEmail: result.tutorEmail,
         tutorName: result.tutorName,
         rejectionReason: reason,
+        rejectionCount: result.rejectionCount
       };
     } catch (error: any) {
       console.error("Error in AdminService rejectTutor:", error.message);

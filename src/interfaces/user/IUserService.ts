@@ -2,6 +2,7 @@
 import { UpdateProfileData, UserProfileData } from '../userInterface/userInterface';
 
 export interface IUserService {
+  ensureUserActive(userId: string): Promise<void>
   updateProfile(
     userId: string,
     updateData: UpdateProfileData

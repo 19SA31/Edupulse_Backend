@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { Request, Response, NextFunction } from "express";
+import HTTP_statusCode from "../enums/HttpStatusCode";
 
 dotenv.config();
 
@@ -32,7 +33,7 @@ const verifyToken = (requiredRole: string) => {
             const { id, email, role } = decoded as jwt.JwtPayload;
 
             if (role !== requiredRole) {
-              return res.status(401).json({
+              return res.status(HTTP_statusCode.Unauthorized).json({
                 message: `Access denied. Insufficient role. Expected ${requiredRole}.`,
               });
             }
@@ -51,7 +52,7 @@ const verifyToken = (requiredRole: string) => {
       }
     } catch (error) {
       res
-        .status(401)
+        .status(HTTP_statusCode.Unauthorized)
         .json({ message: "Access denied. Access token not valid." });
     }
   };
@@ -67,13 +68,13 @@ const handleRefreshToken = async (
     jwt.verify(refreshToken, secret_key, (err, decoded) => {
       if (err) {
         return res
-          .status(401)
+          .status(HTTP_statusCode.Unauthorized)
           .json({ message: "Access denied. Refresh token not valid." });
       } else {
         const { id, email, role } = decoded as jwt.JwtPayload;
         if (!id || !role) {
           return res
-            .status(401)
+            .status(HTTP_statusCode.Unauthorized)
             .json({ message: "Access denied. Token payload invalid." });
         } else {
           const newAccessToken = createToken(id, email, role);
@@ -96,7 +97,7 @@ const handleRefreshToken = async (
     });
   } else {
     return res
-      .status(401)
+      .status(HTTP_statusCode.Unauthorized)
       .json({ message: "Access denied. Refresh token not provided." });
   }
 };

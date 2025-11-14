@@ -42,6 +42,10 @@ const tutorDocsSchema = new Schema<TutorDocs>({
   reviewedAt: {
     type: Date,
     default: null
+  },
+  rejectionCount:{
+    type: Number,
+    default: 0
   }
 });
 

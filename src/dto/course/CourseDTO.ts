@@ -55,7 +55,7 @@ export interface CourseDetailsDto {
   price: number;
   thumbnailImage: string;
   chapters: ChapterDetailsDto[];
-  isPublished: boolean;
+  isPublished: string;
   isListed: boolean;
   enrollmentCount: number;
   createdAt: Date;
@@ -67,7 +67,7 @@ export interface FileDto {
   name: string;
   size: number;
   type: string;
-  file?: any;
+  file?: File; 
   preview?: string | null;
   fileName?: string;
 }
@@ -99,6 +99,7 @@ export interface CreateCourseDto {
   chapters: ChapterDto[];
   tutorId: string;
 }
+
 export interface CourseForReview {
   _id: string;
   title: string;
@@ -130,23 +131,12 @@ export interface ChapterForReview {
 export interface LessonForReview {
   title: string;
   description: string;
-  documents: any[];
-  videos: any[];
+  documents: DocumentFileDto[]; 
+  videos: VideoFileDto[]; 
 }
 
-export interface DocumentFile {
-  _id: string;
-  fileName: string;
-  signedUrl: string;
-  originalName: string;
-}
-
-export interface VideoFile {
-  _id: string;
-  fileName: string;
-  signedUrl: string;
-  originalName: string;
-}
+export type DocumentFile = DocumentFileDto;
+export type VideoFile = VideoFileDto;
 
 export interface PublishedCourseDto {
   _id: string;
@@ -158,11 +148,12 @@ export interface PublishedCourseDto {
   price: number;
   thumbnailImage: string;
   tutorId: string;
-  isPublished: string;
+  isPublished: boolean; 
   isListed: boolean;
   enrollmentCount: number;
   createdAt: Date;
   updatedAt: Date;
+  rejectionCount: Number;
 }
 
 export interface RejectedCourseDto {
@@ -175,11 +166,12 @@ export interface RejectedCourseDto {
   price: number;
   thumbnailImage: string;
   tutorId: string;
-  isPublished: string;
+  isPublished: boolean; 
   isListed: boolean;
   enrollmentCount: number;
   createdAt: Date;
   updatedAt: Date;
+  rejectionCount: Number
 }
 
 export interface TutorBasicDto {
@@ -193,13 +185,12 @@ export interface CourseRejectDto {
   tutor: TutorBasicDto;
 }
 
-
-export interface CourseListingDto{
-  courseId:string;
-  courseName:string;
-  courseCategory:string;
-  tutorName:string;
-  isListed:boolean
+export interface CourseListingDto {
+  courseId: string;
+  courseName: string;
+  courseCategory: string;
+  tutorName: string;
+  isListed: boolean;
 }
 
 export interface ListedCourseDTO {
@@ -211,4 +202,63 @@ export interface ListedCourseDTO {
   categoryName: string;
   tutorName: string;
   enrollmentCount: number;
+}
+
+export interface EditCourseDto {
+  title: string;
+  description: string;
+  benefits: string;
+  requirements: string;
+  category: string;
+  price: number;
+  chapters: ChapterDto[];
+  thumbnailImage?: {
+    file?: File;
+    preview?: string;
+    isExisting?: boolean;
+  };
+}
+
+export interface UpdateCourseDto extends CreateCourseDto {
+  thumbnailUrl?: string;
+}
+
+export interface CourseFilterDto {
+  search?: string;
+  category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sortBy?: string;
+}
+
+export interface PaginationDto {
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+  limit: number;
+}
+
+export interface PaginatedCoursesDto<T> {
+  courses: T[];
+  pagination: PaginationDto;
+}
+
+
+export interface IFile {
+  fileName: string;
+}
+
+export interface IModule {
+  title: string;
+  description: string;
+  documents: IFile[];
+  videos: IFile[];
+  order: number;
+}
+
+export interface IChapter {
+  title: string;
+  description: string;
+  modules: IModule[];
+  order: number;
 }

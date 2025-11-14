@@ -1,17 +1,21 @@
-import { ITutorRepository } from "../../interfaces/tutor/tutorRepoInterface";
-import { ITutorService } from "../../interfaces/tutor/tutorServiceInterface";
+import { ITutorRepository } from "../../interfaces/tutor/ITutorRepository";
+import { ITutorService } from "../../interfaces/tutor/ITutorService";
 import { ServiceResponse } from "../../interfaces/tutorInterface/tutorInterface";
 import { S3Service } from "../../utils/s3";
 import { TutorMapper } from "../../mappers/tutor/TutorMapper";
 import {
   SubmitVerificationDocumentsRequestDTO,
   SubmitVerificationDocumentsResponseDTO,
-  GetVerificationStatusRequestDTO,
-  GetVerificationStatusResponseDTO,
   GetVerificationDocumentsRequestDTO,
   GetVerificationDocumentsResponseDTO,
   VerificationDocsServiceDTO,
   ListedTutorDTO,
+  SlotDTO,
+  SlotValidationDTO,
+  CreateSlotsRequestDTO,
+  CreateTutorSlotsDTO,
+  CreateSlotsServiceResponseDTO,
+  GetTutorSlotsResponseDTO,
 } from "../../dto/tutor/TutorDTO";
 import {
   UpdateProfileData,
@@ -28,12 +32,20 @@ export class TutorService implements ITutorService {
     this._s3Service = s3Service;
   }
 
+  async ensureTutorActive(tutorId: string): Promise<void> {
+    const tutor = await this._tutorRepository.findById(tutorId);
+    if (!tutor) {
+      throw new Error("Tutor not found");
+    }
+    if (tutor.isBlocked) {
+      throw new Error("Tutor is blocked");
+    }
+  }
+
   async updateProfile(
     tutorId: string,
     updateData: UpdateProfileData
   ): Promise<{ tutor: TutorProfileData }> {
-    console.log("Updating tutor profile:", tutorId);
-
     const existingTutor = await this._tutorRepository.findById(tutorId);
     if (!existingTutor) {
       throw new Error("Tutor not found");
@@ -79,17 +91,53 @@ export class TutorService implements ITutorService {
       if (!tutorDTO) {
         return {
           success: false,
-          message: "Tutor not found. Please register first.",
+          message: "Tutor not found.",
         };
       }
 
       const existingDocs =
         await this._tutorRepository.findVerificationDocsByTutorId(tutorDTO._id);
 
-      if (existingDocs && existingDocs.verificationStatus === "approved") {
+      if (existingDocs && existingDocs.verificationStatus === "rejected") {
+        await this.deleteOldFiles(existingDocs);
+
+        const uploadedDocuments = await this.uploadVerificationDocuments(
+          tutorDTO._id,
+          requestDTO
+        );
+
+
+        const updateDTO = TutorMapper.mapToUpdateVerificationDocsDTO(
+          uploadedDocuments.avatarS3Key,
+          uploadedDocuments.degreeS3Key,
+          uploadedDocuments.aadharFrontS3Key,
+          uploadedDocuments.aadharBackS3Key,
+          "pending"
+        );
+
+        const result = await this._tutorRepository.updateVerificationDocs(
+          existingDocs._id,
+          updateDTO
+        );
+
+        if (!result) {
+          return {
+            success: false,
+            message: "Failed to update verification documents",
+          };
+        }
+
+        const responseData =
+          TutorMapper.mapToSubmitVerificationDocumentsResponse({
+            verificationId: result._id,
+            status: result.verificationStatus,
+            submittedAt: result.submittedAt,
+          });
+
         return {
-          success: false,
-          message: "Verification documents already approved.",
+          success: true,
+          message: "Verification documents resubmitted successfully",
+          data: responseData,
         };
       }
 
@@ -129,46 +177,6 @@ export class TutorService implements ITutorService {
       return {
         success: false,
         message: "Error submitting verification documents",
-      };
-    }
-  }
-
-  async getVerificationStatus(
-    requestDTO: GetVerificationStatusRequestDTO
-  ): Promise<ServiceResponse<GetVerificationStatusResponseDTO>> {
-    try {
-      const tutorDTO = await this._tutorRepository.findTutorByEmailOrPhone(
-        requestDTO.email,
-        requestDTO.phone
-      );
-
-      if (!tutorDTO) {
-        return { success: false, message: "Tutor not found" };
-      }
-
-      const verificationDocs =
-        await this._tutorRepository.findVerificationDocsByTutorId(tutorDTO._id);
-
-      const responseData = TutorMapper.mapToGetVerificationStatusResponse({
-        status: verificationDocs?.verificationStatus || "not_submitted",
-        tutorId: tutorDTO._id,
-        submittedAt: verificationDocs?.submittedAt,
-        reviewedAt: verificationDocs?.reviewedAt,
-        rejectionReason: verificationDocs?.rejectionReason,
-      });
-
-      return {
-        success: true,
-        message: verificationDocs
-          ? "Verification status retrieved successfully"
-          : "No verification documents found",
-        data: responseData,
-      };
-    } catch (error: any) {
-      console.error("Error in getVerificationStatus:", error);
-      return {
-        success: false,
-        message: "Error retrieving verification status",
       };
     }
   }
@@ -276,8 +284,6 @@ export class TutorService implements ITutorService {
 
     if (this.isAvatarFile(updateData.avatar)) {
       try {
-        console.log("Processing tutor avatar upload");
-
         const avatarFile = updateData.avatar as Express.Multer.File;
         let processedBuffer = avatarFile.buffer;
 
@@ -303,14 +309,11 @@ export class TutorService implements ITutorService {
           processedFile
         );
         processedData.avatar = avatarS3Key;
-
-        console.log("New tutor avatar uploaded:", avatarS3Key);
       } catch (uploadError) {
         console.error("Tutor avatar upload error:", uploadError);
         throw new Error("Failed to upload avatar. Please try again.");
       }
     } else if (updateData.avatar === null && existingTutor.avatar) {
-      console.log("Deleting tutor avatar");
       await this.safeDeleteFile(existingTutor.avatar);
     }
 
@@ -330,7 +333,6 @@ export class TutorService implements ITutorService {
   private async safeDeleteFile(fileKey: string): Promise<void> {
     try {
       await this._s3Service.deleteFile(fileKey);
-      console.log("File deleted from S3:", fileKey);
     } catch (deleteError) {
       console.warn("Failed to delete file:", deleteError);
     }
@@ -357,7 +359,7 @@ export class TutorService implements ITutorService {
       gender: tutor.gender,
       avatar: avatarUrl,
       designation: tutor.designation,
-      about:tutor.about,
+      about: tutor.about,
       isBlocked: tutor.isBlocked,
       createdAt: tutor.createdAt,
       updatedAt: tutor.updatedAt,
@@ -493,5 +495,170 @@ export class TutorService implements ITutorService {
     } catch (error) {
       throw new Error(`Failed to fetch listed tutors: ${error}`);
     }
+  }
+
+  async createSlots(
+    requestDTO: CreateSlotsRequestDTO
+  ): Promise<CreateSlotsServiceResponseDTO> {
+    try {
+      await this.ensureTutorActive(requestDTO.tutorId);
+
+      const validation = this.validateSlotData(requestDTO);
+      if (!validation.isValid) {
+        return {
+          success: false,
+          message: validation.errors.join(", "),
+          data: null,
+        };
+      }
+
+      const existingSlots = await this._tutorRepository.findSlotsByTutorAndDate(
+        requestDTO.tutorId,
+        requestDTO.date
+      );
+
+
+      if (existingSlots) {
+        return {
+          success: false,
+          message:
+            "Slots already exist for this date. Please update existing slots instead.",
+          data: null,
+        };
+      }
+
+      const processedSlots = this.processSlotData(
+        requestDTO.slots,
+        requestDTO.halfHourPrice,
+        requestDTO.oneHourPrice
+      );
+
+      const createDTO: CreateTutorSlotsDTO = {
+        tutorId: requestDTO.tutorId,
+        date: requestDTO.date,
+        halfHourPrice: requestDTO.halfHourPrice,
+        oneHourPrice: requestDTO.oneHourPrice,
+        slots: processedSlots,
+        active: true,
+      };
+
+      const createdSlot = await this._tutorRepository.createTutorSlots(
+        createDTO
+      );
+
+      if (!createdSlot) {
+        return {
+          success: false,
+          message: "Failed to create slots",
+          data: null,
+        };
+      }
+
+      const responseData = TutorMapper.mapToCreateSlotsResponse(createdSlot);
+
+      return {
+        success: true,
+        message: "Slots created successfully",
+        data: responseData,
+      };
+    } catch (error: any) {
+      console.error("Error in createSlots service:", error);
+      return {
+        success: false,
+        message: error.message || "Error creating slots",
+        data: null,
+      };
+    }
+  }
+
+  private validateSlotData(
+    requestDTO: CreateSlotsRequestDTO
+  ): SlotValidationDTO {
+    const errors: string[] = [];
+
+    const slotDate = new Date(requestDTO.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (slotDate < today) {
+      errors.push("Cannot create slots for past dates");
+    }
+
+    if (requestDTO.halfHourPrice <= 0) {
+      errors.push("Half hour price must be greater than 0");
+    }
+
+    if (requestDTO.oneHourPrice <= 0) {
+      errors.push("One hour price must be greater than 0");
+    }
+
+    if (requestDTO.halfHourPrice >= requestDTO.oneHourPrice) {
+      errors.push("One hour price should be greater than half hour price");
+    }
+
+    if (!requestDTO.slots || requestDTO.slots.length === 0) {
+      errors.push("At least one slot is required");
+    }
+
+    const timeSlots = new Set<string>();
+    requestDTO.slots.forEach((slot, index) => {
+      if (!slot.time || !this.isValidTimeFormat(slot.time)) {
+        errors.push(`Invalid time format for slot ${index + 1}`);
+      }
+
+      if (![30, 60].includes(slot.duration)) {
+        errors.push(
+          `Invalid duration for slot ${index + 1}. Must be 30 or 60 minutes`
+        );
+      }
+
+      if (slot.price <= 0) {
+        errors.push(`Invalid price for slot ${index + 1}`);
+      }
+
+      if (timeSlots.has(slot.time)) {
+        errors.push(`Duplicate time slot: ${slot.time}`);
+      }
+      timeSlots.add(slot.time);
+    });
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  }
+
+  private isValidTimeFormat(time: string): boolean {
+    const timeRegex = /^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i;
+    return timeRegex.test(time);
+  }
+
+  private processSlotData(
+    slots: SlotDTO[],
+    halfHourPrice: number,
+    oneHourPrice: number
+  ): SlotDTO[] {
+    return slots.map((slot) => ({
+      time: slot.time.trim(),
+      duration: slot.duration,
+      price: slot.duration === 30 ? halfHourPrice : oneHourPrice,
+      availability: true,
+      bookedBy: null,
+    }));
+  }
+
+  async getTutorSlots(
+    tutorId: string
+  ): Promise<GetTutorSlotsResponseDTO[] | null> {
+    const slotDocs = await this._tutorRepository.getTutorSlots(tutorId);
+
+    if (!slotDocs || slotDocs.length === 0) {
+      return null;
+    }
+
+    const responseData = slotDocs.map((doc) =>
+      TutorMapper.mapToGetTutorSlotsResponse(doc)
+    );
+    return responseData;
   }
 }

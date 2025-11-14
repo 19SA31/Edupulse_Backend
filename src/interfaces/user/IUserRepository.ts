@@ -2,6 +2,7 @@
 import { IUser, UpdateProfileData } from '../userInterface/userInterface';
 
 export interface IUserRepository {
+
   findByEmail(email: string): Promise<IUser | null>;
   findById(id: string): Promise<IUser | null>;
   updateProfile(userId: string, updateData: UpdateProfileData): Promise<IUser | null>;

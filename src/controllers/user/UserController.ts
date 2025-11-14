@@ -1,8 +1,9 @@
-import { Request, Response } from 'express';
-import { IUserService } from '../../interfaces/user/userServiceInterface';
-import { ResponseModel } from '../../models/ResponseModel';
+import { Request, Response, NextFunction } from 'express';
+import { IUserService } from '../../interfaces/user/IUserService';
 import { UpdateProfileData, CropData } from '../../interfaces/userInterface/userInterface';
 import HTTP_statusCode from '../../enums/HttpStatusCode';
+import { AppError } from '../../errors/AppError';
+import { sendSuccess } from '../../helper/responseHelper';
 
 interface AuthRequest extends Request {
   user?: {
@@ -19,272 +20,126 @@ class UserController {
     this.userService = userService;
   }
 
-  updateProfile = async (req: AuthRequest, res: Response): Promise<void> => {
+  updateProfile = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-      console.log("Inside controller for update profile");
-      console.log("Request body:", req.body);
-      console.log("Request file:", req.file ? 'File present' : 'No file');
-
-      
       const userId = req.body?.id;
       
       if (!userId) {
-        console.log("No user ID found in token");
-        res.status(HTTP_statusCode.Unauthorized).json(
-          new ResponseModel(false, 'Unauthorized: User not authenticated')
-        );
-        return;
+        throw new AppError('Unauthorized: User not authenticated', HTTP_statusCode.Unauthorized);
       }
 
-      console.log("Authenticated user ID:", userId);
-
-      
       const avatarFile = req.file;
-      
       
       let cropData: CropData | undefined;
       if (req.body.cropData) {
-        try {
-          cropData = JSON.parse(req.body.cropData);
-          console.log("Crop data received:", cropData);
-          
-          
-          if (cropData && typeof cropData === 'object') {
-            const { x, y, width, height } = cropData;
-            if (typeof x !== 'number' || typeof y !== 'number' || 
-                typeof width !== 'number' || typeof height !== 'number') {
-              console.log("Invalid crop data structure");
-              res.status(HTTP_statusCode.BadRequest).json(
-                new ResponseModel(false, 'Invalid crop data structure')
-              );
-              return;
-            }
-
-            
-            if (x < 0 || y < 0 || width <= 0 || height <= 0) {
-              console.log("Invalid crop data values");
-              res.status(HTTP_statusCode.BadRequest).json(
-                new ResponseModel(false, 'Invalid crop data values')
-              );
-              return;
-            }
-          }
-        } catch (error) {
-          console.log("Invalid crop data format");
-          res.status(HTTP_statusCode.BadRequest).json(
-            new ResponseModel(false, 'Invalid crop data format')
-          );
-          return;
-        }
+        cropData = this.validateCropData(req.body.cropData);
       }
 
-      
       if (avatarFile) {
-        
-        const maxSize = 5 * 1024 * 1024;
-        if (avatarFile.size > maxSize) {
-          console.log("File size exceeds limit");
-          res.status(HTTP_statusCode.BadRequest).json(
-            new ResponseModel(false, 'File size exceeds 5MB limit')
-          );
-          return;
-        }
-
-        
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-        if (!allowedTypes.includes(avatarFile.mimetype)) {
-          console.log("Invalid file type");
-          res.status(HTTP_statusCode.BadRequest).json(
-            new ResponseModel(false, 'Only JPEG, PNG, GIF, and WebP images are allowed')
-          );
-          return;
-        }
-
-        
-        if (cropData && avatarFile.buffer) {
-          
-          const { x, y, width, height } = cropData;
-          
-          
-          if (width > 5000 || height > 5000) {
-            console.log("Crop area too large");
-            res.status(HTTP_statusCode.BadRequest).json(
-              new ResponseModel(false, 'Crop area is too large')
-            );
-            return;
-          }
-        }
+        this.validateAvatarFile(avatarFile, cropData);
       }
 
-      
-      const updateData: UpdateProfileData = {};
-      
-      
-      if (req.body.name && req.body.name.trim()) {
-        updateData.name = req.body.name.trim();
-      }
-      if (req.body.phone && req.body.phone.trim()) {
-        updateData.phone = req.body.phone.trim();
-      }
-      if (req.body.DOB) {
-        updateData.DOB = req.body.DOB;
-      }
-      if (req.body.gender) {
-        updateData.gender = req.body.gender;
-      }
-
-      
-      if (avatarFile) {
-        updateData.avatar = avatarFile;
-      }
-
-      
-      if (cropData) {
-        updateData.cropData = cropData;
-      }
-
-      console.log("Update data:", updateData);
-      console.log("Avatar file:", avatarFile ? {
-        originalname: avatarFile.originalname,
-        mimetype: avatarFile.mimetype,
-        size: avatarFile.size
-      } : 'No avatar file');
-
+      const updateData = this.buildUpdateData(req.body, avatarFile, cropData);
       
       if (Object.keys(updateData).length === 0) {
-        console.log("No data provided for update");
-        res.status(HTTP_statusCode.BadRequest).json(
-          new ResponseModel(false, 'No data provided for update')
-        );
-        return;
+        throw new AppError('No data provided for update', HTTP_statusCode.BadRequest);
       }
-
       
       const result = await this.userService.updateProfile(userId, updateData);
 
-      console.log("*********",result)
-      console.log("Service result:", {
-        success: !!result.user,
-        hasData: !!result.user
-      });
-
-      
-      res.status(HTTP_statusCode.OK).json(
-        new ResponseModel(true, 'Profile updated successfully', result)
-      );
-
+      sendSuccess(res, 'Profile updated successfully', result);
     } catch (error) {
-      console.error('Update profile controller error:', error);
-      
-      
-      if (error instanceof Error) {
-        const errorMessage = error.message;
-        
-        
-        if (errorMessage.includes('Name must be') || 
-            errorMessage.includes('Phone number') || 
-            errorMessage.includes('Date of birth') || 
-            errorMessage.includes('User must be') || 
-            errorMessage.includes('Invalid gender') ||
-            errorMessage.includes('already registered')) {
-          res.status(HTTP_statusCode.BadRequest).json(
-            new ResponseModel(false, errorMessage)
-          );
-          return;
-        }
-        
-        
-        if (errorMessage.includes('User not found')) {
-          res.status(HTTP_statusCode.NotFound).json(
-            new ResponseModel(false, errorMessage)
-          );
-          return;
-        }
-        
-       
-        if (errorMessage.includes('Failed to upload avatar')) {
-          res.status(HTTP_statusCode.InternalServerError).json(
-            new ResponseModel(false, 'Failed to upload avatar. Please try again.')
-          );
-          return;
-        }
-
-        
-        if (errorMessage.includes('File too large')) {
-          res.status(HTTP_statusCode.BadRequest).json(
-            new ResponseModel(false, 'File size exceeds the allowed limit')
-          );
-          return;
-        }
-        if (errorMessage.includes('Only image files are allowed')) {
-          res.status(HTTP_statusCode.BadRequest).json(
-            new ResponseModel(false, 'Only image files are allowed')
-          );
-          return;
-        }
-        if (errorMessage.includes('Unexpected field')) {
-          res.status(HTTP_statusCode.BadRequest).json(
-            new ResponseModel(false, 'Invalid file field name')
-          );
-          return;
-        }
-      }
-      
-      res.status(HTTP_statusCode.InternalServerError).json(
-        new ResponseModel(false, 'Internal server error')
-      );
+      next(error);
     }
   };
 
-  getUserProfile = async (req: AuthRequest, res: Response): Promise<void> => {
+  getUserProfile = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-      console.log("Getting user profile");
-      
       const userId = req.user?.id;
       
       if (!userId) {
-        console.log("No user ID found in token");
-        res.status(HTTP_statusCode.Unauthorized).json(
-          new ResponseModel(false, 'Unauthorized: User not authenticated')
-        );
-        return;
+        throw new AppError('Unauthorized: User not authenticated', HTTP_statusCode.Unauthorized);
       }
-
-      console.log("Fetching profile for user ID:", userId);
 
       const result = await this.userService.getUserProfile(userId);
-      console.log("inside userCNTRL: ",result)
-      console.log("Profile fetch result:", {
-        success: !!result.user,
-        hasData: !!result.user
-      });
 
-      res.status(HTTP_statusCode.OK).json(
-        new ResponseModel(true, 'Profile retrieved successfully', result.user)
-      );
-
+      sendSuccess(res, 'Profile retrieved successfully', result.user);
     } catch (error) {
-      console.error('Get profile controller error:', error);
-      
-      if (error instanceof Error) {
-        const errorMessage = error.message;
-        
-        
-        if (errorMessage.includes('User not found')) {
-          res.status(HTTP_statusCode.NotFound).json(
-            new ResponseModel(false, errorMessage)
-          );
-          return;
-        }
-      }
-      
-      res.status(HTTP_statusCode.InternalServerError).json(
-        new ResponseModel(false, 'Internal server error')
-      );
+      next(error);
     }
   };
 
- 
+  // Private helper methods
+  private validateCropData(cropDataString: string): CropData {
+    try {
+      const cropData = JSON.parse(cropDataString);
+      
+      if (!cropData || typeof cropData !== 'object') {
+        throw new AppError('Invalid crop data structure', HTTP_statusCode.BadRequest);
+      }
+
+      const { x, y, width, height } = cropData;
+      
+      if (typeof x !== 'number' || typeof y !== 'number' || 
+          typeof width !== 'number' || typeof height !== 'number') {
+        throw new AppError('Invalid crop data structure', HTTP_statusCode.BadRequest);
+      }
+
+      if (x < 0 || y < 0 || width <= 0 || height <= 0) {
+        throw new AppError('Invalid crop data values', HTTP_statusCode.BadRequest);
+      }
+
+      if (width > 5000 || height > 5000) {
+        throw new AppError('Crop area is too large', HTTP_statusCode.BadRequest);
+      }
+
+      return cropData;
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Invalid crop data format', HTTP_statusCode.BadRequest);
+    }
+  }
+
+  private validateAvatarFile(avatarFile: Express.Multer.File, cropData?: CropData): void {
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (avatarFile.size > maxSize) {
+      throw new AppError('File size exceeds 5MB limit', HTTP_statusCode.BadRequest);
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(avatarFile.mimetype)) {
+      throw new AppError('Only JPEG, PNG, GIF, and WebP images are allowed', HTTP_statusCode.BadRequest);
+    }
+  }
+
+  private buildUpdateData(
+    body: any, 
+    avatarFile?: Express.Multer.File, 
+    cropData?: CropData
+  ): UpdateProfileData {
+    const updateData: UpdateProfileData = {};
+    
+    if (body.name && body.name.trim()) {
+      updateData.name = body.name.trim();
+    }
+    if (body.phone && body.phone.trim()) {
+      updateData.phone = body.phone.trim();
+    }
+    if (body.DOB) {
+      updateData.DOB = body.DOB;
+    }
+    if (body.gender) {
+      updateData.gender = body.gender;
+    }
+    if (avatarFile) {
+      updateData.avatar = avatarFile;
+    }
+    if (cropData) {
+      updateData.cropData = cropData;
+    }
+
+    return updateData;
+  }
 }
 
 export default UserController;

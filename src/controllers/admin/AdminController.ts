@@ -1,9 +1,9 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import HTTP_statusCode from "../../enums/HttpStatusCode";
-import { IAdminService } from "../../interfaces/admin/adminServiceInterface";
-import { ResponseModel } from "../../models/ResponseModel";
+import { IAdminService } from "../../interfaces/admin/IAdminService";
 import { sendRejectionEmail } from "../../config/emailConfig";
-import { ValidationError } from "../../errors/ValidationError";
+import { AppError } from "../../errors/AppError";
+import { sendSuccess, sendError } from "../../helper/responseHelper";
 
 export class AdminController {
   private _AdminService: IAdminService;
@@ -12,197 +12,103 @@ export class AdminController {
     this._AdminService = AdminServiceInstance;
   }
 
-  async getUsers(req: Request, res: Response): Promise<void> {
+  async getUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { page = 1, limit = 10, search } = req.query;
 
       const pageNumber = parseInt(page as string, 10);
       const pageLimit = parseInt(limit as string, 10);
       const skip = (pageNumber - 1) * pageLimit;
+      const searchQuery = search ? String(search) : null;
 
       const { users, totalPages } = await this._AdminService.getAllUsers(
         skip,
         pageLimit,
-        search
+        searchQuery
       );
 
-      const response = new ResponseModel(true, "Fetch users successfully", {
-        users,
-        totalPages,
-      });
-
-      res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
-      console.error("Error in getUsers controller:", error.message);
-
-      const response = new ResponseModel(
-        false,
-        "An unexpected error occurred",
-        null
-      );
-
-      res.status(HTTP_statusCode.InternalServerError).json(response);
+      sendSuccess(res, "Fetch users successfully", { users, totalPages });
+    } catch (error) {
+      next(error);
     }
   }
 
-  async getTutors(req: Request, res: Response): Promise<void> {
+  async getTutors(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { page = 1, limit = 10, search } = req.query;
 
       const pageNumber = parseInt(page as string, 10);
       const pageLimit = parseInt(limit as string, 10);
       const skip = (pageNumber - 1) * pageLimit;
+      const searchQuery = search ? String(search) : null;
 
       const result = await this._AdminService.getAllTutors(
         skip,
         pageLimit,
-        search
+        searchQuery
       );
 
-      const response = new ResponseModel(
-        true,
-        "Fetched tutors successfully",
-        result
-      );
-
-      res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
-      console.error("Error in getTutors controller:", error.message);
-
-      const response = new ResponseModel(
-        false,
-        "An unexpected error occurred",
-        null
-      );
-
-      res.status(HTTP_statusCode.InternalServerError).json(response);
+      sendSuccess(res, "Fetched tutors successfully", result);
+    } catch (error) {
+      next(error);
     }
   }
 
-  async listUnlistUser(req: Request, res: Response): Promise<void> {
+  async listUnlistUser(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = req.params.userId;
-
       const user = await this._AdminService.listUnlistUser(id);
 
-      const response = new ResponseModel(
-        true,
-        "User updated successfully",
-        user
-      );
-
-      res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
-      console.error("Error in listUnlistUser controller:", error.message);
-
-      if (error.message === "User not found") {
-        const response = new ResponseModel(false, "User not found", null);
-        res.status(HTTP_statusCode.NotFound).json(response);
-      } else {
-        const response = new ResponseModel(
-          false,
-          "An unexpected error occurred",
-          null
-        );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
-      }
+      sendSuccess(res, "User updated successfully", user);
+    } catch (error) {
+      next(error);
     }
   }
 
-  async listUnlistTutor(req: Request, res: Response): Promise<void> {
+  async listUnlistTutor(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const id = req.params.tutorId;
-
       const tutor = await this._AdminService.listUnlistTutor(id);
 
-      const response = new ResponseModel(
-        true,
-        "Tutor updated successfully",
-        tutor
-      );
-
-      res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
-      console.error("Error in listUnlistTutor controller:", error.message);
-
-      if (error.message === "Tutor not found") {
-        const response = new ResponseModel(false, "Tutor not found", null);
-        res.status(HTTP_statusCode.NotFound).json(response);
-      } else {
-        const response = new ResponseModel(
-          false,
-          "An unexpected error occurred",
-          null
-        );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
-      }
+      sendSuccess(res, "Tutor updated successfully", tutor);
+    } catch (error) {
+      next(error);
     }
   }
 
-  async addCategory(req: Request, res: Response): Promise<void> {
+  async addCategory(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      console.log("inside admin controller of add category");
       const category = await this._AdminService.addCourseCategory(req.body);
 
-      const response = new ResponseModel(
-        true,
-        "Category created successfully",
-        category
-      );
-
-      res.status(HTTP_statusCode.updated).json(response);
-    } catch (error: any) {
-      console.error("Error in addCategory controller:", error.message);
-
-      if (error instanceof ValidationError) {
-        res
-          .status(HTTP_statusCode.BadRequest)
-          .json(new ResponseModel(false, error.message, null));
-      } else {
-        const response = new ResponseModel(
-          false,
-          "Failed to create category",
-          null
-        );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
-      }
+      sendSuccess(res, "Category created successfully", category, HTTP_statusCode.updated);
+    } catch (error) {
+      next(error);
     }
   }
 
-  async getCategories(req: Request, res: Response): Promise<void> {
+  async getCategories(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { page = 1, limit = 10, search } = req.query;
 
       const pageNumber = parseInt(page as string, 10);
       const pageLimit = parseInt(limit as string, 10);
       const skip = (pageNumber - 1) * pageLimit;
+      const searchQuery = search ? String(search) : "";
 
-      const { categories, totalPages } =
-        await this._AdminService.getAllCategories(skip, pageLimit, search);
-
-      const response = new ResponseModel(
-        true,
-        "Fetched categories successfully",
-        { categories, totalPages }
+      const { categories, totalPages } = await this._AdminService.getAllCategories(
+        skip,
+        pageLimit,
+        searchQuery
       );
 
-      res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
-      console.error("Error in getCategories controller:", error.message);
-
-      const response = new ResponseModel(
-        false,
-        "Failed to fetch categories",
-        null
-      );
-
-      res.status(HTTP_statusCode.InternalServerError).json(response);
+      sendSuccess(res, "Fetched categories successfully", { categories, totalPages });
+    } catch (error) {
+      next(error);
     }
   }
 
-  async editCategory(req: Request, res: Response): Promise<void> {
+  async editCategory(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      console.log("inside admin controller of edit category");
       const categoryId = req.params.id;
       const updateData = req.body;
 
@@ -211,213 +117,98 @@ export class AdminController {
         updateData
       );
 
-      const response = new ResponseModel(
-        true,
-        "Category updated successfully",
-        updatedCategory
-      );
-
-      res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
-      console.error("Error in editCategory controller:", error.message);
-
-      if (error.message === "Category not found") {
-        const response = new ResponseModel(false, "Category not found", null);
-        res.status(HTTP_statusCode.NotFound).json(response);
-      } else if (error.message.includes("already exists")) {
-        const response = new ResponseModel(false, error.message, null);
-        res.status(HTTP_statusCode.BadRequest).json(response);
-      } else {
-        const response = new ResponseModel(
-          false,
-          "An unexpected error occurred",
-          null
-        );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
-      }
+      sendSuccess(res, "Category updated successfully", updatedCategory);
+    } catch (error) {
+      next(error);
     }
   }
 
-  async toggleCategoryStatus(req: Request, res: Response): Promise<void> {
+  async toggleCategoryStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      console.log("inside toggle category status");
       const categoryId = req.params.id;
+      const updatedCategory = await this._AdminService.toggleCategoryListStatus(categoryId);
 
-      const updatedCategory = await this._AdminService.toggleCategoryListStatus(
-        categoryId
-      );
-
-      const response = new ResponseModel(
-        true,
-        "Category status updated successfully",
-        updatedCategory
-      );
-
-      res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
-      console.error("Error in toggleCategoryStatus controller:", error.message);
-
-      if (error.message === "Category not found") {
-        const response = new ResponseModel(false, "Category not found", null);
-        res.status(HTTP_statusCode.NotFound).json(response);
-      } else {
-        const response = new ResponseModel(
-          false,
-          "An unexpected error occurred",
-          null
-        );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
-      }
+      sendSuccess(res, "Category status updated successfully", updatedCategory);
+    } catch (error) {
+      next(error);
     }
   }
 
-  async getTutorDocs(req: Request, res: Response): Promise<void> {
+  async getTutorDocs(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { page = 1, limit = 10, search } = req.query;
 
       const pageNumber = parseInt(page as string, 10);
       const pageLimit = parseInt(limit as string, 10);
       const skip = (pageNumber - 1) * pageLimit;
+      const searchQuery = search ? String(search) : null;
 
       const result = await this._AdminService.getAllTutorDocs(
         skip,
         pageLimit,
-        search
+        searchQuery
       );
 
-      const response = new ResponseModel(
-        true,
-        "Fetched tutor docs successfully",
-        result
-      );
-
-      res.status(HTTP_statusCode.OK).json(response);
-    } catch (error: any) {
-      console.error("Error in getTutors controller:", error.message);
-
-      const response = new ResponseModel(
-        false,
-        "An unexpected error occurred",
-        null
-      );
-
-      res.status(HTTP_statusCode.InternalServerError).json(response);
+      sendSuccess(res, "Fetched tutor docs successfully", result);
+    } catch (error) {
+      next(error);
     }
   }
 
-  async rejectTutor(req: Request, res: Response): Promise<void> {
+  async rejectTutor(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { tutorId } = req.params;
       const { reason } = req.body;
-      console.log("rejecting tutor contr ", tutorId);
 
       if (!reason || reason.trim() === "") {
-        const response = new ResponseModel(
-          false,
-          "Rejection reason is required",
-          null
-        );
-        res.status(HTTP_statusCode.BadRequest).json(response);
-        return;
+        throw new AppError("Rejection reason is required", HTTP_statusCode.BadRequest);
       }
 
       const result = await this._AdminService.rejectTutor(tutorId, reason);
 
-      if (!result) {
-        const response = new ResponseModel(
-          false,
-          "Failed to reject tutor",
-          null
+      if (!result || !result.success) {
+        throw new AppError(
+          result?.message || "Failed to reject tutor",
+          HTTP_statusCode.BadRequest
         );
-        res.status(HTTP_statusCode.BadRequest).json(response);
-        return;
       }
 
-      if (result.success) {
-        const emailSent = await sendRejectionEmail(
-          result.tutorEmail!,
-          result.tutorName!,
-          reason
-        );
+      const emailSent = await sendRejectionEmail(
+        result.tutorEmail!,
+        result.tutorName!,
+        reason,
+        result.rejectionCount
+      );
 
-        if (!emailSent) {
-          console.warn(
-            `Failed to send rejection email to ${result.tutorEmail}`
-          );
-        }
-
-        const response = new ResponseModel(
-          true,
-          "Tutor rejected successfully",
-          {
-            tutorId,
-            reason: reason,
-            emailSent,
-          }
-        );
-
-        res.status(HTTP_statusCode.OK).json(response);
-      } else {
-        const response = new ResponseModel(
-          false,
-          result.message || "Failed to reject tutor",
-          null
-        );
-        res.status(HTTP_statusCode.BadRequest).json(response);
+      if (!emailSent) {
+        console.warn(`Failed to send rejection email to ${result.tutorEmail}`);
       }
-    } catch (error: any) {
-      console.error("Error in rejectTutor controller:", error.message);
 
-      if (error.message === "Tutor not found") {
-        const response = new ResponseModel(false, "Tutor not found", null);
-        res.status(HTTP_statusCode.NotFound).json(response);
-      } else {
-        const response = new ResponseModel(
-          false,
-          "An unexpected error occurred",
-          null
-        );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
-      }
+      sendSuccess(res, "Tutor rejected successfully", {
+        tutorId,
+        reason,
+        emailSent,
+      });
+    } catch (error) {
+      next(error);
     }
   }
 
-  async verifyTutor(req: Request, res: Response): Promise<void> {
+  async verifyTutor(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { tutorId } = req.params;
-
       const result = await this._AdminService.verifyTutor(tutorId);
 
-      if (result.success) {
-        const response = new ResponseModel(
-          true,
-          "Tutor verified successfully",
-          result
-        );
-
-        res.status(HTTP_statusCode.OK).json(response);
-      } else {
-        const response = new ResponseModel(
-          false,
+      if (!result.success) {
+        throw new AppError(
           result.message || "Failed to verify tutor",
-          null
+          HTTP_statusCode.BadRequest
         );
-        res.status(HTTP_statusCode.BadRequest).json(response);
       }
-    } catch (error: any) {
-      console.error("Error in verifyTutor controller:", error.message);
 
-      if (error.message === "Tutor not found") {
-        const response = new ResponseModel(false, "Tutor not found", null);
-        res.status(HTTP_statusCode.NotFound).json(response);
-      } else {
-        const response = new ResponseModel(
-          false,
-          "An unexpected error occurred",
-          null
-        );
-        res.status(HTTP_statusCode.InternalServerError).json(response);
-      }
+      sendSuccess(res, "Tutor verified successfully", result);
+    } catch (error) {
+      next(error);
     }
   }
 }
