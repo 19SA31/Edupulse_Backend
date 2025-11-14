@@ -1,7 +1,7 @@
 // interfaces/course/courseInterface.ts
-import { Types } from 'mongoose';
-import { Tutor } from '../adminInterface/adminInterface';
-import { ListedCourseDTO } from '../../dto/course/CourseDTO';
+import { Types } from "mongoose";
+import { Tutor } from "../adminInterface/adminInterface";
+import { ListedCourseDTO } from "../../dto/course/CourseDTO";
 
 export interface IFile {
   fileName: string;
@@ -22,7 +22,6 @@ export interface IChapter {
   order: number;
 }
 
-
 export interface Course {
   _id?: Types.ObjectId;
   title: string;
@@ -39,18 +38,18 @@ export interface Course {
   enrollmentCount: number;
   createdAt: Date;
   updatedAt: Date;
-  rejectionCount: Number
+  rejectionCount: Number;
 }
-export interface CourseReject{
-  course:Course,
-  tutor:Tutor
+export interface CourseReject {
+  course: Course;
+  tutor: Tutor;
 }
 
-export interface Category{
-  _id?: any; 
-  id:string;
-  name:string;
-  description:string;
+export interface Category {
+  _id?: any;
+  id: string;
+  name: string;
+  description: string;
 }
 
 export interface CourseFilters {
@@ -90,7 +89,7 @@ export interface FilterConditions {
 export interface SortOptions {
   price?: 1 | -1;
   title?: 1 | -1;
-  'categoryId.name'?: 1 | -1;
+  "categoryId.name"?: 1 | -1;
   createdAt?: 1 | -1;
 }
 
@@ -106,9 +105,6 @@ export interface PaginatedCoursesResponse {
   limit: number;
   totalPages: number;
 }
-
-
-
 
 export interface RawCourse {
   _id?: Types.ObjectId | { $oid: string };
@@ -126,7 +122,7 @@ export interface RawCourse {
   chapters?: RawChapter[];
   createdAt?: Date | { $date: string | { $numberLong: string } };
   updatedAt?: Date | { $date: string | { $numberLong: string } };
-  rejectionCount: Number
+  rejectionCount: Number;
 }
 
 export interface RawChapter {
@@ -157,7 +153,7 @@ export interface RawVideo {
 }
 
 export interface RawTutor {
-  _id?: Types.ObjectId | { $oid: string } | string
+  _id?: Types.ObjectId | { $oid: string } | string;
   name: string;
   email: string;
   designation?: string;
