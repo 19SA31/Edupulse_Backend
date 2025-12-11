@@ -5,6 +5,8 @@ export interface TutorDto {
   email: string;
   phone: string;
   avatar:string;
+  designation?:string;
+  about?:string;
   createdAt: string;
   isBlocked: boolean;
 }

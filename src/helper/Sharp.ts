@@ -31,3 +31,14 @@ export async function cropAndSave(
     }
   });
 }
+
+export async function compressImage(imageBuffer: Buffer): Promise<Buffer> {
+  return sharp(imageBuffer)
+    .jpeg({
+      quality: 70, 
+      chromaSubsampling: "4:2:0",
+    })
+    .toBuffer();
+}
+
+

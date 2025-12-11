@@ -26,6 +26,22 @@ import EnrollmentController from "../../controllers/enrollment/enrollemntControl
 import EnrollmentService from "../../services/enrollment/enrollmentService";
 import EnrollmentRepository from "../../repositories/enrollment/enrollmentRepo";
 
+import {
+  validateSignup,
+  validateOtpVerification,
+  validateLogin,
+  validatePasswordReset,
+  validateGoogleAuth,
+} from "../../middlewares/validation/authValidation";
+import { validateAllMongoIdParams } from "../../middlewares/validation/commonValidation";
+import { validateCourseFilters } from "../../middlewares/validation/courseValidation";
+import { validateProfileUpdate } from "../../middlewares/validation/profileValidation";
+import {
+  validatePaymentCreation,
+  validatePaymentVerification,
+  validateEnrollmentFilters,
+} from "../../middlewares/validation/enrollmentValidation";
+
 const userRoute = express.Router();
 const s3Service = new S3Service();
 const storage = multer.memoryStorage();
@@ -95,6 +111,7 @@ const enrollmentController = new EnrollmentController(enrollmentService);
 
 userRoute.post(
   "/send-otp",
+  validateSignup,
   AuthenticationControllerInstance.sendUserOtp.bind(
     AuthenticationControllerInstance
   )
@@ -102,6 +119,7 @@ userRoute.post(
 
 userRoute.post(
   "/verify-otp",
+  validateOtpVerification,
   AuthenticationControllerInstance.verifyUserOtp.bind(
     AuthenticationControllerInstance
   )
@@ -109,6 +127,7 @@ userRoute.post(
 
 userRoute.post(
   "/login",
+  validateLogin,
   AuthenticationControllerInstance.userLogin.bind(
     AuthenticationControllerInstance
   )
@@ -116,6 +135,7 @@ userRoute.post(
 
 userRoute.post(
   "/google-auth",
+  validateGoogleAuth,
   AuthenticationControllerInstance.googleUserAuth.bind(
     AuthenticationControllerInstance
   )
@@ -130,6 +150,7 @@ userRoute.post(
 
 userRoute.patch(
   "/reset-password",
+  validatePasswordReset,
   AuthenticationControllerInstance.resetUserPassword.bind(
     AuthenticationControllerInstance
   )
@@ -140,6 +161,7 @@ userRoute.put(
   verifyToken("user"),
   authMiddleware,
   uploadAvatar,
+  validateProfileUpdate,
   userController.updateProfile.bind(userController)
 );
 
@@ -164,6 +186,7 @@ userRoute.get(
   "/listed-courses",
   verifyToken("user"),
   authMiddleware,
+  validateCourseFilters,
   courseController.getAllListedCourses.bind(courseController)
 );
 
@@ -176,6 +199,7 @@ userRoute.get(
   "/course-details/:id",
   verifyToken("user"),
   authMiddleware,
+  validateAllMongoIdParams,
   courseController.getCourseDetails.bind(courseController)
 );
 
@@ -183,6 +207,7 @@ userRoute.post(
   "/create-payment",
   verifyToken("user"),
   authMiddleware,
+  validatePaymentCreation,
   enrollmentController.createPayment.bind(enrollmentController)
 );
 
@@ -190,6 +215,7 @@ userRoute.post(
   "/verify-payment",
   verifyToken("user"),
   authMiddleware,
+  validatePaymentVerification,
   enrollmentController.verifyPayment.bind(enrollmentController)
 );
 
@@ -197,6 +223,7 @@ userRoute.get(
   "/verify-enrollment/:courseId",
   verifyToken("user"),
   authMiddleware,
+  validateAllMongoIdParams,
   enrollmentController.verifyEnrollment.bind(enrollmentController)
 );
 
@@ -210,6 +237,7 @@ userRoute.get(
 userRoute.get(
   "/courses-enrolled",
   verifyToken("user"),
+  validateEnrollmentFilters,
   enrollmentController.getEnrolledCourses.bind(enrollmentController)
 );
 

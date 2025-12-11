@@ -3,7 +3,7 @@ import { Course, FilterConditions, SortOptions } from "./courseInterface";
 
 export interface ICourseRepoInterface {
   getCategories(): Promise<Category[]>;
-  getCategoryByName(categoryName: string): Promise<Category | null>
+  getCategoryById(categoryId: string): Promise<Category | null>
   createCourse(courseData: Partial<Course>): Promise<Course>;
   checkSameTutor(tutorId: string): Promise<Course>;
   unpublishedCourses(

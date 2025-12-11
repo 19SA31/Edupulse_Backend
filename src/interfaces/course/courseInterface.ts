@@ -89,7 +89,6 @@ export interface FilterConditions {
 export interface SortOptions {
   price?: 1 | -1;
   title?: 1 | -1;
-  "categoryId.name"?: 1 | -1;
   createdAt?: 1 | -1;
 }
 

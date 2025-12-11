@@ -27,10 +27,10 @@ export class CourseRepository
     return await this._categoryRepository.findWithCondition({ isListed: true });
   }
 
-  async getCategoryByName(categoryName: string): Promise<Category | null> {
+  async getCategoryById(categoryId: string): Promise<Category | null> {
     try {
       const category = await this._categoryRepository.findOne({
-        name: categoryName,
+        _id: categoryId,
       });
       return category || null;
     } catch (error) {

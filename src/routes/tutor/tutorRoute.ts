@@ -26,6 +26,27 @@ import EnrollmentController from "../../controllers/enrollment/enrollemntControl
 import EnrollmentService from "../../services/enrollment/enrollmentService";
 import EnrollmentRepository from "../../repositories/enrollment/enrollmentRepo";
 
+import {
+  validateSignup,
+  validateOtpVerification,
+  validateLogin,
+  validatePasswordReset,
+  validateGoogleAuth,
+} from "../../middlewares/validation/authValidation";
+import {
+  validateAllMongoIdParams,
+  validatePagination,
+} from "../../middlewares/validation/commonValidation";
+import {
+  validateCourseCreation,
+  validateCourseUpdate,
+} from "../../middlewares/validation/courseValidation";
+import {
+  validateProfileUpdate,
+  validateVerificationDocuments,
+} from "../../middlewares/validation/profileValidation";
+import { validateSlotCreation } from "../../middlewares/validation/slotValidation";
+
 const tutorRoute = express.Router();
 
 const AuthRepositoryInstance = new AuthUserRepository();
@@ -71,6 +92,7 @@ const courseController = new CourseController(courseService);
 
 tutorRoute.post(
   "/send-otp",
+  validateSignup,
   AuthenticationControllerInstance.sendTutorOtp.bind(
     AuthenticationControllerInstance
   )
@@ -78,6 +100,7 @@ tutorRoute.post(
 
 tutorRoute.post(
   "/verify-otp",
+  validateOtpVerification,
   AuthenticationControllerInstance.verifyTutorOtp.bind(
     AuthenticationControllerInstance
   )
@@ -85,6 +108,7 @@ tutorRoute.post(
 
 tutorRoute.post(
   "/login",
+  validateLogin,
   AuthenticationControllerInstance.tutorLogin.bind(
     AuthenticationControllerInstance
   )
@@ -92,6 +116,7 @@ tutorRoute.post(
 
 tutorRoute.post(
   "/google-auth",
+  validateGoogleAuth,
   AuthenticationControllerInstance.googleTutorAuth.bind(
     AuthenticationControllerInstance
   )
@@ -106,6 +131,7 @@ tutorRoute.post(
 
 tutorRoute.patch(
   "/reset-password",
+  validatePasswordReset,
   AuthenticationControllerInstance.resetTutorPassword.bind(
     AuthenticationControllerInstance
   )
@@ -123,6 +149,7 @@ tutorRoute.get(
   "/profile",
   verifyToken("tutor"),
   authMiddleware,
+  validateVerificationDocuments,
   tutorController.getTutorProfile.bind(tutorController)
 );
 
@@ -131,6 +158,7 @@ tutorRoute.put(
   verifyToken("tutor"),
   authMiddleware,
   uploadAvatar,
+  validateProfileUpdate,
   tutorController.updateTutorProfile.bind(tutorController)
 );
 
@@ -146,6 +174,7 @@ tutorRoute.post(
   verifyToken("tutor"),
   authMiddleware,
   uploadCourseFiles,
+  validateCourseCreation,
   courseController.createCourse.bind(courseController)
 );
 
@@ -153,6 +182,7 @@ tutorRoute.get(
   "/tutor-courses",
   verifyToken("tutor"),
   authMiddleware,
+  validatePagination,
   courseController.getTutorCourses.bind(courseController)
 );
 
@@ -160,6 +190,7 @@ tutorRoute.get(
   "/course-details/:id",
   verifyToken("tutor"),
   authMiddleware,
+  validateAllMongoIdParams,
   courseController.getCourseDetails.bind(courseController)
 );
 
@@ -168,6 +199,8 @@ tutorRoute.put(
   verifyToken("tutor"),
   authMiddleware,
   uploadCourseFiles,
+  validateAllMongoIdParams,
+  validateCourseUpdate,
   courseController.editCourse.bind(courseController)
 );
 
@@ -175,6 +208,7 @@ tutorRoute.post(
   "/create-slots",
   verifyToken("tutor"),
   authMiddleware,
+  validateSlotCreation,
   tutorController.createSlots.bind(tutorController)
 );
 
@@ -196,6 +230,8 @@ tutorRoute.get(
   "/course-enrollments/:courseId",
   verifyToken("tutor"),
   authMiddleware,
+  validateAllMongoIdParams,
+  validatePagination,
   enrollmentController.getCourseEnrollments.bind(enrollmentController)
 );
 
