@@ -1,3 +1,5 @@
+import * as crypto from "crypto";
+import * as path from "path";
 import {
   S3Client,
   PutObjectCommand,
@@ -6,8 +8,6 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import dotenv from "dotenv";
-import * as crypto from "crypto";
-import * as path from "path";
 
 dotenv.config();
 
@@ -118,6 +118,42 @@ export class S3Service {
       throw error;
     }
   }
+
+  async uploadBuffer(
+    folderPath: string,
+    buffer: Buffer,
+    mimetype: string
+  ): Promise<string> {
+    const uniqueId = crypto.randomBytes(16).toString("hex");
+
+    const extension =
+      mimetype === "image/png"
+        ? ".png"
+        : mimetype === "image/webp"
+        ? ".webp"
+        : ".jpg";
+
+    const uniqueName = `${uniqueId}${extension}`;
+
+    const normalizedFolderPath = folderPath.endsWith("/")
+      ? folderPath
+      : `${folderPath}/`;
+
+    const fullKey = `${normalizedFolderPath}${uniqueName}`;
+
+    const params = {
+      Bucket: this.bucketName,
+      Key: fullKey,
+      Body: buffer,
+      ContentType: mimetype,
+    };
+
+    const command = new PutObjectCommand(params);
+    await this.s3.send(command);
+
+    return fullKey;
+  }
+  
 
   public extractFileName(fullPath: string): string {
     return fullPath.split("/").pop() || "";

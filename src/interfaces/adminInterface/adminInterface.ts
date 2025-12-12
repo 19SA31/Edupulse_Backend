@@ -23,6 +23,8 @@ export interface User {
     name: string;
     email: string;
     phone: string;
+    designation?:string;
+    about?:string;
     password: string; 
     createdAt: Date;
     isBlocked: boolean;

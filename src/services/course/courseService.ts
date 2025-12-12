@@ -10,7 +10,7 @@ import {
   FilterConditions,
   SortOptions,
   RawTutor,
-  PaginatedCoursesResponse
+  PaginatedCoursesResponse,
 } from "../../interfaces/course/courseInterface";
 import {
   CourseForReview,
@@ -25,6 +25,7 @@ import {
 } from "../../dto/course/CourseDTO";
 import { ListedCategoryDTO } from "../../dto/course/CategoryDTO";
 import { S3Service } from "../../utils/s3";
+import { compressImage } from "../../helper/Sharp";
 import { ObjectId } from "mongoose";
 
 export class CourseService implements ICourseService {
@@ -55,10 +56,13 @@ export class CourseService implements ICourseService {
     try {
       let thumbnailUrl = "";
       if (thumbnailFile) {
+        const compressedBuffer = await compressImage(thumbnailFile.buffer);
+
         const folderPath = `courses/thumbnails`;
-        thumbnailUrl = await this._s3Service.uploadFile(
+        thumbnailUrl = await this._s3Service.uploadBuffer(
           folderPath,
-          thumbnailFile
+          compressedBuffer,
+          thumbnailFile.mimetype
         );
       }
 
@@ -329,53 +333,82 @@ export class CourseService implements ICourseService {
       if (userId) {
         const enrolledCourses =
           await this._enrollmentService.getEnrolledCourses(userId);
-        if (enrolledCourses) {
+        if (Array.isArray(enrolledCourses) && enrolledCourses.length > 0) {
           userEnrolledCourseIds = enrolledCourses.map(
-            (course) => course.courseId
+            (c: { courseId: string }) => c.courseId
           );
         }
       }
 
-      let filterConditions: FilterConditions = {};
+      const andConditions: FilterConditions[] = [];
 
       if (userEnrolledCourseIds.length > 0) {
-        filterConditions.$or = [
-          { isListed: true },
-          { _id: { $in: userEnrolledCourseIds } },
-        ];
+        andConditions.push({
+          $or: [{ isListed: true }, { _id: { $in: userEnrolledCourseIds } }],
+        });
       } else {
-        filterConditions.isListed = true;
+        andConditions.push({ isListed: true });
       }
 
-      if (filters.category && filters.category !== "All classes") {
-        filterConditions.categoryName = filters.category;
-      }
-
-      if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
-        filterConditions.price = {};
-        if (filters.minPrice !== undefined) {
-          filterConditions.price.$gte = filters.minPrice;
+      if (filters.category && `${filters.category}`.trim() !== "") {
+        const candidate = String(filters.category).trim();
+        let categoryRecord: any = null;
+        try {
+          categoryRecord = await this._courseRepo.getCategoryById(candidate);
+        } catch {
+          categoryRecord = null;
         }
-        if (filters.maxPrice !== undefined) {
-          filterConditions.price.$lte = filters.maxPrice;
-        }
-      }
-
-      if (filters.search) {
-        const searchConditions: FilterConditions = {
-          $or: [
-            { title: { $regex: filters.search, $options: "i" } },
-            { description: { $regex: filters.search, $options: "i" } },
-          ],
-        };
-
-        if (Object.keys(filterConditions).length > 0) {
-          filterConditions = {
-            $and: [filterConditions, searchConditions],
+        if (!categoryRecord) {
+          const page = Number(filters.page) || 1;
+          const limit = Number(filters.limit) || 6;
+          return {
+            courses: [],
+            total: 0,
+            page,
+            limit,
+            totalPages: 0,
           };
-        } else {
-          filterConditions = searchConditions;
         }
+        andConditions.push({ categoryId: categoryRecord._id });
+      }
+
+      if (
+        (typeof filters.minPrice === "number" &&
+          !Number.isNaN(filters.minPrice)) ||
+        (typeof filters.maxPrice === "number" &&
+          !Number.isNaN(filters.maxPrice))
+      ) {
+        const priceCond: any = {};
+        if (
+          typeof filters.minPrice === "number" &&
+          !Number.isNaN(filters.minPrice)
+        ) {
+          priceCond.$gte = filters.minPrice;
+        }
+        if (
+          typeof filters.maxPrice === "number" &&
+          !Number.isNaN(filters.maxPrice)
+        ) {
+          priceCond.$lte = filters.maxPrice;
+        }
+        andConditions.push({ price: priceCond });
+      }
+
+      if (filters.search && `${filters.search}`.trim() !== "") {
+        const q = String(filters.search).trim();
+        andConditions.push({
+          $or: [
+            { title: { $regex: q, $options: "i" } },
+            { description: { $regex: q, $options: "i" } },
+          ],
+        });
+      }
+
+      let filterConditions: FilterConditions = {};
+      if (andConditions.length === 1) {
+        filterConditions = andConditions[0];
+      } else if (andConditions.length > 1) {
+        filterConditions = { $and: andConditions };
       }
 
       let sortOptions: SortOptions = {};
@@ -392,12 +425,6 @@ export class CourseService implements ICourseService {
         case "title_desc":
           sortOptions = { title: -1 };
           break;
-        case "category_asc":
-          sortOptions = { "categoryId.name": 1 };
-          break;
-        case "category_desc":
-          sortOptions = { "categoryId.name": -1 };
-          break;
         case "newest":
           sortOptions = { createdAt: -1 };
           break;
@@ -408,29 +435,10 @@ export class CourseService implements ICourseService {
           sortOptions = { createdAt: -1 };
       }
 
-      const page = filters.page || 1;
-      const limit = filters.limit || 6;
+      const page = Math.max(1, Number(filters.page) || 1);
+      const limit = Math.max(1, Number(filters.limit) || 6);
 
-      let countFilterConditions = { ...filterConditions };
-      if (filterConditions.categoryName) {
-        const category = await this._courseRepo.getCategoryByName(
-          filterConditions.categoryName as string
-        );
-        if (category) {
-          countFilterConditions = { ...filterConditions };
-          delete countFilterConditions.categoryName;
-          countFilterConditions.categoryId = category._id;
-        } else {
-
-          return {
-            courses: [],
-            total: 0,
-            page,
-            limit,
-            totalPages: 0,
-          };
-        }
-      }
+      const countFilterConditions = { ...filterConditions };
 
       const total = await this._courseRepo.countDocuments(
         countFilterConditions
@@ -444,7 +452,7 @@ export class CourseService implements ICourseService {
       );
 
       await Promise.all(
-        courses.map(async (course) => {
+        courses.map(async (course: any) => {
           try {
             if (course.thumbnailImage) {
               course.thumbnailImage = await this._s3Service.getFile(
@@ -460,8 +468,7 @@ export class CourseService implements ICourseService {
         })
       );
 
-      const totalPages = Math.ceil(total / limit);
-
+      const totalPages = limit > 0 ? Math.ceil(total / limit) : 0;
       return {
         courses: CourseMapper.toListedCourseDTOArray(courses),
         total,
@@ -537,22 +544,27 @@ export class CourseService implements ICourseService {
         throw new Error("Course not found");
       }
 
-      let thumbnailUrl = existingCourse.thumbnailImage;
+      let thumbnailKey = existingCourse.thumbnailImage
+        ? this.extractS3FileName(existingCourse.thumbnailImage)
+        : "";
+
       const filesToDelete: string[] = [];
 
       if (thumbnailFile) {
-        if (thumbnailUrl) {
-          const oldThumbnail = this.extractS3FileName(thumbnailUrl);
-          filesToDelete.push(oldThumbnail);
+        if (thumbnailKey) {
+          filesToDelete.push(thumbnailKey);
         }
 
+        const compressedBuffer = await compressImage(thumbnailFile.buffer);
+
         const folderPath = `courses/thumbnails`;
-        thumbnailUrl = await this._s3Service.uploadFile(
+        thumbnailKey = await this._s3Service.uploadBuffer(
           folderPath,
-          thumbnailFile
+          compressedBuffer,
+          thumbnailFile.mimetype
         );
       } else if (existingThumbnailUrl && !thumbnailFile) {
-        thumbnailUrl = this.extractS3FileName(existingThumbnailUrl);
+        thumbnailKey = this.extractS3FileName(existingThumbnailUrl);
       }
 
       const { processedChapters, filesToCleanup } =
@@ -571,7 +583,7 @@ export class CourseService implements ICourseService {
         requirements: courseDto.requirements,
         categoryId: courseDto.category as any,
         price: courseDto.price,
-        thumbnailImage: thumbnailUrl,
+        thumbnailImage: thumbnailKey,
         chapters: processedChapters,
         updatedAt: new Date(),
         isPublished: "draft",
